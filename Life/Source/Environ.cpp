@@ -6,8 +6,9 @@
 //
 //
 #include "stdafx.h"
+//#include "sound.h"
 #include "Primordial Life.h"
-#include <mmsystem.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -16,9 +17,6 @@
 #include "evolve.h"
 #include "environ.h"
 #include "biots.h"
-#include "PLifeDoc.h"
-#include "GeneralView.h"
-#include "Resources.h"
 #include "ZipFile.h"
 
 // from evolve.cpp
@@ -56,7 +54,7 @@ CSock&  sock = g_sock;
 Biot* CBiotList::FindBiotByID(DWORD id)
 {
 	for (int i = 0; i < GetSize(); i++)
-		if (GetAt(i)->m_Id == id)
+		if (GetAt(i)->m_id == id)
 			return GetAt(i);
 	return NULL;
 }
@@ -142,7 +140,7 @@ Biot* CBiotList::HitCheck(Biot *me, int* pStart)
 	for (; i < GetSize(); i++)
 	{
 		if (GetAt(i) != me &&
-			GetAt(i)->Touches(*me))
+			GetAt(i)->Intersects(*me))
 		{
 			if (pStart)
 				*pStart = i + 1;
@@ -167,7 +165,7 @@ void  CBiotList::Serialize(CArchive& ar, Environment& env)
 		Biot* pBiot;
 
 		ar >> size;
-		ar >> m_bLooped;
+		BoolArchive::Load(ar, m_bLooped);
 		ar >> m_nBiot;
 
 		for (int i = 0; i < size; i++)
@@ -184,7 +182,7 @@ void  CBiotList::Serialize(CArchive& ar, Environment& env)
 	else
 	{
 		ar << GetSize();
-		ar << m_bLooped;
+		BoolArchive::Store(ar, m_bLooped);
 		ar << m_nBiot;
 		for (int i = 0; i < GetSize(); i++)
 			GetAt(i)->Serialize(ar);
@@ -249,87 +247,34 @@ DWORD CEnvStats::ToGenerations(LPCTSTR szDays)
 // Sample
 // 
 //
-#define LOWER_LIMIT   50
-#define UPPER_LIMIT   250
-
-int CEnvStats::m_arCumulativeActivity[MAX_SPECIES + 1]; 
 void CEnvStats::Sample(Environment& env)
 {
-	//static long arCumulativeActivity[32];
-	if (m_days == 0.0)  //first time
-		memset(m_arCumulativeActivity, 0, sizeof(m_arCumulativeActivity));
 	m_days += .05;
-	
+
 	m_population = env.m_biotList.GetSize();
 
 	if (m_population > m_peakPopulation)
 		m_peakPopulation = m_population;
 
 	// Determine color percentages...
-    long     colorDistance[WHITE_LEAF + 2];
+    long     colorDistance[LINES_BASIC + 1];
 	ZeroMemory(colorDistance, sizeof(colorDistance));
 	DWORD maxAge = 0;
-	long m_Diversity[MAX_SPECIES + 1];
-	memset(m_Diversity, 0, sizeof(m_Diversity));
-	//memset(arCumulativeActivity, 0, sizeof(m_arCumulativeActivity));
-	//vector < CString > m_lstSpecies;
+
 	for (int j = 0; j < m_population; j++)
-		{
+	{
 		Biot* pBiot = env.m_biotList[j];
 
 		if (pBiot->m_age > maxAge)
 			maxAge = pBiot->m_age;
 
-		for (int i = 0; i < WHITE_LEAF + 1; i++)
-			{
+		for (int i = 0; i < LINES_BASIC; i++)
+		{
 			colorDistance[i] += pBiot->colorDistance[i];
-			colorDistance[WHITE_LEAF + 1] += pBiot->colorDistance[i];
-			}
-		m_Diversity[pBiot->trait.GetSpecies()]++;
+			colorDistance[LINES_BASIC] += pBiot->colorDistance[i];
 		}
+	}
 
-	m_nDiversity = 0;
-	m_nCumulativeActivity = 0;
-	for (int i = 0; i < (MAX_SPECIES + 1); i++)
-		{
-		if (m_Diversity[i] > 0)
-			{
-			m_nDiversity++;
-			m_arCumulativeActivity[i] += m_Diversity[i];
-			m_nCumulativeActivity += m_arCumulativeActivity[i];
-			}
-		else
-			m_arCumulativeActivity[i] = 0;
-		}
-	
-	m_dblStdActivity = 0.0;
-	m_nNewActivity = 0;
-	m_dblMeanCumActivity = (float)m_nCumulativeActivity / (float)m_nDiversity;
-	for (i = 0; i < (MAX_SPECIES + 1); i++)
-		{
-		if (m_arCumulativeActivity[i] == 0) continue;
-		if ((m_arCumulativeActivity[i] < UPPER_LIMIT) && (m_arCumulativeActivity[i] > LOWER_LIMIT))
-			m_nNewActivity += m_arCumulativeActivity[i];
-
-		double dblTmp = m_arCumulativeActivity[i] - m_dblMeanCumActivity;
-		m_dblStdActivity +=  (dblTmp * dblTmp);
-		}
-
-	m_dblMeanNewActivity = (float)m_nNewActivity / (float)m_nDiversity;
-	m_dblStdActivity = sqrt(m_dblStdActivity)/(float)m_nDiversity;
-	
-	m_dblStdNewActivity = 0.0;
-	for (i = 0; i < (MAX_SPECIES + 1); i++)
-		{
-		double dblTmp;
-		if ((m_arCumulativeActivity[i] < UPPER_LIMIT) && (m_arCumulativeActivity[i] > LOWER_LIMIT))
-			{
-			dblTmp = m_arCumulativeActivity[i] - m_dblMeanNewActivity;
-			m_dblStdNewActivity += (dblTmp * dblTmp);
-			}
-		}
-
-	m_dblStdNewActivity = sqrt(m_dblStdNewActivity)/ (float)m_nDiversity;
 	m_ageRange = max(maxAge + 1, GENERATIONS * INTERVALS);
 	m_ageIntervals = INTERVALS;
 
@@ -343,19 +288,16 @@ void CEnvStats::Sample(Environment& env)
 		Biot* pBiot = env.m_biotList[j];
 
 		m_ages[(pBiot->m_age * m_ageIntervals) / m_ageRange]++;
-#ifdef _METABOLISM
-		m_energy[(int) (pBiot->metabolism.PercentEnergy() / (100.0 / ENERGY_LEVELS))]++;
-#else
 		m_energy[(int) (pBiot->PercentEnergy() / (100.0 / ENERGY_LEVELS))]++;
-#endif
+
 		m_freeEnvArea -= pBiot->Area();
 	}
 
-	m_perWhite  = (float) (100 * ((double) colorDistance[WHITE_LEAF] / (double) colorDistance[WHITE_LEAF + 1]));
-	m_perGreen  = (float) (100 * ((double) colorDistance[GREEN_LEAF] / (double) colorDistance[WHITE_LEAF + 1]));
-	m_perRed    = (float) (100 * ((double) colorDistance[RED_LEAF]   / (double) colorDistance[WHITE_LEAF + 1]));
-	m_perBlue   = (float) (100 * ((double) colorDistance[BLUE_LEAF]  / (double) colorDistance[WHITE_LEAF + 1]));
-	m_perLtBlue = (float) (100 * ((double) colorDistance[LBLUE_LEAF] / (double) colorDistance[WHITE_LEAF + 1]));
+	m_perWhite  = (float) (100 * ((double) colorDistance[LINE_INJECTOR] / (double) colorDistance[LINES_BASIC]));
+	m_perGreen  = (float) (100 * ((double) colorDistance[LINE_LEAF] / (double) colorDistance[LINES_BASIC]));
+	m_perRed    = (float) (100 * ((double) colorDistance[LINE_MOUTH]   / (double) colorDistance[LINES_BASIC]));
+	m_perBlue   = (float) (100 * ((double) colorDistance[LINE_SHIELD]  / (double) colorDistance[LINES_BASIC]));
+	m_perLtBlue = (float) (100 * ((double) colorDistance[LINE_EYE] / (double) colorDistance[LINES_BASIC]));
 
 
 }
@@ -363,7 +305,7 @@ void CEnvStats::Sample(Environment& env)
 
 float CEnvStats::PercentUncoveredByBiots()
 {
-	TRACE("Area free %f\n", (float) m_freeEnvArea / (float) m_totalEnvArea);
+//	TRACE("Area free %f\n", (float) m_freeEnvArea / (float) m_totalEnvArea);
 	return (float) m_freeEnvArea / (float) m_totalEnvArea;
 }
 
@@ -420,7 +362,7 @@ CString CEnvStats::GetExtinctionsStr()
 //
 void CEnvStats::Serialize(CArchive& ar)
 {
-	const long archVersion = 5;
+	const long archVersion = 2;
 
 	if (ar.IsLoading())
 	{
@@ -442,22 +384,6 @@ void CEnvStats::Serialize(CArchive& ar)
 		ar >> m_perLtBlue;
 		ar >> m_ageRange;
 		ar >> m_ageIntervals;
-		if (version >= 3)
-			ar >> m_dblSecsPerBiot;
-		if (version >= 4)
-			{
-			ar >> m_nDiversity;
-			ar >> m_nCumulativeActivity;
-			ar >> m_dblMeanCumActivity;
-			ar.Read(m_arCumulativeActivity, sizeof(m_arCumulativeActivity));
-			}
-		if (version >= 5)
-			{
-			ar >> m_dblStdActivity;
-			ar >> m_nNewActivity;
-			ar >> m_dblMeanNewActivity;
-			ar >> m_dblStdNewActivity;
-			}
 		ar.Read(m_ages, sizeof(m_ages));
 		ar.Read(m_energy, sizeof(m_energy));
 	}
@@ -480,15 +406,6 @@ void CEnvStats::Serialize(CArchive& ar)
 		ar << m_perLtBlue;
 		ar << m_ageRange;
 		ar << m_ageIntervals;
-		ar << m_dblSecsPerBiot;
-		ar << m_nDiversity;
-		ar << m_nCumulativeActivity;
-		ar << m_dblMeanCumActivity;
-		ar.Write( m_arCumulativeActivity, sizeof(m_arCumulativeActivity));
-		ar << m_dblStdActivity;
-		ar << m_nNewActivity;
-		ar << m_dblMeanNewActivity;
-		ar << m_dblStdNewActivity;
 		ar.Write(m_ages, sizeof(m_ages));
 		ar.Write(m_energy, sizeof(m_energy));
 	}
@@ -531,32 +448,17 @@ void CEnvStatsList::Serialize(CArchive& ar)
 //////////////////////////////////////////////////////////////////////
 // Environment Class
 //
-//Fox BEGIN
 Environment::Environment()
 {
-	for (int i = 0; i <= MAX_LEAF; i++)
-		options.hPen[i] = NULL;
-
-	options.hPen[GREEN_LEAF]      = CreatePen(PS_SOLID, 1, RGB(0,255,0));
-	options.hPen[BLUE_LEAF]       = CreatePen(PS_SOLID, 1, RGB(0,0,255));
-	options.hPen[RED_LEAF]        = CreatePen(PS_SOLID, 1, RGB(255,0,0));
-	options.hPen[LBLUE_LEAF]      = CreatePen(PS_SOLID, 1, RGB(0,255,255));
-	options.hPen[WHITE_LEAF]      = CreatePen(PS_SOLID, 1, RGB(255,255,255));
-	options.hPen[DARK_GREEN_LEAF] = CreatePen(PS_SOLID, 1, RGB(0, 128, 0));
-	options.hPen[DARK_BLUE_LEAF]  = CreatePen(PS_SOLID, 1, RGB(0, 0, 128));
-	options.hPen[DARK_RED_LEAF]   = CreatePen(PS_SOLID, 1, RGB(128, 0, 0));
-	options.hPen[DARK_LBLUE_LEAF] = CreatePen(PS_SOLID, 1, RGB(0, 128, 128));
-	options.hPen[GREY_LEAF]       = CreatePen(PS_SOLID, 1, RGB(128,128,128));
-	options.hPen[YELLOW_LEAF]     = CreatePen(PS_SOLID, 1, RGB(255,255,0));
-	options.hPen[BLACK_LEAF]      = CreatePen(PS_SOLID, 1, RGB(0,0,0));
-	options.hPen[PURPLE_LEAF]     = CreatePen(PS_SOLID, 1, RGB(255,0,255));
+	for (int i = 0; i <= LINE_MAX; i++)
+		options.hPen[i] = CreatePen(PS_SOLID, 1, g_lineRGB[i]);
 
 	Clear();
 
 	m_pMagnifyWnd  = NULL;
-	m_pEnvStatsWnd = NULL;	
+	m_pEnvStatsWnd = NULL;
 }
-//Fox END
+
 
 //////////////////////////////////////////////////////////////////////
 // Environment Destructor
@@ -565,10 +467,9 @@ Environment::Environment()
 //
 Environment::~Environment(void)
 {
-	for (int i = 0; i <= MAX_LEAF; i++)
+	for (int i = 0; i <= LINE_MAX; i++)
 		if (options.hPen[i] != NULL)
 			DeleteObject(options.hPen[i]);
-	delete [] m_matCells;
 }
 
 
@@ -578,54 +479,21 @@ Environment::~Environment(void)
 //Fox BEGIN
 void Environment::Clear()
 {
-	options.effectiveLength[GREEN_LEAF] = 1;
-	options.effectiveLength[BLUE_LEAF]  = 2;
-	options.effectiveLength[RED_LEAF]   = 1;
-	options.effectiveLength[WHITE_LEAF] = 1;
-	options.effectiveLength[LBLUE_LEAF] = 1;
-	
-	// You have / he has
-	options.leafContact[GREEN_LEAF][GREEN_LEAF ] = CONTACT_IGNORE;
-	options.leafContact[GREEN_LEAF][BLUE_LEAF  ] = CONTACT_IGNORE;
-	options.leafContact[GREEN_LEAF][WHITE_LEAF ] = CONTACT_IGNORE;
-	options.leafContact[GREEN_LEAF][RED_LEAF   ] = CONTACT_EATEN;
-	options.leafContact[GREEN_LEAF][LBLUE_LEAF ] = CONTACT_IGNORE; 
+	options.SetDefaultContact();
 
-	options.leafContact[BLUE_LEAF][BLUE_LEAF  ] = CONTACT_IGNORE;
-	options.leafContact[BLUE_LEAF][GREEN_LEAF ] = CONTACT_IGNORE;
-	options.leafContact[BLUE_LEAF][RED_LEAF   ] = CONTACT_DEFEND;
-	options.leafContact[BLUE_LEAF][WHITE_LEAF ] = CONTACT_IGNORE;
-	options.leafContact[BLUE_LEAF][LBLUE_LEAF ] = CONTACT_IGNORE;
+	options.leafMass[LINE_MOUTH   ] = 1;
+	options.leafMass[LINE_SHIELD  ] = 2;
+	options.leafMass[LINE_INJECTOR] = 1;
+	options.leafMass[LINE_LEAF    ] = 4;
+	options.leafMass[LINE_EYE     ] = 1;
+	options.leafMass[LINE_TOOTH   ] = 2;
 
-	options.leafContact[RED_LEAF][RED_LEAF   ]   = CONTACT_ATTACK;
-	options.leafContact[RED_LEAF][GREEN_LEAF ]   = CONTACT_EAT;
-	options.leafContact[RED_LEAF][BLUE_LEAF  ]   = CONTACT_DEFENDED;
-	options.leafContact[RED_LEAF][WHITE_LEAF ]   = CONTACT_DESTROY;
-	options.leafContact[RED_LEAF][LBLUE_LEAF ]   = CONTACT_DESTROY;
-
-	options.leafContact[WHITE_LEAF][RED_LEAF  ]  = CONTACT_DESTROYED;
-	options.leafContact[WHITE_LEAF][GREEN_LEAF]  = CONTACT_IGNORE;
-	options.leafContact[WHITE_LEAF][BLUE_LEAF ]  = CONTACT_IGNORE;
-	options.leafContact[WHITE_LEAF][WHITE_LEAF]  = CONTACT_IGNORE;
-	options.leafContact[WHITE_LEAF][LBLUE_LEAF]  = CONTACT_IGNORE; 
-
-	options.leafContact[LBLUE_LEAF][RED_LEAF  ]  = CONTACT_DESTROYED;
-	options.leafContact[LBLUE_LEAF][GREEN_LEAF]  = CONTACT_IGNORE;
-	options.leafContact[LBLUE_LEAF][BLUE_LEAF ]  = CONTACT_IGNORE;
-	options.leafContact[LBLUE_LEAF][WHITE_LEAF]  = CONTACT_IGNORE;
-	options.leafContact[LBLUE_LEAF][LBLUE_LEAF]  = CONTACT_IGNORE; 
-
-	options.leafMass[RED_LEAF]    = 1;
-	options.leafMass[BLUE_LEAF]   = 2;
-	options.leafMass[WHITE_LEAF]  = 1;
-	options.leafMass[GREEN_LEAF]  = 4;
-	options.leafMass[LBLUE_LEAF]  = 1;
-
-	options.newType[RED_LEAF]    = RED_LEAF;
-	options.newType[BLUE_LEAF]   = BLUE_LEAF;
-	options.newType[WHITE_LEAF]  = WHITE_LEAF;
-	options.newType[GREEN_LEAF]  = YELLOW_LEAF;
-	options.newType[LBLUE_LEAF]  = LBLUE_LEAF;
+	options.newType[LINE_MOUTH   ] = LINE_MOUTH;
+	options.newType[LINE_SHIELD  ] = LINE_SHIELD;
+	options.newType[LINE_INJECTOR] = LINE_INJECTOR;
+	options.newType[LINE_LEAF    ] = LINE_HIGHLIGHT;
+	options.newType[LINE_EYE     ] = LINE_EYE;
+	options.newType[LINE_TOOTH   ] = LINE_TOOTH;
 
 	options.m_leafEnergy = 2;
 	options.regenCost  = 200;
@@ -633,7 +501,7 @@ void Environment::Clear()
 
 	options.startEnergy = 400 * 8;  
 
-	options.friction = (float) 0.005;
+	options.friction = 0;(float) 0.005;
 
 	// Set up sides
 	side[0] = (Side*) &leftSide;
@@ -646,15 +514,15 @@ void Environment::Clear()
 
 	// Ini File parameters
 	options.chance              = 12;
-	options.bSoundOn            = TRUE;	
+	options.bSoundOn            = true;	
 	options.nSexual             = 3;
 	options.startNew            = 1;
 	options.m_initialPopulation = 20;
-	options.bParentAttack       = TRUE;
-	options.bSiblingsAttack     = TRUE;
-	options.bBarrier            = TRUE;	
-	options.bMouse              = TRUE;
-	bNetworkSettingsChange = FALSE;
+	options.bParentAttack       = true;
+	options.bSiblingsAttack     = true;
+	options.bBarrier            = true;	
+	options.bMouse              = true;
+	bNetworkSettingsChange		= false;
 
 	// Don't save the state of these
 	// They maintain a global scratch pad for drawing
@@ -674,14 +542,15 @@ void Environment::Clear()
 
 	options.m_nSick = 200;
 
-	m_bIsSelected = FALSE;
+	m_bIsSelected = false;
 
 	m_stats.Clear();
 	m_statsList.RemoveAll();
 
 	m_dwTicks      = timeGetTime();
+
 }
-//Fox END
+
 
 //////////////////////////////////////////////////////////////////////
 // GetBitPad - allocates a bitmap, compatible with hScreenDC.
@@ -753,7 +622,7 @@ void Environment::FreeBitPadDC()
 // PlayResource
 //
 //
-void Environment::PlayResource(LPCSTR szSound, BOOL bSync)
+void Environment::PlayResource(LPCSTR szSound, bool bSync)
 {
 	if (options.bSoundOn && !AfxGetPLife().IsSmall())
 	{
@@ -773,7 +642,8 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 {
 	Biot* pNew;
 
-//	m_sort.SetIncrementalSort(false);
+	// We need to incrementally sort because biots must search for a empty screen location
+	m_sort.SetIncrementalSort(true);
 	for (long lIndex = 0; lIndex < options.m_initialPopulation; lIndex++)
 	{
 		if ((pNew = new Biot(*this)) != NULL)
@@ -781,23 +651,9 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 			m_biotList.Add(pNew);
 			pNew->RandomCreate(nArmsPerBiot, nTypesPerBiot, nSegmentsPerArm);
 			m_sort.Add(pNew);
-//			m_sort.TraceDebug();
 		}
 	}
-//	m_sort.SortAll();
-//	m_sort.TraceDebug();
-//	m_sort.SetIncrementalSort(true);
-
-//	BRectSortPos pos;
-
-//	pos.FindRectsInPoint(200, 200);
-//	pos.FindRectsInPoint(100, 100);
-
-//	while (m_sort.IterateRects(pos) != NULL);
-//	m_sort.
-//	pNew = new Biot(*this);
-//	pNew = m_biotList[0];
-//	m_sort.Add(pNew);
+	m_sort.TraceDebug();
 }
      
 
@@ -815,7 +671,7 @@ void Environment::OnOpen(CScrollView* pView)
 	topSide.SetSide(this);
 	bottomSide.SetSide(this);
 
-	options.maxLineSegments      = (MAX_GENES / MAX_SYMMETRY);
+	options.maxLineSegments      = MAX_SEGMENTS;
 
 	sock.StartSession(pView->GetSafeHwnd(), this);
 	sock.Listen();
@@ -847,32 +703,14 @@ void Environment::OnOpen(CScrollView* pView)
 void Environment::OnNew(CScrollView* pView, RECT worldRect, int population, int seed,
 						int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 { 
+//	playMIDIFile(NULL, "C:\\WINDOWS\\MEDIA\\CANYON.MID");
 	Clear();
 
 	options.startNew = 1;
 	Set(&worldRect);
 
-	int nWidth = this->Width();
-	int nHeight = this -> Height();
-	
-	m_nCellWidth = nWidth / 50;
-	if (m_nCellWidth < 50 ) 
-		m_nCellWidth = 50;
-	
-	m_nCellHeight = nHeight / 50;
-	if (m_nCellHeight < 50 ) 
-		m_nCellHeight = 50;
-
-	m_nCellsAcross = nWidth / m_nCellWidth + 1;
-	m_nCellsHigh = nHeight / m_nCellHeight + 1;
-	//Allocate Pointer to Cells 
-	m_matCells = new CResources [m_nCellsHigh * m_nCellsAcross];
-	for (int nRow = 0; nRow < m_nCellsHigh * m_nCellsAcross; nRow++)
-		m_matCells[nRow].Randomize();
-
-
 	options.m_initialPopulation  = population;
-	options.maxLineSegments      = (MAX_GENES / MAX_SYMMETRY);
+	options.maxLineSegments      = MAX_SEGMENTS;
 
 	m_orginalSeed = seed;
 
@@ -941,35 +779,109 @@ void Environment::OnNew(CScrollView* pView, RECT worldRect, int population, int 
 }
     
 
+void Environment::DebugStep(CScrollView* pView)
+{
+	int i;
+	Biot* pBiot;
+
+	if (m_bBlocked)
+		return;
+
+	m_bBlocked = true;
+
+	// Create our display context
+	CDC* pScreenDC = pView->GetDC();
+	pView->OnPrepareDC(pScreenDC);
+
+	m_hScreenDC = pScreenDC->GetSafeHdc();
+	m_hMemoryDC = ::CreateCompatibleDC(m_hScreenDC);
+
+
+	int nBiot;
+	// Process all the biots now
+
+	TRACE("TIME STEP: %d ------------------------------------------------------------------------------\n", options.m_generation);
+
+	// Walk all the biots and compute collisions
+		for (nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
+			m_biotList[nBiot]->CollisionDetection(options.m_generation);
+
+		// Walk all the biots and purge old collisions
+		for (nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
+			m_biotList[nBiot]->PurgeOldCollisions(options.m_generation);
+
+		// Collide all the biots
+		for (nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
+			m_biotList[nBiot]->Collide();
+
+		// Is the biot present?
+		// Walk all the biots and purge old collisions
+		for (nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
+		{
+			pBiot = m_biotList[nBiot];
+			BRect origPos(pBiot);
+
+			pBiot->Move();
+			m_sort.Move(pBiot, &origPos);
+			for (i = 0; i < 4; i++)
+			{
+				if (pBiot->IsContainedBy(*side[i]))
+				{
+					sock.LockAll();
+					if (side[i]->Export(pBiot))
+					{
+						pBiot->Erase();
+						m_sort.Remove(pBiot);
+						m_biotList.RemoveBiot();
+					}
+					else
+					{	
+						pBiot->Reject(i);
+					}
+					sock.UnlockAll();
+					i = 4;
+				}
+			}
+
+		}
+
+		for (nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
+		{
+			if (m_biotList[nBiot]->IsDead())
+			{
+				pBiot = m_biotList[nBiot];
+				m_sort.Remove(pBiot);
+				delete pBiot;
+				m_biotList.RemoveAt(nBiot);
+				nBiot--;
+				m_stats.m_deaths++;
+			}
+		}
+		options.m_generation++;
+
+
+	// Let the window paint now
+	FreeBitPadDC();
+
+	VERIFY(::DeleteDC(m_hMemoryDC));
+	VERIFY(pView->ReleaseDC(pScreenDC));
+	m_hScreenDC = NULL;
+
+	m_bBlocked = false;
+}
+
 //////////////////////////////////////////////////////////////////////
 // Skip
 //
 //
-LARGE_INTEGER SubtractLI(LARGE_INTEGER & liTickEnd,LARGE_INTEGER & liTickStart)
-	{
-	LARGE_INTEGER liResult;
-	if (liTickStart.LowPart > liTickEnd.LowPart)
-		{
-		//Need to Borrow from High Part
-		liResult.LowPart = liTickStart.LowPart + 1;
-		liTickEnd.HighPart --;
-		}
-	else
-		liResult.LowPart = liTickEnd.LowPart - liTickStart.LowPart;
-
-	liResult.HighPart = liTickEnd.HighPart - liTickStart.HighPart;
-	return liResult;
-	}
-
 void Environment::Skip(CScrollView* pView)
 {
+//	ASSERT(0);
 	int i;
 	Biot* pBiot;
-	static double dblAverageTicks = 0.0;
+
 	if (m_bBlocked)
 		return;
-	if (options.m_generation == 0)
-		m_bSineSun = (options.m_leafEnergy == 7);
 
 //	bool bSample = ((options.m_generation & 0x000001FF) == 0x00000000);
 
@@ -989,7 +901,7 @@ void Environment::Skip(CScrollView* pView)
 		{
 			sock.Listen();
 			sock.ConnectAll();
-			bNetworkSettingsChange = FALSE;
+			bNetworkSettingsChange = false;
 		}
 	}
 */
@@ -1033,111 +945,110 @@ void Environment::Skip(CScrollView* pView)
 		sock.UnlockAll();
 	}
 */
-	if ((options.m_generation & CEnvStats::SAMPLE_TIME) == CEnvStats::SAMPLE_TIME)
-		{
-		if (m_bSineSun)
-			options.m_leafEnergy = (int)10 * cos(m_stats.m_days);
-		m_stats.Sample(*this);
-		m_statsList.AddTail(m_stats);
-		m_stats.NewSample();
-		if (m_statsList.GetCount() > 100)
-			m_statsList.RemoveHead();
 
-		AfxMainFrame().UpdateStatusBar();
-
-		if (m_pEnvStatsWnd)
-			m_pEnvStatsWnd->PaintNow();
-
-		if (m_stats.PercentUncoveredByBiots() < 0.50)
-			{
-			m_biotList[Integer(m_biotList.GetSize())]->m_nSick = options.m_nSick;
-			}
-
-		}
-
-	LARGE_INTEGER liTickStart = AfxMainFrame().GetTimeTick();
-	//DWORD dwTicks = timeGetTime(); 
+	DWORD dwTicks = timeGetTime(); 
+	int nBiot;
 	// Process all the biots now
-	//while ((timeGetTime() - dwTicks) < 1/*200*/)
-	while (true)
+	while ((timeGetTime() - dwTicks) < 200)
 	{
-		pBiot = m_biotList.NextBiot();
+		#if defined(_DEBUG)
+		TestSortedArray();
+		#endif
 
-		if (m_biotList.Looped())
-		{
-			// Another approach would store the delta time between each loop
-			// and if it was under a certain threshold, it would add a sleep
-			// statement.
-			//***if ((timeGetTime() - m_dwTicks) < 25)
-			//***	Sleep(8);
+		// Walk all the biots and compute collisions
+		for (nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
+			m_biotList[nBiot]->CollisionDetection(options.m_generation);
 
-			//m_dwTicks = timeGetTime();
+		// Walk all the biots and purge old collisions
+		for (nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
+			m_biotList[nBiot]->PurgeOldCollisions(options.m_generation);
 
-			
-
-			options.m_generation++;
-
-			if (m_bIsSelected)
-			{
-				Biot* pBiot = GetSelectedBiot();
-				if (m_pMagnifyWnd)
-					m_pMagnifyWnd->PaintNow(pBiot);
-				m_editor.UpdateBiot(pBiot);
-				m_bIsSelected = (pBiot != NULL);
-			}
-		}
+		// Collide all the biots
+		for (nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
+			m_biotList[nBiot]->Collide();
 
 		// Is the biot present?
-		if (pBiot)
+		// Walk all the biots and purge old collisions
+		for (nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
 		{
+			pBiot = m_biotList[nBiot];
 			BRect origPos(pBiot);
 
-			if (!pBiot->Move())
+			pBiot->Move();
+			m_sort.Move(pBiot, &origPos);
+			for (i = 0; i < 4; i++)
 			{
-				m_sort.Remove(pBiot);
-				m_biotList.RemoveBiot();
-				m_stats.m_deaths++;
-			}
-			else
-			{
-				m_sort.Move(pBiot, &origPos);
-				for (i = 0; i < 4; i++)
+				if (pBiot->IsContainedBy(*side[i]))
 				{
-					if (pBiot->IsContainedBy(*side[i]))
+					sock.LockAll();
+					if (side[i]->Export(pBiot))
 					{
-						sock.LockAll();
-						if (side[i]->Export(pBiot))
-						{
-							pBiot->Erase();
-							m_sort.Remove(pBiot);
-							m_biotList.RemoveBiot();
-						}
-						else
-						{	
-							pBiot->Reject(i);
-						}
-						sock.UnlockAll();
-						i = 4;
+						pBiot->Erase();
+						m_sort.Remove(pBiot);
+						m_biotList.RemoveBiot();
 					}
+					else
+					{	
+						pBiot->Reject(i);
+					}
+					sock.UnlockAll();
+					i = 4;
 				}
 			}
 		}
-	if (m_biotList.Looped()) break;
-	}
 
-	LARGE_INTEGER liTickEnd = AfxMainFrame().GetTimeTick();
-	LARGE_INTEGER liTicks = SubtractLI(liTickEnd,liTickStart);
-	long nPopulation = m_biotList.GetSize();
-	if (nPopulation == 0) nPopulation = -1;
-	DWORD lTicksPerBiot = liTicks.HighPart == 0 ? liTicks.LowPart / nPopulation : 0x8fffffffL;
-	//double dblSecsPerBiot = double(lTicksPerBiot) / (double) AfxMainFrame().GetTimerFrequency();
-	CEnvStats& stats = AfxMainFrame().GetGeneralView()->GetDocument()->m_env.m_stats;
-	dblAverageTicks += ((double(lTicksPerBiot) / (double) AfxMainFrame().GetTimerFrequency()));
-	dblAverageTicks *= 0.03;
-	stats.m_dblSecsPerBiot = dblAverageTicks;
-	stats.m_population = nPopulation;
-		//double(lTicksPerBiot) / (double) AfxMainFrame().GetTimerFrequency();
-	AfxMainFrame().UpdateStatusBar();
+		// Another approach would store the delta time between each loop
+		// and if it was under a certain threshold, it would add a sleep
+		// statement.
+		if ((timeGetTime() - m_dwTicks) < 25)
+			Sleep(8);
+
+		m_dwTicks = timeGetTime();
+
+		if ((options.m_generation & CEnvStats::SAMPLE_TIME) == CEnvStats::SAMPLE_TIME)
+		{
+			m_stats.Sample(*this);
+			m_statsList.AddTail(m_stats);
+			m_stats.NewSample();
+			if (m_statsList.GetCount() > 100)
+				m_statsList.RemoveHead();
+
+			AfxMainFrame().UpdateStatusBar();
+
+			if (m_pEnvStatsWnd)
+				m_pEnvStatsWnd->PaintNow();
+
+			if (m_stats.PercentUncoveredByBiots() < 0.50)
+			{
+				m_biotList[Integer(m_biotList.GetSize())]->m_nSick = options.m_nSick;
+			}
+		}
+
+		options.m_generation++;
+
+		if (m_bIsSelected)
+		{
+			Biot* pBiot = GetSelectedBiot();
+			if (m_pMagnifyWnd)
+				m_pMagnifyWnd->PaintNow(pBiot);
+			m_editor.UpdateBiot(pBiot);
+			m_bIsSelected = (pBiot != NULL);
+		}
+
+		// Walk all the biots and compute collisions
+		for (nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
+		{
+			if (m_biotList[nBiot]->IsDead())
+			{
+				pBiot = m_biotList[nBiot];
+				m_sort.Remove(pBiot);
+				delete pBiot;
+				m_biotList.RemoveAt(nBiot);
+				nBiot--;
+				m_stats.m_deaths++;
+			}
+		}
+	}
 
 	if (m_biotList.GetSize() < 4)
 	{
@@ -1154,8 +1065,7 @@ void Environment::Skip(CScrollView* pView)
 
 	// Let the window paint now
 	FreeBitPadDC();
-	DiffuseResources();
-	//TraceResources();
+
 	VERIFY(::DeleteDC(m_hMemoryDC));
 	VERIFY(pView->ReleaseDC(pScreenDC));
 	m_hScreenDC = NULL;
@@ -1187,18 +1097,17 @@ void Environment::DeleteContents()
 //////////////////////////////////////////////////////////////////////
 // AddBiot
 //
+// Adds a biot to the environment lists
 //
 void Environment::AddBiot(Biot* pNewBiot)
-	{
+{
 	if (pNewBiot)
-		{
+	{
 		m_sort.Add(pNewBiot);
 		m_biotList.Add(pNewBiot);
-#ifdef _TRACE_SORT
-		m_sort.TraceDebug();
-#endif
-		}
+//		m_sort.TraceDebug();
 	}
+}
 
 
 //////////////////////////////////////////////////////////////////////
@@ -1233,7 +1142,7 @@ void Environment::Paint(CDC* pDC, CRect& rect)
 	m_hScreenDC = pDC->m_hDC;
 	m_hMemoryDC = CreateCompatibleDC(m_hScreenDC);
 
-	CDC dcImage;
+/*	CDC dcImage;
 
 	dcImage.Attach(m_hMemoryDC);
 
@@ -1272,8 +1181,8 @@ void Environment::Paint(CDC* pDC, CRect& rect)
 
 	dcImage.Detach();
 
-	for (int i = 0; i < m_biotList.GetSize(); i++)
-		if (c.Touches(*m_biotList[i]) && 
+*/	for (int i = 0; i < m_biotList.GetSize(); i++)
+		if (c.Intersects(*m_biotList[i]) && 
 			m_biotList[i]->m_bitmapWidth > 0 && 
 			m_biotList[i]->m_bitmapHeight > 0)
 			m_biotList[i]->Draw();
@@ -1352,16 +1261,80 @@ void Environment::MagnifyBiot(CDC& dc, Biot* pBiot, CRect& rect)
 }
 
 
-Biot* Environment::HitCheck(Biot *me, BRectSortPos& pos)
+/////////////////////////////////////////////////////////////////
+// Takes search iterator and returns each biot that satisfies the
+// condition that is not the asking biot
+//
+Biot* Environment::HitCheck(Biot *pAskingBiot, BRectSortPos& pos)
 {
 	Biot* pBiot;
+
+	// Passing NULL would be bad!
+	ASSERT(pAskingBiot != NULL);
+
 	do
 	{
 		pBiot = dynamic_cast<Biot*>(m_sort.IterateRects(pos));
 	}
-	while (me == pBiot && me != NULL);
+	while (pAskingBiot == pBiot);
 	return pBiot;
 }
+
+
+/////////////////////////////////////////////////////////////////
+// Takes search iterator and returns each biot that satisfies the
+// condition
+//
+Biot* Environment::HitCheck(BRectSortPos& pos)
+{
+	return dynamic_cast<Biot*>(m_sort.IterateRects(pos));
+}
+
+
+/////////////////////////////////////////////////////////////////
+// Looks at each biot to see if they touch and then checks
+// the sorted array to see if it agrees
+//
+void Environment::TestSortedArray()
+{
+	for (int nBiot = 0; nBiot < m_biotList.GetSize(); nBiot++)
+	{
+		for (int nBiot2 = 0; nBiot2 < m_biotList.GetSize(); nBiot2++)
+		{
+			bool bIntersects = m_biotList[nBiot2]->Intersects(*m_biotList[nBiot]);
+			bool bValidate   = ValidateHit(m_biotList[nBiot], m_biotList[nBiot2]);
+			if (bValidate != bIntersects)
+			{
+				TRACE("Oh no! biot1%x biot2%x integrity failure!\n", m_biotList[nBiot], m_biotList[nBiot2]);
+//				m_sort.TraceDebug();
+				m_biotList[nBiot2]->Intersects(*m_biotList[nBiot]);
+				ValidateHit(m_biotList[nBiot], m_biotList[nBiot2]);
+			}
+		}
+	}
+}
+// NOTE: Change Touches to Intersects 
+
+/////////////////////////////////////////////////////////////////
+// Determines if a biot is touch another or not.  Used
+// for validating the sorted rects
+//
+bool Environment::ValidateHit(Biot* pBiot1, Biot* pBiot2)
+{
+	BRectSortPos pos;
+	pos.FindRectsIntersecting(*pBiot1);
+
+	Biot* pBiot;
+
+	do
+	{
+		pBiot = dynamic_cast<Biot*>(m_sort.IterateRects(pos));
+	}
+	while (pBiot2 != pBiot && pBiot != NULL);
+
+	return (pBiot == pBiot2);
+}
+
 
 /////////////////////////////////////////////////////////////////////
 // BiotOperation
@@ -1385,7 +1358,7 @@ void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
 	{
 		pBiot = m_biotList.FindBiotByID(m_selectedId);
 
-		m_bIsSelected = FALSE;
+		m_bIsSelected = false;
 		m_selectedId  = 0;
 
 		if (pBiot)
@@ -1400,8 +1373,7 @@ void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
 	pos.FindRectsInPoint(x, y);
 	Biot* pNewBiot = dynamic_cast<Biot*>(m_sort.IterateRects(pos));
 
-	int nBiot = m_biotList.FindBiotByPoint(x, y);
-	if (nBiot < 0)
+	if (pNewBiot == NULL)
 	{
 		if (operation == IDC_RELOCATE && pBiot)
 		{
@@ -1435,7 +1407,7 @@ void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
 
 	pBiot         = pNewBiot;//m_biotList[nBiot];
 	m_operation   = operation;
-	m_selectedId  = pBiot->m_Id;
+	m_selectedId  = pBiot->m_id;
 	m_bIsSelected = TRUE;
 
 	if (pBiot)
@@ -1450,7 +1422,7 @@ void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
 		case IDC_TERMINATE:
 		{
 			PlayResource("PL.Terminate");
-			pBiot->newType = YELLOW_LEAF;
+			pBiot->newType = LINE_HIGHLIGHT;
 			pBiot->m_age = pBiot->m_maxAge;
 		}
 		break;
@@ -1459,7 +1431,7 @@ void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
 			PlayResource("PL.Edit");
 
 			pBiot->Mutate(100);
-			pBiot->newType = WHITE_LEAF;
+			pBiot->newType = LINE_INJECTOR;
 			m_sort.Move(pBiot);
 
 //			if (!m_editor.GetSafeHwnd())
@@ -1471,12 +1443,8 @@ void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
 
 		case IDC_FEED:
 			PlayResource("PL.Feed");
-#ifdef _METABOLISM
-			pBiot->metabolism.energy += pBiot->metabolism.childBaseEnergy;
-#else
 			pBiot->energy += pBiot->childBaseEnergy;
-#endif
-			pBiot->newType = GREEN_LEAF;
+			pBiot->newType = LINE_LEAF;
 			break;
 
 		case IDC_MAGNIFY:
@@ -1499,7 +1467,7 @@ void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
 			if (pBiot->m_nSick == 0)
 			{
 				PlayResource("PL.TooOld");
-				pBiot->newType = PURPLE_LEAF;
+				pBiot->newType = -1;
 				pBiot->m_nSick = 200;
 			}
 			else
@@ -1519,7 +1487,7 @@ void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
 		if (operation == IDC_EDIT)
 			pBiot->SetScreenRect();
 
-//		pBiot->newType = WHITE_LEAF;
+//		pBiot->newType = LINE_INJECTOR;
 		pBiot->PrepareDraw(Biot::REDRAW);
 
 		for (int i = 0; i < 2; i++)
@@ -1552,17 +1520,17 @@ void Environment::GetDefaultSettings()
 	CKeyRegistry& registry = AfxUserRegistry();
 
 	options.bSoundOn = registry.GetValue(szSound, options.bSoundOn);
-	if (options.bSoundOn != FALSE)
-		options.bSoundOn = TRUE;
+	if (options.bSoundOn != false)
+		options.bSoundOn = true;
 
 	if (!AfxIsNT() || AfxGetPLife().GetView() != CPrimCmdLine::SHOW_SAVER_WINDOW)
 	{
 		options.bMouse = registry.GetValue(szMouse, options.bMouse);
-		if (options.bMouse != FALSE)
-			options.bMouse = TRUE;
+		if (options.bMouse != false)
+			options.bMouse = true;
 	}
 	else
-		options.bMouse = FALSE;
+		options.bMouse = false;
 
 	options.nSexual = registry.GetValue(szAsexual, options.nSexual);
 	if (options.nSexual < 1 ||
@@ -1570,12 +1538,12 @@ void Environment::GetDefaultSettings()
 		options.nSexual = 3;	
 
 	options.bSiblingsAttack = registry.GetValue(szSiblingsAttack, options.bSiblingsAttack);
-	if (options.bSiblingsAttack != FALSE)
-		options.bSiblingsAttack = TRUE;
+	if (options.bSiblingsAttack != false)
+		options.bSiblingsAttack = true;
 
 	options.bParentAttack = registry.GetValue(szParentAttack, options.bParentAttack);
-	if (options.bParentAttack != FALSE)
-		options.bParentAttack = TRUE;
+	if (options.bParentAttack != false)
+		options.bParentAttack = true;
 		
 
 	options.chance = registry.GetValue(szChance, options.chance);
@@ -1686,13 +1654,13 @@ void Environment::Serialize(CArchive& ar)
 		ar >> m_uniqueID;
 
 		ar >> options.bSoundOn;
-		if (options.bSoundOn != FALSE)
-			options.bSoundOn = TRUE;
+		if (options.bSoundOn != false)
+			options.bSoundOn = true;
 
 		ar >> options.bMouse;
 
 		if (AfxIsNT() && AfxGetPLife().GetView() == CPrimCmdLine::SHOW_SAVER_WINDOW)
-			options.bMouse = FALSE;
+			options.bMouse = false;
 
 		ar >> options.nSexual;
 		if (options.nSexual < 1 ||
@@ -1700,12 +1668,12 @@ void Environment::Serialize(CArchive& ar)
 			options.nSexual = 3;		
 
 		ar >> options.bSiblingsAttack;
-		if (options.bSiblingsAttack != FALSE)
-			options.bSiblingsAttack = TRUE;
+		if (options.bSiblingsAttack != false)
+			options.bSiblingsAttack = true;
 
 		ar >> options.bParentAttack;
-		if (options.bParentAttack != FALSE)
-			options.bParentAttack = TRUE;		
+		if (options.bParentAttack != false)
+			options.bParentAttack = true;		
 
 		ar >> options.chance;
 		if (options.chance < 0)
@@ -1741,7 +1709,7 @@ void Environment::Serialize(CArchive& ar)
 void Environment::SaveBiot(Biot* pBiot)
 {
 	static char BASED_CODE szFilter[] = _T("Biot Files (*.bot)|*.bot|");
-	
+
 	CFileDialog dlg(FALSE, _T("bot"), pBiot->GetFullName(), 
 		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST,
 		szFilter);
@@ -1862,214 +1830,4 @@ void Environment::LoadBiot(int x, int y)
 	}
 }
 
-CString CEnvStats::GetTicksStr()
-	{
-	CString sString;
-	sString.Format(_T("%0.6f"), m_dblSecsPerBiot * 1000);
-	TRACE(sString + _T("\n"));
-	return sString;
 
-	}
-
-void Environment::DiffuseResources()
-	{
-	CResources * pResources = new CResources[m_nCellsHigh * m_nCellsAcross];
-	
-	for (int nRow = 0 ; nRow < m_nCellsHigh; nRow++)
-		for (int nCol = 0; nCol < m_nCellsAcross; nCol++)
-			{
-			//What Flows Up?
-			if (CResources::m_nDensityGreen > 0)
-				{
-				if (nRow > 0)
-					{
-					int nGreenDiff = m_matCells[Cell(nRow, nCol)].m_nGreen - m_matCells[Cell(nRow - 1, nCol)].m_nGreen;
-					if (nGreenDiff > 0)
-						{//Diffuse Up by 10% of difference
-						nGreenDiff *= 0.1; //Diffuse at least one unit of green
-						pResources[Cell(nRow - 1, nCol)].m_nGreen += ((nGreenDiff == 0) ? 1 : nGreenDiff);
-						m_matCells[Cell(nRow, nCol)].m_nGreen -= (nGreenDiff == 0) ? 1 : nGreenDiff;
-						}
-					}
-				}
-
-			if (CResources::m_nDensityBlue > 0)
-				{
-				if (nRow > 0)
-					{
-					int nBlueDiff = m_matCells[Cell(nRow, nCol)].m_nBlue - m_matCells[Cell(nRow - 1, nCol)].m_nBlue;
-					if (nBlueDiff > 0)
-						{//Diffuse Up by 10% of difference
-						nBlueDiff *= 0.1; //Diffuse at least one unit of blue
-						pResources[Cell(nRow - 1, nCol)].m_nBlue += ((nBlueDiff == 0) ? 1 : nBlueDiff);
-						m_matCells[Cell(nRow, nCol)].m_nBlue -= (nBlueDiff == 0) ? 1 : nBlueDiff;
-						}
-					}
-				}
-
-			if (CResources::m_nDensityRed > 0)
-				{
-				if (nRow > 0)
-					{
-					int nRedDiff = m_matCells[Cell(nRow, nCol)].m_nRed - m_matCells[Cell(nRow - 1, nCol)].m_nRed;
-					if (nRedDiff > 0)
-						{//Diffuse Up by 10% of difference
-						nRedDiff *= 0.1; //Diffuse at least one unit of red
-						pResources[Cell(nRow - 1, nCol)].m_nRed += ((nRedDiff == 0) ? 1 : nRedDiff);
-						m_matCells[Cell(nRow, nCol)].m_nRed -= (nRedDiff == 0) ? 1 : nRedDiff;
-						}
-					}
-				}
-
-			//What Flows Down?
-			if (CResources::m_nDensityGreen < 0)
-				{
-				if (nRow < (m_nCellsHigh - 1))
-					{
-					int nGreenDiff = m_matCells[Cell(nRow, nCol)].m_nGreen - m_matCells[Cell(nRow + 1, nCol)].m_nGreen;
-					if (nGreenDiff > 0)
-						{//Diffuse Down by 10% of difference
-						nGreenDiff *= 0.1; //Diffuse at least one unit of green						
-						pResources[Cell(nRow + 1, nCol)].m_nGreen += ((nGreenDiff == 0) ? 1 : nGreenDiff);
-						m_matCells[Cell(nRow, nCol)].m_nGreen -= (nGreenDiff == 0) ? 1 : nGreenDiff;		
-						}
-					}
-				}
-
-			if (CResources::m_nDensityBlue < 0)
-				{
-				if (nRow < (m_nCellsHigh - 1))
-					{
-					int nBlueDiff = m_matCells[Cell(nRow, nCol)].m_nBlue - m_matCells[Cell(nRow + 1, nCol)].m_nBlue;
-					if (nBlueDiff > 0)
-						{//Diffuse Down by 10% of difference
-						nBlueDiff *= 0.1; //Diffuse at least one unit of blue
-						pResources[Cell(nRow + 1, nCol)].m_nBlue += ((nBlueDiff == 0) ? 1 : nBlueDiff);
-						m_matCells[Cell(nRow, nCol)].m_nBlue -= (nBlueDiff == 0) ? 1 : nBlueDiff;		
-						}
-					}
-				}
-
-			if (CResources::m_nDensityRed < 0)
-				{
-				if (nRow < (m_nCellsHigh - 1))
-					{
-					int nRedDiff = m_matCells[Cell(nRow, nCol)].m_nRed - m_matCells[Cell(nRow + 1, nCol)].m_nRed;
-					if (nRedDiff > 0)
-						{//Diffuse Down by 10% of difference
-						nRedDiff *= 0.1; //Diffuse at least one unit of red
-						pResources[Cell(nRow + 1, nCol)].m_nRed += ((nRedDiff == 0) ? 1 : nRedDiff);
-						m_matCells[Cell(nRow, nCol)].m_nRed -= (nRedDiff == 0) ? 1 : nRedDiff;		
-						}
-					}
-				}
-
-			//What Flows Sideways?
-			if (CResources::m_nDensityGreen == 0)
-				{
-				if ((m_matCells[Cell(nRow, nCol)].Sign() > 0) && (nCol < (m_nCellsAcross - 1)))
-					{//To Right
-					int nGreenDiff = m_matCells[Cell(nRow, nCol)].m_nGreen - m_matCells[Cell(nRow, nCol + 1)].m_nGreen;
-					if (nGreenDiff > 0)
-						{//Diffuse Right by 10% of difference
-						nGreenDiff *= 0.1; //Diffuse at least one unit of green
-						pResources[Cell(nRow, nCol + 1)].m_nGreen += (nGreenDiff == 0) ? 1 : nGreenDiff;
-						m_matCells[Cell(nRow, nCol)].m_nGreen -= (nGreenDiff == 0) ? 1 : nGreenDiff;
-						}
-					}
-				else if (nCol > 0)
-					{
-					int nGreenDiff = m_matCells[Cell(nRow, nCol)].m_nGreen - m_matCells[Cell(nRow, nCol - 1)].m_nGreen;	
-					if (nGreenDiff > 0)
-						{//Diffuse Left by 10% of difference
-						nGreenDiff *= 0.01; //Diffuse at least one unit of green
-						pResources[Cell(nRow, nCol - 1)].m_nGreen += (nGreenDiff == 0) ? 1 : nGreenDiff;
-						m_matCells[Cell(nRow, nCol)].m_nGreen -= (nGreenDiff == 0) ? 1 : nGreenDiff;
-						}
-					}
-					
-				}
-
-			if (CResources::m_nDensityBlue == 0)
-				{
-				if ((m_matCells[Cell(nRow, nCol)].Sign() > 0) && (nCol < (m_nCellsAcross - 1)))
-					{//To Right
-					int nBlueDiff = m_matCells[Cell(nRow, nCol)].m_nBlue - m_matCells[Cell(nRow, nCol + 1)].m_nBlue;
-					if (nBlueDiff > 0)
-						{//Diffuse Right by 10% of difference
-						nBlueDiff *= 0.1; //Diffuse at least one unit of Blue
-						pResources[Cell(nRow, nCol + 1)].m_nBlue += (nBlueDiff == 0) ? 1 : nBlueDiff;
-						m_matCells[Cell(nRow, nCol)].m_nBlue -= (nBlueDiff == 0) ? 1 : nBlueDiff;
-						}
-					}
-				else if (nCol > 0)
-					{
-					int nBlueDiff = m_matCells[Cell(nRow, nCol)].m_nBlue - m_matCells[Cell(nRow, nCol - 1)].m_nBlue;	
-					if (nBlueDiff > 0)
-						{//Diffuse Left by 10% of difference
-						nBlueDiff *= 0.01; //Diffuse at least one unit of Blue
-						pResources[Cell(nRow, nCol - 1)].m_nBlue += (nBlueDiff == 0) ? 1 : nBlueDiff;
-						m_matCells[Cell(nRow, nCol)].m_nBlue -= (nBlueDiff == 0) ? 1 : nBlueDiff;
-						}
-					}
-					
-				}
-
-			if (CResources::m_nDensityRed == 0)
-				{
-				if ((m_matCells[Cell(nRow, nCol)].Sign() > 0) && (nCol < (m_nCellsAcross - 1)))
-					{//To Right
-					int nRedDiff = m_matCells[Cell(nRow, nCol)].m_nRed - m_matCells[Cell(nRow, nCol + 1)].m_nRed;
-					if (nRedDiff > 0)
-						{//Diffuse Right by 10% of difference
-						nRedDiff *= 0.1; //Diffuse at least one unit of Red
-						pResources[Cell(nRow, nCol + 1)].m_nRed += (nRedDiff == 0) ? 1 : nRedDiff;
-						m_matCells[Cell(nRow, nCol)].m_nRed -= (nRedDiff == 0) ? 1 : nRedDiff;
-						}
-					}
-				else if (nCol > 0)
-					{
-					int nRedDiff = m_matCells[Cell(nRow, nCol)].m_nRed - m_matCells[Cell(nRow, nCol - 1)].m_nRed;	
-					if (nRedDiff > 0)
-						{//Diffuse Left by 10% of difference
-						nRedDiff *= 0.01; //Diffuse at least one unit of Red
-						pResources[Cell(nRow, nCol - 1)].m_nRed += (nRedDiff == 0) ? 1 : nRedDiff;
-						m_matCells[Cell(nRow, nCol)].m_nRed -= (nRedDiff == 0) ? 1 : nRedDiff;
-						}
-					}
-				}
-			}
-
-	for (nRow = 0 ; nRow < m_nCellsHigh; nRow++)
-		for (int nCol = 0; nCol < m_nCellsAcross; nCol++)
-			m_matCells[Cell(nRow, nCol)] += pResources[Cell(nRow, nCol)];
-
-
-	delete [] pResources;
-	}
-
-void Environment::TraceResources()
-	{
-	CString strOut;
-	int nCells = m_nCellsAcross * m_nCellsHigh;
-	for (int n = 0; n < nCells;)
-		{
-		if (n + 5 < nCells)
-			{
-			strOut.Format("%s%s%s%s%s\n", m_matCells[n++].Trace(), 
-				m_matCells[n++].Trace(), m_matCells[n++].Trace(), 
-				m_matCells[n++].Trace(), m_matCells[n++].Trace());
-			TRACE(strOut);
-			}
-		else
-			{
-			while (n < nCells)
-				{
-				strOut.Format(_T("%s"), m_matCells[n++].Trace());
-				TRACE(strOut);
-				}
-			TRACE(_T("\n"));
-			break;
-			}
-		}
-	}

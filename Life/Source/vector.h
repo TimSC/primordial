@@ -14,8 +14,10 @@
 //
 //
 const double RADIANS = PI / 180.0;
-const double limit   = 2.0F;  // 3
+const double limit   = 3.0F;  // 3
 const double rlimit  = 3.0F;  // 12 diameter of 100 rotating 8 deg
+
+class VectorSum;
 
 class Vector
 {
@@ -27,67 +29,67 @@ protected:
     double dr;  // Rotation rate in degrees
     double r;   // Rotation position in degrees
 
-    // These variables are calculated based on the difference
-    // of the origin from the center of mass
-    double drx; // Change position X based on rotation rate
-    double dry; // Change position Y based on rotation rate
-    
+	// These variables are calculated based on the difference
+	// of the origin from the center of mass
+	double drx; // Change position X based on rotation rate
+	double dry; // Change position Y based on rotation rate
+
 public:
     double mass;
-    
+
 public:
-    
+
     Vector(void);
-    
-    virtual void Serialize(CArchive& ar);
-    
+
+	virtual void Serialize(CArchive& ar);
+
     // Proposes movement in rotation, and translation
-    // Always call tryRotate first!!
-    int tryRotate(const POINT& origin, const POINT& center);
+	// Always call tryRotate first!!
+    int tryRotate(const BPoint& origin, const BPoint& center);
     int tryStepX();
     int tryStepY();
-    
-    // Actually make movement
+
+	// Actually make movement
     void makeStep(void);
-    
+
     int GetX() { return (int) x; }
     int GetY() { return (int) y; }
     void backStepX(void) { x -= dx; }
     void backStepY(void) { y -= dy; }
     void backRotate(void){ r -= dr; }
-    
+
     void invertDeltaY(void) { dy = -dy; }
     void invertDeltaX(void) { dx = -dx; }
-    
-    double CheckLimit(const double value) const
-	{
-	    if (value > limit)
-		return limit;
-	    else
-		if (value < -limit)
-		    return -limit;
-	    
-	    return value;
-	}
-    
-    double CheckRLimit(const double value) const
-	{
-	    if (value > rlimit)
-		return rlimit;
-	    else
-		if (value < -rlimit)
-		    return -rlimit;
-	    
-	    return value;
-	}
-    
-    void setDeltaX(const double DX) {
-	dx = CheckLimit(DX);
-    }
 
+	double CheckLimit(const double value) const
+	{
+		if (value > limit)
+			return limit;
+		else
+			if (value < -limit)
+				return -limit;
+
+		return value;
+	}
+	
+	double CheckRLimit(const double value) const
+	{
+		if (value > rlimit)
+			return rlimit;
+		else
+			if (value < -rlimit)
+				return -rlimit;
+
+		return value;
+	}
+	
+	void setDeltaX(const double DX)
+	{
+		dx = CheckLimit(DX);
+	}
     void setDeltaX(const int DX)
 	{
-	    dx = CheckLimit((double) DX);
+		dx = CheckLimit((double) DX);
 	}
     void setDeltaY(const double DY)
 	{
@@ -128,7 +130,7 @@ public:
 		dr = CheckRLimit(dr + ddr / mass);
 	}
 
-    void friction(double fric) { dx -= (fric * dx); dy -= (fric * dy); dr -= (fric * dr);}
+    void friction(double fric);
 
     double getDeltaX(void) const { return dx; }
     double getDeltaY(void) const { return dy; }
@@ -168,14 +170,12 @@ public:
         return 0;
     }
 
-    double rotationComponent(double x1, double y1, double x2, double y2)
-    { 
-      double dist = distance(x1, y1);
+    double rotationComponent(double radius, double x1, double y1, double x2, double y2)
+    {
+		if (radius == 0.0)
+			return 0.0;
 
-      if (dist)
-        return (((x1 * y2)-(y1 * x2))) / dist;
-      else
-        return 0;
+        return (((x1 * y2) - (y1 * x2))) / radius;
     }
 
     double motionComponent(double vector, double rotation)
@@ -183,25 +183,28 @@ public:
 		return (fabs(fabs(vector) - fabs(rotation)) < .0001)?0.0:sqrt((vector * vector) - (rotation * rotation));
 	}
 
-    double fraction(double motion, int x1, double center) { return (motion * (double)(x1)) / center; }
+    double fraction(double motion, double x1, double center)
+	{
+		return (motion * x1) / center;
+	}
 
 	// Circumference per degree times the number of degrees per turn provides a vector.
     double VectorR(const double radius) const { return (RADIANS * radius * dr); }
 
 	// Cos (alpha) = deltaX / radius  &  Cos(alpha) = Yr / Vr, solved for Yr
-    double deltaYr(const double Vr, const int deltaX, const double radius) const
+    double deltaYr(const double Vr, const double& deltaX, const double radius) const
 	{
 		return (radius != 0)?Vr * deltaX / radius: 0;
 	}
 
-    double deltaXr(const double Vr, const int deltaY, const double radius) const
+    double deltaXr(const double Vr, const double& deltaY, const double radius) const
 	{
 		return (radius != 0)?-Vr * deltaY / radius: 0;
 	}
 
 	// a positive dr causes the biot to move clockwise on the screen
 	// a delta y below the origin (greater y value) is a negative deltaY
-	void RotatedDelta(double& Vx, double& Vy, const int deltaX, const int deltaY, const double radius) const
+	void RotatedDelta(double& Vx, double& Vy, const double& deltaX, const double& deltaY, const double radius) const
 	{
 		// Current velocity vector at this radius
 		double Vr = VectorR(radius);
@@ -211,11 +214,24 @@ public:
 		Vx = getDeltaX() + deltaXr(Vr, deltaY, radius);
 		Vy = getDeltaY() + deltaYr(Vr, deltaX, radius);
 	}                    
+
+	void TraceDebug();
+
+	void ValidateBounds(bool bTop, bool bBottom, bool bLeft, bool bRight);
+	void MakeNegative(double& d);
+	void MakePositive(double& d);
 };
 
 
+inline void Vector::friction(double fric)
+{
+	dx -= (fric * dx);
+	dy -= (fric * dy);
+	dr -= (fric * dr);
+}
+
 // Propose next rotation movement, but don't do it yet
-inline int Vector::tryRotate(const POINT& origin, const POINT& center)
+inline int Vector::tryRotate(const BPoint& origin, const BPoint& center)
 {
 	CLine line(center, origin);
 
@@ -246,10 +262,6 @@ inline int Vector::tryStepY(void)
 // Actually make the step
 inline void Vector::makeStep(void)
 {
-//	int rx = int(drx);
-//	drx -= double(vx);
-//	int ry = int(dry);
-//	dry -= double(vy);
 	x += (dx + double(drx));
 	y += (dy + double(dry));
 	r += dr;
@@ -263,4 +275,140 @@ inline void Vector::makeStep(void)
 		if (r <= -360.0)
 			r += 360.0;
 	}
+}
+
+
+inline void Vector::ValidateBounds(bool bTop, bool bBottom, bool bLeft, bool bRight)
+{
+	// If we are over the top, and heading north, go south
+	if (bTop)
+	{
+//		TRACE("Top ");
+		MakePositive(dy);
+	}
+
+	if (bBottom)
+	{
+//		TRACE("Bottom ");
+		MakeNegative(dy);
+	}
+
+	if (bLeft)
+	{
+//		TRACE("Left ");
+		MakePositive(dx);
+	}
+
+	if (bRight)
+	{
+//		TRACE("Right ");
+		MakeNegative(dx);
+	}
+}
+
+
+// Encourage migration back into the field
+inline void Vector::MakeNegative(double& d)
+{
+	if (d > 0.0)
+	{
+//		TRACE("Make Negative");
+		d = -d;
+	}
+
+	if (d > -0.1)
+	{
+//		TRACE("Make Negative -.1");
+		d = -0.1;
+	}
+//	TRACE("\n");
+}
+
+
+// Encourage migration back into the field
+inline void Vector::MakePositive(double& d)
+{
+    if (d < 0.0)
+	{
+//		TRACE("Make Positive");
+		d = -d;
+	}
+
+	if (d < 0.1)
+	{
+//		TRACE("Make Positive .1");
+		d = 0.1;
+	}
+//	TRACE("\n");
+}
+
+
+///////////////////////////////////////////////////
+// VectorSum
+//
+// Keeps track of multiple hits on one object
+//
+//
+class VectorSum 
+{
+public:
+	VectorSum() : m_hits(0) {};
+
+	void Add(double dx, double dy, double dr);
+	void Adjust(Vector& vector);
+	void Set(Vector& vector);
+	void Clear();
+
+protected:
+	double m_dx;
+	double m_dy;
+	double m_dr;
+	int    m_hits;
+};
+
+
+// It is possible that two borders get set
+
+inline void VectorSum::Set(Vector& vector)
+{
+	if (m_hits > 0)
+	{
+		vector.setDeltaX(m_dx);
+		vector.setDeltaY(m_dy);
+		vector.setDeltaRotate(m_dr);
+//		TRACE("VectorSum::Set(%.3f, %.3f, %.3f)\n", vector.getDeltaX(), vector.getDeltaY(), vector.getDeltaRotate());
+	}
+}
+
+inline void VectorSum::Adjust(Vector& vector)
+{
+	if (m_hits > 0)
+	{
+		vector.setDeltaX(vector.getDeltaX() + m_dx);
+		vector.setDeltaY(vector.getDeltaY() + m_dy);
+		vector.setDeltaRotate(vector.getDeltaRotate() + m_dr);
+//		TRACE("VectorSum::Adjust(%.3f, %.3f, %.3f)\n", m_dx, m_dy, m_dr);
+	}
+}
+
+
+inline void VectorSum::Add(double dx, double dy, double dr)
+{
+	if (m_hits++ == 0)
+	{
+		m_dx = dx;
+		m_dy = dy;
+		m_dr = dr;
+	}
+	else
+	{
+		m_dx = ((m_dx * (m_hits - 1)) + dx) / m_hits;
+		m_dy = ((m_dy * (m_hits - 1)) + dy) / m_hits;
+		m_dr = ((m_dr * (m_hits - 1)) + dr) / m_hits;
+	}
+}
+
+inline void VectorSum::Clear()
+{
+	m_hits = 0;
 }

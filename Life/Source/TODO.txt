@@ -1,0 +1,49 @@
++ Move commands set redraw only if 3 degrees accumulate.(perhaps should redraw always!)
++ We need calculate flapping using the center of mass!
++ Move validateborder to VectorSum and have it examine dx and dy after all the collisions have been considered0
++ Flapping is biased in the + x and y direction; compare with center rather than origin
++ Flapping results in bad rate passed in -56, rate of 1 (or -1?)
++ Flapping minimum angle is too small to see.  How about 10 to 90 degrees?
++ Should we really just simply add the vector of the limb movement in the wall collision?
++ Write a test program to check the integrity of the sorted biot rectangle arrays
+- Flapping the line next to the line from the origin, but before the center of mass makes it go toward the center of mass?
+- Biots could have 10 overlapping instructions to flap the same segment and get it to push it faster!!
+- Biots with symmetry have a very good chance of have the same limb segment flapped on all arms without using the Type version of the command.
+- Biot origin point should move in relation to limb movement.  But how?  
+- flap strength has little to do with flap angle - actually smaller flap angles give just as big of boost.
+- Moving a limb/segment should have an opposite effect on the global rotation of the biot!! Not doing this makes collisions more energetic
+- Brain commands should be added to an active brain list to avoid looping through lots of dead commands
+- Flapping needs to have  its cumulative physics re-worked
+- What about supporting more colors and color blending!!
+- What about optional bottom and special attacher limbs
+- Remember that a completely random biot may be lethal - may have to constrain random start.
+- Maybe children should be born one at a time near the center of the mother and artificial seperation pulls them apart.  Have to ensure they don't attack each other until after the initial separation.  Might look better.
+- use light flashing to communicate between biots for flocking... etc...
+- A central eye? Always have eyes?  
+- An actuator to change line colors?
+- How do we maintain orientation or position?  Should there be an actuator to seek a position or an orientation? 
+    If so, how would this work?  How do we know what to flap to get there?  We could pick a line with the 
+	proper slope pointing to the position and flap it.  We could also pick a line pointing in the right direction
+	to orient one self straight.  Holding a position and orientation could be the command as well.  One might
+	seek a position and obtain it.  Or one might try for a while and give up, or one might try and hold it once
+	obtained.  Absolute position doesn't make sense for a species.  Perhaps a flocking behavior could pick a leader
+	and follow the leader.  The leader perhaps has the lowest biot id, or is the oldest, or has the most energy.
+- White lines should ALWAYS inject genetic code into females
+- Females should always have the ability to reproduce without males (no asexual mode)
+- Do we use biot vision with lines, or do we do "goal" directed behavior which then looks for a victim or attacker?
+- Make blue lines genetic injectors
+- Make white lines teeth
+- Make brown lines shields
+- Make grey lines death
+- Some Biots seem to get the shakes - what's up with that?
+- In double line - the image can get cropped on the edges
+- Do retracted lines count for photosynthesis or  attacks as full length?
+- Add option for thicker lines
+- Still seems to be a few cases where the biots rotate the wrong way.
+- We could use thick lines for "fat" storage.  Fat biots have more energy which goes on inside lines first.
+- If a limb gets eaten - how long do we wait to clear the state?  (How about after healing!)
+- If a limb gets removed, same deal - clear after healing.
+- Should we use real time for biot age?
+- It may be that a biot shouldn't count a collision because an enemy line is removed but it doesn't know that
+- The injector doesn't color the other biot on contact.
+- Sometimes biots get completely killed, and have no length (apparent at least) and they don't die!!

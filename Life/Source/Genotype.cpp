@@ -2,6 +2,37 @@
 #include "environ.h"
 #include "biots.h"
 
+
+
+const COLORREF g_lineRGB[LINE_MAX] = {
+	RGB(  0, 192,   0),
+	RGB(200, 183,  40),
+	RGB(255,   0,   0),
+	RGB(255, 255, 255),
+	RGB( 50, 100, 255),
+	RGB(  7, 223, 215),
+	RGB(  0, 128,   0),
+	RGB(100,  92,  20),
+	RGB(128,   0,   0),
+	RGB(192, 192, 192),
+	RGB(  0,  38, 160),
+	RGB(  0, 128, 128),
+	RGB(255,   0, 255),
+	RGB(216,   1, 255),
+	RGB(192,   0, 192),
+	RGB(255, 128, 255),
+	RGB(128,   0, 128),
+	RGB(168,  32, 218),
+	RGB( 90, 120,  90),
+	RGB(110, 100,  60),
+	RGB(120,  90,  90),
+	RGB( 75,  75,  75),
+	RGB( 30,  75,  75),
+	RGB( 50,  75, 100),
+	RGB(255, 255,   0),
+	RGB(  0,   0,   0)
+};
+
 ////////////////////////////////////////////////////////
 // GeneSegment
 //
@@ -29,10 +60,10 @@ void GeneSegment::Serialize(CArchive& ar)
 		if (m_radius > MAX_SEGMENT_LENGTH)
 			m_radius = MAX_SEGMENT_LENGTH;
 
-		if (m_color[0] >= DIM_COLOR - 1)
+		if (m_color[0] >= LINES_BASIC - 1)
 			m_color[0] = 0;
 
-		if (m_color[1] >= DIM_COLOR)
+		if (m_color[1] >= LINES_BASIC)
 			m_color[1] = 0;
 	}
 	else
@@ -60,13 +91,17 @@ void GeneSegment::Randomize(int segment, BOOL bIsVisible)
 
 	m_startSegment = Byte(MAX_SEGMENTS);
 
-	m_color[0]   = Byte(DIM_COLOR - 1);
-//	if (m_color[0] != GREEN_LEAF)
-//		m_color[0]  = Byte(DIM_COLOR);
+	m_color[0]   = Byte(LINES_BASIC - 1);
+	if (m_color[0] != LINE_LEAF)
+		m_color[0]  = Byte(LINES_BASIC - 1);
+	if (m_color[0] != LINE_LEAF)
+		m_color[0]  = Byte(LINES_BASIC - 1);
 
-	m_color[1]   = Byte(DIM_COLOR);
-	if (m_color[1] != WHITE_LEAF && m_color[1] != GREEN_LEAF)
-		m_color[1]  = Byte(DIM_COLOR);
+	m_color[1]   = Byte(LINES_BASIC);
+	if (m_color[1] != LINE_LEAF)
+		m_color[1]  = Byte(LINES_BASIC - 1);
+	if (m_color[1] != LINE_INJECTOR && m_color[1] != LINE_LEAF)
+		m_color[1]  = Byte(LINES_BASIC);
 }
 
 
@@ -79,15 +114,15 @@ void GeneSegment::Debug(int segment, BOOL bIsVisible)
 
 	m_visible = (BYTE) bIsVisible;
 	m_startSegment = segment - 1;
-	if (segment != 2)
+	if (segment % 2 == 1 || segment == 0)
 	{
-		m_color[0]   = GREEN_LEAF;
-		m_color[1]   = WHITE_LEAF;
+		m_color[0]   = LINE_LEAF;
+		m_color[1]   = LINE_INJECTOR;
 	}
 	else
 	{
-		m_color[0]   = BLUE_LEAF;
-		m_color[1]   = RED_LEAF;
+		m_color[0]   = LINE_SHIELD;
+		m_color[1]   = LINE_MOUTH;
 	}
 }
 
@@ -112,10 +147,10 @@ void GeneSegment::Mutate(int chance, int segment)
 		m_visible = !m_visible;
   
 	if (Int1024() < chance)
-		m_color[0]   = Byte(DIM_COLOR - 1);
+		m_color[0]   = Byte(LINES_BASIC - 1);
 
 	if (Int1024() < chance)
-		m_color[1]   = Byte(DIM_COLOR);
+		m_color[1]   = Byte(LINES_BASIC);
 
 }
 
@@ -258,9 +293,9 @@ void GeneLimb::ToggleSegments()
 //
 // Contains GeneLines plus overall biot genes
 //
-const int GeneTrait::mirrorAngle[MAX_SYMMETRY] = { 0, 180,  0,  180,  90, 90, 270, 270 };
-const int GeneTrait::mirrorCoef[MAX_SYMMETRY]  = { 1,  -1, -1,    1,  -1,  1,  -1,   1 };
-const int GeneTrait::mirrorSix[MAX_SYMMETRY]   = { 0, 120,  0,  120, 240, 240,  0,   0 };
+const int GeneTrait::mirrorAngle[MAX_LIMBS] = { 0, 180,  0,  180,  90, 90, 270, 270 };
+const int GeneTrait::mirrorCoef[MAX_LIMBS]  = { 1,  -1, -1,    1,  -1,  1,  -1,   1 };
+const int GeneTrait::mirrorSix[MAX_LIMBS]   = { 0, 120,  0,  120, 240, 240,  0,   0 };
 
 void GeneTrait::Serialize(CArchive& ar)
 {
@@ -283,7 +318,6 @@ void GeneTrait::Serialize(CArchive& ar)
 
 		ar >> m_mirrored;
 		ar >> m_sex;
-		ar >> m_asexual;
 		ar >> m_chanceMale;
 		ar >> m_maxAge;
 
@@ -305,10 +339,7 @@ void GeneTrait::Serialize(CArchive& ar)
 		if (m_sex > 1)
 			m_sex = 1;
 
-		if (m_asexual > 1)
-			m_asexual = 1;
-
-		for (i = 0; i < MAX_SYMMETRY; i++)
+		for (i = 0; i < MAX_LIMBS; i++)
 			if (m_lineRef[i] >= MAX_LIMB_TYPES)
 				m_lineRef[i] = 0;
 
@@ -330,28 +361,28 @@ void GeneTrait::Serialize(CArchive& ar)
   
 		ar << m_mirrored;
 		ar << m_sex;
-		ar << m_asexual;
 		ar << m_chanceMale;
 		ar << m_maxAge;
 	}
 }
 
 
-int GeneTrait::GetCompressedToggle(int nAngle, int nLine, int nSegment)
+
+int GeneTrait::GetMirrorAngle(int nAngle, int nLimb, int nSegment)
 {
-	ASSERT(nLine < MAX_SYMMETRY);
+	ASSERT(nLimb < MAX_LIMBS);
 	ASSERT(nSegment < MAX_SEGMENTS);
 
 	if (IsMirrored())
 	{
-		if (mirrorCoef[nLine] == -1)
-			if (m_geneLine[m_lineRef[nLine]].m_toggleVisibleSegments[nSegment])
+		if (mirrorCoef[nLimb] == -1)
+			if (m_geneLine[m_lineRef[nLimb]].m_toggleVisibleSegments[nSegment])
 				return -nAngle;
 			else
 				return nAngle;
 	}
 
-	if (m_geneLine[m_lineRef[nLine]].m_toggleVisibleSegments[nSegment])
+	if (m_geneLine[m_lineRef[nLimb]].m_toggleVisibleSegments[nSegment])
 		return nAngle;
 	else
 		return -nAngle;
@@ -392,11 +423,7 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
     m_children       = (BYTE) (Integer(8) + 1);
 	m_attackChildren = (BYTE) Bool();
 	m_attackSiblings = (BYTE) Bool();
-#ifdef _LOW_DIVERSITY
 	m_species        = (BYTE) Integer(2);  // Make fewer species to begin with
-#else
-	m_species        = (BYTE) Integer(INIT_SPECIES) * ((MAX_SPECIES + 1)/ INIT_SPECIES);  // Make fewer species to begin with
-#endif
 	m_adultRatio[0]  = (BYTE) (Integer(6) + 1);
 	m_adultRatio[1]  = (BYTE) (Integer(6) + 1);
 	m_mirrored       = (BYTE) Bool();
@@ -405,7 +432,7 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
 	{
 	default:
 	case 0:
-		m_lineCount  = (BYTE) (Integer(MAX_SYMMETRY) + 1);
+		m_lineCount  = (BYTE) (Integer(MAX_LIMBS) + 1);
 		break;
 
 	case 1:
@@ -435,12 +462,11 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
 		m_geneLine[i].Randomize(nSegmentsPerArm);
 
 	m_sex        = (BYTE) Bool();
-	m_asexual    = (BYTE) Bool();
     m_chanceMale = (BYTE) (Int256() / 2 + 64);
 	m_maxAge     = (short) Int256();
 
 	// We start out with uniform appearance
-	for (i = 0; i < MAX_SYMMETRY; i++)
+	for (i = 0; i < MAX_LIMBS; i++)
 	{
 		m_lineRef[i] = Byte(nTypesPerBiot + 1);
 	}
@@ -462,12 +488,12 @@ void GeneTrait::Debug(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 	m_adultRatio[1]  = (BYTE) 1;
 	m_mirrored       = (BYTE) TRUE;
 
-	m_lineCount  = 1;//(BYTE) MAX_SYMMETRY;
+	m_lineCount  = 1;//(BYTE) MAX_LIMBS;
 /*	switch(nArmsPerBiot)
 	{
 	default:
 	case 0:
-		m_lineCount  = (BYTE) MAX_SYMMETRY;
+		m_lineCount  = (BYTE) MAX_LIMBS;
 		break;
 
 	case 1:
@@ -497,12 +523,11 @@ void GeneTrait::Debug(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 		m_geneLine[i].Debug(nSegmentsPerArm);
 
 	m_sex        = (BYTE) FALSE;
-	m_asexual    = (BYTE) TRUE;
     m_chanceMale = (BYTE) 0;
 	m_maxAge     = (short) 255;
 
 	// We start out with uniform appearance
-	for (i = 0; i < MAX_SYMMETRY; i++)
+	for (i = 0; i < MAX_LIMBS; i++)
 	{
 		m_lineRef[i] = 0;
 	}
@@ -526,7 +551,7 @@ void GeneTrait::Mutate(int chance)
 
 	if (Int1024() < chance)
 		m_attackSiblings = (BYTE) Bool();
-#ifdef _LOW_DIVERSITY
+
 	if (Int1024() < chance)
 	{
 		if (Sign() > 0)
@@ -534,32 +559,6 @@ void GeneTrait::Mutate(int chance)
 		else
 			m_species--;
 	}
-#else
-	if (Int1024() < chance * 2)
-		{
-		if (Sign() > 0)
-			{
- 			m_species += 1;
-			if (Int1024() < chance) //Take Double Step
-				{
-				m_species += 1;
-				}
-			}
-		else
-			{
-			m_species -= 1;
-			if (Int1024() < chance) //Take Double Step
-				{
-				m_species -= 1;
-				}
-			}
-
-		if (m_species > 253)
-			m_species = MAX_SPECIES;
-		else if (m_species > MAX_SPECIES)
-			m_species = 0;
-		}
-#endif
 
 	if (Int1024() < chance)
 		m_adultRatio[0]     = (BYTE) (Integer(6) + 1);
@@ -583,15 +582,12 @@ void GeneTrait::Mutate(int chance)
 		m_sex = (BYTE) Bool();
 
 	if (Int1024() < chance)
-		m_asexual = (BYTE) Bool();
-
-	if (Int1024() < chance)
 		m_chanceMale = Byte();
 
 	if (Int1024() < chance)
 		m_maxAge = (short) Int256();
 
-	for (i = 0; i < MAX_SYMMETRY; i++)
+	for (i = 0; i < MAX_LIMBS; i++)
 		if (Int1024() < chance)
 			m_lineRef[i] = Byte(MAX_LIMB_TYPES);
 
@@ -606,7 +602,7 @@ void GeneTrait::Crossover(GeneTrait&  gTrait)
 	for (i = 0; i < MAX_LIMB_TYPES; i++)
 		m_geneLine[i].Crossover(gTrait.m_geneLine[i]);
 
-	for (i = 0; i < MAX_SYMMETRY; i++)
+	for (i = 0; i < MAX_LIMBS; i++)
 		if (Bool())
 			m_lineRef[i] = gTrait.m_lineRef[i];
 
@@ -639,9 +635,6 @@ void GeneTrait::Crossover(GeneTrait&  gTrait)
 
 	if (Bool())
 		m_mirrored       = gTrait.m_mirrored;
-
-	if (Bool())
-		m_asexual        = gTrait.m_asexual;
 
 	if (Bool())
 		m_chanceMale     = gTrait.m_chanceMale;

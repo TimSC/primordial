@@ -66,8 +66,6 @@ public:
 
 // Implementation
 public:
-	DWORD GetTimerFrequency();
-	LARGE_INTEGER GetTimeTick();
 	virtual ~CMainFrame();
 #ifdef _DEBUG
 	virtual void AssertValid() const;

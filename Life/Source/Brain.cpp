@@ -2,8 +2,6 @@
 //
 // Implements the biot brain
 //
-// CVS Test by C. Niederberger (cniederb, niederberger@inf.ethz.ch) - please ignore
-//
 #include "stdafx.h"
 #include "Rand.h"
 #include "Genotype.h"
@@ -252,10 +250,10 @@ void CommandArgument::Serialize(CArchive& ar)
 void CommandArgument::Randomize(void)
 {
 	Randomizer rand;
-	m_command    = rand.Integer(COMMAND_MAX_TYPES);
+	m_command    = rand.Byte(COMMAND_MAX_TYPES);// == COMMAND_FLAP_LIMB_SEGMENT?	COMMAND_FLAP_LIMB_SEGMENT : COMMAND_NOP;//0;//rand.Integer(COMMAND_MAX_TYPES);
 	m_rate       = rand.Byte();
 	m_degrees    = rand.Byte();
-	m_limb       = rand.Byte(MAX_SYMMETRY);
+	m_limb       = rand.Byte(MAX_LIMBS);
 	m_segment    = rand.Byte(MAX_SEGMENTS);
 }
 
@@ -273,7 +271,7 @@ void CommandArgument::Mutate(int chance)
 		m_degrees    = rand.Byte();
 
 	if (rand.Int1024() < chance)
-		m_limb       = rand.Byte(MAX_SYMMETRY);
+		m_limb       = rand.Byte(MAX_LIMBS);
 
 	if (rand.Int1024() < chance)
 		m_segment    = rand.Byte(MAX_SEGMENTS);
@@ -282,11 +280,11 @@ void CommandArgument::Mutate(int chance)
 
 int CommandArgument::GetLimb(int actualLimb)
 { 
-	if (m_limb == MAX_SYMMETRY)
+	if (m_limb == MAX_LIMBS)
 		return (int) m_limb;
 
-	if ((int) m_limb + actualLimb >= MAX_SYMMETRY)
-		return (int) m_limb + actualLimb - MAX_SYMMETRY;
+	if ((int) m_limb + actualLimb >= MAX_LIMBS)
+		return (int) m_limb + actualLimb - MAX_LIMBS;
 	 else
 		return (int) m_limb + actualLimb;
 }
@@ -613,7 +611,7 @@ void CommandFlapLimbTypeSegment::Initialize(CommandLimbStore& store)
 	}
 
 	// How far are we going to move it?
-	m_nMaxDegrees     = store.m_pArg->GetDegrees();
+	m_nMaxDegrees     = store.m_pArg->GetDegrees() % 80 + 10;
 
 	// How far have we moved it thus far?
 	m_nAppliedDegrees = 0; 
@@ -677,7 +675,7 @@ void CommandFlapLimbTypeSegment::Execute(CommandLimbStore& store)
 		
 		if (m_nAppliedDegrees < 0)
 		{
-			m_nAppliedDegrees += store.m_pBiot->MoveLimbTypeSegment(m_nSegment, m_nLimbType, min(m_nRate, m_nAppliedDegrees));
+			m_nAppliedDegrees += store.m_pBiot->MoveLimbTypeSegment(m_nSegment, m_nLimbType, min(m_nRate, -m_nAppliedDegrees));
 		}
 	}
 }
@@ -689,7 +687,7 @@ void CommandFlapLimbTypeSegment::FlapLimbTypeSegments(Biot& biot)
 	{
 		if (m_nLimbType == biot.trait.GetLineTypeIndex(i))
 		{
-			int nPeno = m_nSegment * MAX_SYMMETRY + i;
+			int nPeno = m_nSegment * MAX_LIMBS + i;
 			Flap(biot, nPeno);
 		}
 	}
@@ -701,30 +699,40 @@ void CommandFlapLimbTypeSegment::Flap(Biot& biot, int nPeno)
 	// If we are damaged, we don't get a boost from flapping
 	if (!biot.IsSegmentMissing(nPeno))
 	{
-		double Vx = biot.startPt[nPeno].x - biot.stopPt[nPeno].x;
-		double Vy = biot.startPt[nPeno].y - biot.stopPt[nPeno].y;
-		double dr = biot.vector.rotationComponent(
-			(double) biot.startPt[nPeno].x,
-			(double) biot.startPt[nPeno].y,
-			biot.startPt[nPeno].x + Vx,
-			biot.startPt[nPeno].y + Vy);
+		BPoint&  startPt = biot.startPt[nPeno];
+		BPoint&  stopPt  = biot.stopPt[nPeno];
+		Vector& vector  = biot.vector;
 
-		double radius = biot.vector.distance(biot.startPt[nPeno].x, biot.startPt[nPeno].y);
+		BPoint center;
+		biot.Center(center);
+		int deltaX = startPt.x - center.x;
+		int deltaY = startPt.y - center.y;
+
+		// The force vector is proportional with the line length
+		double Vx = startPt.x - stopPt.x;
+		double Vy = startPt.y - stopPt.y;
+
+		// We need to apply this force vector at a radius from the center
+		double radius = vector.distance(deltaX, deltaY);
+
+		double dr = vector.rotationComponent(radius, (double) deltaX, (double) deltaY,
+						deltaX + Vx, deltaY + Vy);
+
+		//TRACE("TypeMotion: deltaX=%d deltaY=%d Vx=%f Vy=%f radius=%f\n", deltaX, deltaY, Vx, Vy, radius);
 
 		if (dr != 0)
 		{
-			double dv = biot.vector.motionComponent(biot.vector.distance(Vx, Vy), dr);
-			Vx = -biot.vector.fraction(dv, (int) biot.startPt[nPeno].x, radius); 
-			Vy = -biot.vector.fraction(dv, (int) biot.startPt[nPeno].y, radius); 
+			double dv = vector.motionComponent(vector.distance(Vx, Vy), dr);
+			Vx = -vector.fraction(dv, deltaX, radius); 
+			Vy = -vector.fraction(dv, deltaY, radius); 
 		}
-		else
-		{
-//			Vx = -Vx;
-//			Vy = -Vy;
-		}
-		biot.vector.accelerateX(Vx*20);
-		biot.vector.accelerateY(Vy*20);
-		biot.vector.accelerateRotation(dr*10);
+
+		//TRACE("Acceleration: accX=%f accY=%f accR=%f\n", Vx*20, Vy*20, dr*10);
+
+		//TODO: Comment back in
+		vector.accelerateX(Vx*20);
+		vector.accelerateY(Vy*20);
+		vector.accelerateRotation(dr*10);
 	}
 }
 
@@ -742,12 +750,12 @@ void CommandFlapLimbSegment::Initialize(CommandLimbStore& store)
 		!store.m_pBiot->trait.GetLineType(store.m_pBiot->trait.GetLineTypeIndex(m_nLimb)).GetSegment(m_nSegment).IsVisible())
 	{
 		// Record we should ignore this command
-		m_nLimb = MAX_SYMMETRY;
+		m_nLimb = MAX_LIMBS;
 		return;
 	}
 
 	// How far are we going to move it?
-	m_nMaxDegrees     = store.m_pArg->GetDegrees();
+	m_nMaxDegrees     = store.m_pArg->GetDegrees() % 80 + 10;
 
 	// How far have we moved it thus far?
 	m_nAppliedDegrees = 0; 
@@ -760,7 +768,7 @@ void CommandFlapLimbSegment::Initialize(CommandLimbStore& store)
 
 void CommandFlapLimbSegment::Execute(CommandLimbStore& store)
 {
-	if (m_nLimb == MAX_SYMMETRY)
+	if (m_nLimb == MAX_LIMBS)
 		return;
 
 	if (store.IsSensorTrue())
@@ -811,7 +819,7 @@ void CommandFlapLimbSegment::Execute(CommandLimbStore& store)
 		
 		if (m_nAppliedDegrees < 0)
 		{
-			m_nAppliedDegrees += store.m_pBiot->MoveLimbSegment(m_nSegment, m_nLimb, min(m_nRate, m_nAppliedDegrees));
+			m_nAppliedDegrees += store.m_pBiot->MoveLimbSegment(m_nSegment, m_nLimb, min(m_nRate, -m_nAppliedDegrees));
 		}
 	}
 }
@@ -819,39 +827,62 @@ void CommandFlapLimbSegment::Execute(CommandLimbStore& store)
 
 void CommandFlapLimbSegment::Flap(Biot& biot)
 {
-	int nPeno = m_nSegment * MAX_SYMMETRY + m_nLimb;
+	int nPeno = biot.Line(m_nLimb, m_nSegment);
 
 	// If we are damaged, we don't get a boost from flapping
 	if (!biot.IsSegmentMissing(nPeno))
 	{
 
-		//TODO: This vector is calculated with the assumption that the origin is the
-		// center of mass.  We want to change that to the center of the bounding
-		// rectangle.
-		double Vx = biot.startPt[nPeno].x - biot.stopPt[nPeno].x;
-		double Vy = biot.startPt[nPeno].y - biot.stopPt[nPeno].y;
-		double dr = biot.vector.rotationComponent(
-			(double) biot.startPt[nPeno].x,
-			(double) biot.startPt[nPeno].y,
-			biot.startPt[nPeno].x + Vx,
-			biot.startPt[nPeno].y + Vy);
+		BPoint&  startPt = biot.startPt[nPeno];
+		BPoint&  stopPt  = biot.stopPt[nPeno];
+		Vector& vector  = biot.vector;
 
-		double radius = biot.vector.distance(biot.startPt[nPeno].x , biot.startPt[nPeno].y);
+		int deltaX = biot.x1(nPeno) - biot.CenterX();
+		int deltaY = biot.y1(nPeno) - biot.CenterY();
 
+		// The force vector is proportional with the line length
+		double Vx = startPt.x - stopPt.x;
+		double Vy = startPt.y - stopPt.y;
+
+		// We need to apply this force vector at a radius from the center
+		double radius = vector.distance(deltaX, deltaY);
+
+		double dr = vector.rotationComponent(radius, (double) deltaX, (double) deltaY,
+						deltaX + Vx, deltaY + Vy);
+
+		double dv, Ax, Ay;
 		if (dr != 0)
 		{
-			double dv = biot.vector.motionComponent(biot.vector.distance(Vx, Vy), dr);
-			Vx = -biot.vector.fraction(dv, (int) biot.startPt[nPeno].x, radius); 
-			Vy = -biot.vector.fraction(dv, (int) biot.startPt[nPeno].y, radius); 
+			dv = vector.motionComponent(vector.distance(Vx, Vy), dr);
+			Ax = vector.fraction(dv, abs(deltaX), radius); 
+			Ay = vector.fraction(dv, abs(deltaY), radius); 
+			if (Vx < 0)
+				Ax = -Ax;
+			if (Vy < 0)
+				Ay = -Ay;
 		}
 		else
 		{
-//			Vx = -Vx;
-//			Vy = -Vy;
+			dv = 0;
+			Ax = Vx;
+			Ay = Vy;
 		}
-		biot.vector.accelerateX(Vx*20);
-		biot.vector.accelerateY(Vy*20);
-		biot.vector.accelerateRotation(dr*10);
+
+		if ((Ax == -Vx && Ax != 0) || (Ay == -Vy && Ay != 0))
+		{
+//			TRACE("SWITCH: ");
+		}
+		else
+		{
+//			TRACE("MOVE: ");
+		}
+
+//		TRACE("id=%d Ax=%f Ay=%f dr=%f dv=%f deltaX=%d deltaY=%d Vx=%f Vy=%f radius=%f\n", biot.m_id, Ax, Ay, dr, dv, deltaX, deltaY, Vx, Vy, radius);
+
+		//TODO: Comment back in
+		vector.accelerateX(Ax);
+		vector.accelerateY(Ay);
+		vector.accelerateRotation(dr);
 	}
 }
 
@@ -867,7 +898,7 @@ void CommandMoveLimbSegment::Initialize(CommandLimbStore& store)
 		!store.m_pBiot->trait.GetLineType(store.m_pBiot->trait.GetLineTypeIndex(m_nLimb)).GetSegment(m_nSegment).IsVisible())
 	{
 		// Record we should ignore this command
-		m_nLimb = MAX_SYMMETRY;
+		m_nLimb = MAX_LIMBS;
 		return;
 	}
 
@@ -883,7 +914,7 @@ void CommandMoveLimbSegment::Initialize(CommandLimbStore& store)
 
 void CommandMoveLimbSegment::Execute(CommandLimbStore& store)
 {
-	if (m_nLimb == MAX_SYMMETRY)
+	if (m_nLimb == MAX_LIMBS)
 		return;
 
 	if (store.IsSensorTrue())
@@ -964,7 +995,7 @@ void CommandMoveLimbSegments::Initialize(CommandLimbStore& store)
 	if (m_nLimb >= store.m_pBiot->trait.GetLines())
 	{
 		// Record we should ignore this command
-		m_nLimb = MAX_SYMMETRY;
+		m_nLimb = MAX_LIMBS;
 		return;
 	}
 
@@ -981,7 +1012,7 @@ void CommandMoveLimbSegments::Initialize(CommandLimbStore& store)
 
 void CommandMoveLimbSegments::Execute(CommandLimbStore& store)
 {
-	if (m_nLimb == MAX_SYMMETRY)
+	if (m_nLimb == MAX_LIMBS)
 		return;
 
 	if (store.IsSensorTrue())
@@ -1105,7 +1136,7 @@ void CommandRetractLimb::Execute(CommandLimbStore& store)
 		// If we are true, we need to adjust back full extension
 		if (m_nAppliedRadius > 0)
 		{
-			m_nAppliedRadius -= store.m_pBiot->RetractLine(m_nSegment, m_nLimb, m_nMaxRadius);
+			m_nAppliedRadius -= store.m_pBiot->RetractSegment(m_nSegment, m_nLimb, m_nMaxRadius);
 		}
 	}
 	else
@@ -1113,7 +1144,7 @@ void CommandRetractLimb::Execute(CommandLimbStore& store)
 		// If we are false, we need to adjust back full extension
 		if (m_nAppliedRadius < m_nMaxRadius)
 		{
-			m_nAppliedRadius += store.m_pBiot->ExtendLine(m_nSegment, m_nLimb);
+			m_nAppliedRadius += store.m_pBiot->ExtendSegment(m_nSegment, m_nLimb);
 		}
 	}
 }
@@ -1291,9 +1322,9 @@ void CommandMemory::Execute(CommandLimbStore& store)
 			m_bSet = false;
 
 			if (arg.SetAlgorithmOne())
-				m_type = WAIT_FOR_FALSE_CLEAR;
+				m_type = WAIT_FOR_TRUE_SET;
 			else
-				m_type = WAIT_AND_CLEAR;
+				m_type = WAIT_AND_SET;
 		}
 	}
 }

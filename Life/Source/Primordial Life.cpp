@@ -168,6 +168,8 @@ BOOL CPLifeApp::InitInstance()
 		return FALSE;
 
 	CSingleDocTemplate* pDocTemplate;
+	//TODO: REMOVE THIS - profile seems to add a command line argument I guess
+	m_cmd.m_viewOption=CPrimCmdLine::SHOW_NORMAL_WINDOW;
 	switch(m_cmd.m_viewOption)
 	{
 		case CPrimCmdLine::SHOW_CHANGE_PASSWORD_DIALOG:
@@ -400,8 +402,8 @@ BOOL CPLifeApp::OnIdle(LONG lCount)
    // In this example, as in most applications, you should let the
    // base class CWinApp::OnIdle complete its processing before you
    // attempt any additional idle loop processing.
-   if (CWinApp::OnIdle(lCount))
-	   return TRUE;   
+	if (CWinApp::OnIdle(lCount))
+		return TRUE;
 
    // The base class CWinApp::OnIdle reserves the lCount values 0 
    // and 1 for the framework's own idle processing.   If you wish to
@@ -411,10 +413,7 @@ BOOL CPLifeApp::OnIdle(LONG lCount)
    // 0 and/or 1. Study the base class implementation first to 
    // understand how your idle loop tasks will compete with the 
    // framework's idle loop processing.
-
-    AfxMainFrame().GetGeneralView()->OnIdle();
-
-	return TRUE;	// TODO: Add your specialized code here and/or call the base class
+    return AfxMainFrame().GetGeneralView()->OnIdle();
 }
 
 

@@ -335,9 +335,7 @@ bool BRectSort::SortAll()
 	{
 		bSorted |= m_pArray[i]->Sort();
 
-#ifdef _TRACE_SORT
 		m_pArray[i]->TraceDebug(i);
-#endif
 	}
 	return bSorted;
 }
@@ -421,6 +419,9 @@ BRectItem* BRectSort::IterateRects(BRectSortPos& sortPos)
 
 	if (sortPos.m_nShortIndex <= ARRAY_TOP)
 	{
+		// We found 1 and then set zero as the next element to process
+		// the problem is that we substract one again
+		// Also - why do we do FindShortest path each time???
 		for (int i = pArray->GetPos(&sortPos) - 1; i >= 0; i--)
 		{
 			BRectItem* pItem = 	pArray->GetAt(i);
@@ -429,7 +430,7 @@ BRectItem* BRectSort::IterateRects(BRectSortPos& sortPos)
 				pItem->m_indexLeft   <  sortPos.m_indexLeft   &&
 				pItem->m_indexTop    <  sortPos.m_indexTop)
 			{
-				pArray->SetPos(&sortPos, i - 1);
+				pArray->SetPos(&sortPos, i);
 				return pItem;
 			}
 		}
@@ -462,6 +463,8 @@ bool BRectSort::FindShortestArray(BRectSortPos& sortPos, int nLeft, int nTop, in
 {
 	int nSmallestArraySize;
 
+	// If top == bottom, it should indicate an intersection and
+	// it doesn't.  Probably same for left==right too
 	if (!sortPos.m_bInitialized)
 	{
 		sortPos.m_indexRight   = m_arrayRight.GreaterPos(nRight);
@@ -496,8 +499,8 @@ bool BRectSort::FindShortestArray(BRectSortPos& sortPos, int nLeft, int nTop, in
 			if (nSmallestArraySize == 0)
 				return false;
 		}
+		sortPos.m_bInitialized = true;
 	}
-	sortPos.m_bInitialized = true;
 	return true;
 }
 

@@ -1,0 +1,58 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: Primordial Life - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "c:\windows\TEMP\RSP7003.TMP" with contents
+[
+/nologo /ML /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D "_MBCS" /Fp"Release/Primordial Life.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\Primordial\_wip\Life\Source\Primordial Life.cpp"
+]
+Creating command line "cl.exe @c:\windows\TEMP\RSP7003.TMP" 
+Creating temporary file "c:\windows\TEMP\RSP7004.TMP" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:no /pdb:"Release/Primordial Life.pdb" /machine:I386 /out:"Release/Primordial Life.exe" 
+".\Release\Primordial Life.obj"
+]
+Creating command line "link.exe @c:\windows\TEMP\RSP7004.TMP"
+<h3>Output Window</h3>
+Compiling...
+Primordial Life.cpp
+Linking...
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: virtual int __thiscall CRegistry::OpenKey(char const *,struct HKEY__ *)" (?OpenKey@CRegistry@@UAEHPBDPAUHKEY__@@@Z)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: virtual int __thiscall CRegistry::CreateKey(char const *,struct HKEY__ *)" (?CreateKey@CRegistry@@UAEHPBDPAUHKEY__@@@Z)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: virtual __thiscall CPrimCmdLine::~CPrimCmdLine(void)" (??1CPrimCmdLine@@UAE@XZ)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: __thiscall CRegistry::CRegistry(void)" (??0CRegistry@@QAE@XZ)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: __thiscall CPrimCmdLine::CPrimCmdLine(void)" (??0CPrimCmdLine@@QAE@XZ)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: virtual __thiscall CRegistry::~CRegistry(void)" (??1CRegistry@@UAE@XZ)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: static struct CRuntimeClass const  CPLifeDoc::classCPLifeDoc" (?classCPLifeDoc@CPLifeDoc@@2UCRuntimeClass@@B)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: static struct CRuntimeClass const  CMainFrame::classCMainFrame" (?classCMainFrame@CMainFrame@@2UCRuntimeClass@@B)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: static struct CRuntimeClass const  CPLifeView::classCPLifeView" (?classCPLifeView@CPLifeView@@2UCRuntimeClass@@B)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: int __thiscall CRegistry::GetString(char const *,class CString &)" (?GetString@CRegistry@@QAEHPBDAAVCString@@@Z)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: void __thiscall CKeyRegistry::SetName(char const *)" (?SetName@CKeyRegistry@@QAEXPBD@Z)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: class CString  __thiscall CKeyRegistry::GetName(void)" (?GetName@CKeyRegistry@@QAE?AVCString@@XZ)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: void __thiscall CSoundRegistry::SoundEvent(char const *,char const *,char const *)" (?SoundEvent@CSoundRegistry@@QAEXPBD00@Z)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: __thiscall CSoundRegistry::CSoundRegistry(char const *,char const *)" (??0CSoundRegistry@@QAE@PBD0@Z)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: __thiscall Environment::~Environment(void)" (??1Environment@@QAE@XZ)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: void __thiscall Environment::SetDefaultSettings(void)" (?SetDefaultSettings@Environment@@QAEXXZ)
+Primordial Life.obj : error LNK2001: unresolved external symbol "int __stdcall ConfigureDialog(struct HWND__ *,unsigned int,unsigned int,long)" (?ConfigureDialog@@YGHPAUHWND__@@IIJ@Z)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: void __thiscall Environment::GetDefaultSettings(void)" (?GetDefaultSettings@Environment@@QAEXXZ)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: __thiscall Environment::Environment(void)" (??0Environment@@QAE@XZ)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: int __thiscall CRegistry::GetString(char const *,char *,unsigned long)" (?GetString@CRegistry@@QAEHPBDPADK@Z)
+Primordial Life.obj : error LNK2001: unresolved external symbol "public: class CGeneralView * __thiscall CMainFrame::GetGeneralView(void)" (?GetGeneralView@CMainFrame@@QAEPAVCGeneralView@@XZ)
+nafxcw.lib(thrdcore.obj) : error LNK2001: unresolved external symbol __endthreadex
+nafxcw.lib(thrdcore.obj) : error LNK2001: unresolved external symbol __beginthreadex
+libc.lib(crt0.obj) : error LNK2001: unresolved external symbol _main
+Release/Primordial Life.exe : fatal error LNK1120: 24 unresolved externals
+Error executing link.exe.
+
+
+
+<h3>Results</h3>
+Primordial Life.exe - 25 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

@@ -191,9 +191,10 @@ void CSaverView::OnInitialUpdate()
 }
 
 
-void CSaverView::OnIdle() 
+BOOL CSaverView::OnIdle() 
 {
 	GetDocument()->m_env.Skip(this);
+	return TRUE;
 }
 
 void CSaverView::OnClose() 

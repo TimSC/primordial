@@ -28,6 +28,7 @@ BEGIN_MESSAGE_MAP(CPLifeView, CGeneralView)
 	ON_UPDATE_COMMAND_UI(ID_SIMULATION_STARTSIMULATION, OnUpdateSimulationStart)
 	ON_COMMAND(ID_VIEW_FULLSCREEN, OnViewFullscreen)
 	ON_COMMAND(ID_SIMULATION_SETTINGS, OnSimulationSettings)
+	ON_COMMAND(ID_STEP_TIMER, OnStepTimer)
 	ON_WM_KEYDOWN()
 	ON_WM_MOUSEMOVE()
 	ON_WM_CREATE()
@@ -117,6 +118,11 @@ void CPLifeView::OnDestroy()
 void CPLifeView::OnViewFullscreen() 
 {
 	AfxMainFrame().OnViewFullscreen();
+}
+
+void CPLifeView::OnStepTimer() 
+{
+	GetDocument()->m_env.DebugStep(this);
 }
 
 //Fox BEGIN
@@ -220,7 +226,7 @@ void CPLifeView::OnLButtonDown(UINT nFlags, CPoint point)
 }
 
 
-void CPLifeView::OnIdle() 
+BOOL CPLifeView::OnIdle() 
 {
 	if (m_yScroll)
 		OnKeyDown(m_yScroll, 0, 0);
@@ -230,5 +236,7 @@ void CPLifeView::OnIdle()
 
 	if (m_bStarted)
 		GetDocument()->m_env.Skip(this);
+
+	return m_bStarted;
 }
 

@@ -31,7 +31,6 @@ public:
 	int		m_nHeight;
 	int		m_nSizeChoice;
 	CButton	m_sizeCtrl;
-	int		m_nSkipGenerations;
 	//}}AFX_DATA
 
 	void EnableControls(BOOL bEnable);

@@ -77,20 +77,11 @@ void CBiotEditor::UpdateBiot(Biot* pBiot)
 
 		m_totalDistance.Format("Total Distance %lu", pBiot->totalDistance);
 		m_benefit.Format("Total Benefit %lu, Total Children %d", pBiot->turnBenefit, pBiot->m_totalChildren);
-#ifdef _METABOLISM
-		m_ratio.Format("Bonus Ratio %6.3f", pBiot->metabolism.m_dBonusRatio);
-#else
 		m_ratio.Format("Bonus Ratio %6.3f", pBiot->m_dBonusRatio);
-#endif
 		if (pBiot->genes2 > 0)
 			m_ratio += " Fertilized";
 
-#ifdef _METABOLISM
-		long energy = (long) ((pBiot->turnBenefit - pBiot->totalDistance) + (pBiot->metabolism.m_dBonusRatio * pBiot->turnBenefit));
-#else
 		long energy = (long) ((pBiot->turnBenefit - pBiot->totalDistance) + (pBiot->m_dBonusRatio * pBiot->turnBenefit));
-#endif
-
 		m_Energy.Format("%ld", energy);
 
 		if (energy <= 0)
@@ -106,26 +97,18 @@ void CBiotEditor::UpdateBiot(Biot* pBiot)
 
 		CString sTitle;
 
-		sTitle.Format("Biot %d", pBiot->m_Id);
+		sTitle.Format("Biot %d", pBiot->m_id);
 		SetWindowText(sTitle);
 
 		int nPos = m_energySlider.GetPos();
 		if (m_energySliderPos != nPos && m_energySliderPos != -1)
 		{
-#ifdef _METABOLISM
-			pBiot->metabolism.energy = (nPos * (pBiot->metabolism.adultBaseEnergy << 1) - 50) / 100;
-#else
 			pBiot->energy = (nPos * (pBiot->adultBaseEnergy << 1) - 50) / 100;
-#endif
 			m_energySliderPos = nPos;
 		}
 		else
 		{
-#ifdef _METABOLISM
-			m_energySliderPos = ((pBiot->metabolism.energy * 100) + 50) / (pBiot->metabolism.adultBaseEnergy << 1);
-#else
 			m_energySliderPos = ((pBiot->energy * 100) + 50) / (pBiot->adultBaseEnergy << 1);
-#endif
 			m_energySlider.SetPos(m_energySliderPos);
 		}
 
@@ -146,17 +129,11 @@ void CBiotEditor::UpdateBiot(Biot* pBiot)
 		{
 			if (pBiot->trait.IsMale())
 			{
-				if (pBiot->trait.IsAsexual())
-					m_sexIcon.SetIcon(AfxGetApp()->LoadIcon(IDI_ASEXUAL));
-				else
-					m_sexIcon.SetIcon(AfxGetApp()->LoadIcon(IDI_MALE));
+				m_sexIcon.SetIcon(AfxGetApp()->LoadIcon(IDI_MALE));
 			}
 			else
 			{
-				if (pBiot->trait.IsAsexual())
-					m_sexIcon.SetIcon(AfxGetApp()->LoadIcon(IDI_ASEXUAL_FEMALE));
-				else
-					m_sexIcon.SetIcon(AfxGetApp()->LoadIcon(IDI_FEMALE));
+				m_sexIcon.SetIcon(AfxGetApp()->LoadIcon(IDI_FEMALE));
 			}
 
 

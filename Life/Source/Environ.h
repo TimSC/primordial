@@ -18,14 +18,13 @@
 #include "EnvStatsWnd.h"
 #include "BiotEditor.h"
 #include "settings.h"
-#include "Resources.h"
+
+
 // Predefine Biot to the Environment
 class Biot;
 class Environment;
-class CSettings;
+//class CSettings;
 
-#define MAX_SPECIES		63
-#define INIT_SPECIES	8
 ///////////////////////////////////////////////////////////////////////
 // CEnvironmentStats
 //
@@ -61,16 +60,6 @@ public:
 
 
 public:
-	double m_dblStdNewActivity;
-	double m_dblMeanNewActivity;
-	long m_nNewActivity;
-	double m_dblStdActivity;
-	float m_dblMeanCumActivity;
-	int m_nCumulativeActivity;
-	static int m_arCumulativeActivity[MAX_SPECIES + 1];
-	int m_nDiversity;
-	CString GetTicksStr();
-	double m_dblSecsPerBiot;
 	long m_births;
 	long m_deaths;
 	long m_arrivals;
@@ -130,7 +119,7 @@ public:
 	Biot* HitCheck(Biot *me, int* pStart);
 	Biot* NextBiot();
 	void RemoveBiot();
-	BOOL Looped() { return m_bLooped; }
+	bool Looped() { return m_bLooped; }
 
 	void FreeAll();
 
@@ -138,7 +127,7 @@ public:
 
 private:
 	int  m_nBiot;
-	BOOL m_bLooped;
+	bool m_bLooped;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -152,86 +141,48 @@ public:
 	Environment();
 	~Environment(void);
 
-	Biot* HitCheck(Biot *me, BRectSortPos& pos);
-//	Biot* HitCheck(Biot *me, int* pStart = NULL); { return m_biotList.HitCheck(me, pStart); }
+	Biot* HitCheck(Biot *pAskingBiot, BRectSortPos& pos);
+	Biot* HitCheck(BRectSortPos& pos);
+	bool  ValidateHit(Biot* pBiot1, Biot* pBiot2);
+	void  TestSortedArray();
 	Biot* FindBiotByID(DWORD id) { return m_biotList.FindBiotByID(id); }
 
 	void  AddBiot(Biot* newBiot);
 
 	void Clear();
 
-	void PlayResource(LPCSTR sound, BOOL bSync = FALSE);
+	void PlayResource(LPCSTR sound, bool bSync = false);
 //	void Paint(HDC hDC, RECT* pRect);
 	void Paint(CDC* pDC, CRect& rect);
 
-	void lights(BOOL bOn);
-	void NoRoomToGiveBirth(){/*m_stats.m_collisionCount += 4;*/};
+	void lights(bool bOn);
+//TODO: Confirm no longer needed
+//	void NoRoomToGiveBirth(){/*m_stats.m_collisionCount += 4;*/};
 	void FreeBitPadDC();
 
 	HDC  GetBitPadDC(int width, int height);
-	DWORD	GetID(void){return ++m_uniqueID; }
+	DWORD	GetId(void){return ++m_uniqueID; }
 
 	int  FindBiot(int x, int y);
 	void MoveBiot(Biot* pBiot) { m_sort.Move((BRectItem*) pBiot); }
 	void MoveBiot(Biot* pBiot, BRect* pOrigRect) { m_sort.Move((BRectItem*) pBiot, pOrigRect); }
-			
+		
 	int  GetPopulation() { return m_biotList.GetSize(); }
 	void Serialize(CArchive& ar);
 	void DeleteContents();
+	void DebugStep(CScrollView* pView);
 	void Skip(CScrollView* pView);
     void BiotOperation(CScrollView* pView, int x, int y, int operation);
 
-	BOOL  BiotShouldBox(DWORD biotId) { return (biotId == m_selectedId && m_bIsSelected); }
+	bool  BiotShouldBox(DWORD biotId) { return (biotId == m_selectedId && m_bIsSelected); }
 	Biot* GetSelectedBiot()           { return m_biotList.FindBiotByID(m_selectedId); }
 
 	void MagnifyBiot(CDC& dc, Biot* pBiot, CRect& rect);
 	void OpenEnvironmentStatistics(CWnd* pWnd);
 
-    BOOL IsIntersect(CLine& bLine, int& x, int& y)
-    {
-      for (int i = 0; i < 4; i++)
-        if (side[i]->IsIntersect(bLine, x, y))
-          return TRUE;
-      return FALSE;
-    }
-
-	int Cell(int nRow, int nCol)
-		{
-		return nRow * m_nCellsHigh + nCol;	
-		}
-
-    BOOL WithinBorders(BRect& rect);
-    /*{
-        if (!(Inside(rect.m_left, rect.m_top) ||
-              rightSide.Inside(rect.m_left, rect.m_top) ||
-              leftSide.Inside(rect.m_left, rect.m_top)  ||
-              topSide.Inside(rect.m_left, rect.m_top)  ||
-             bottomSide.Inside(rect.m_left, rect.m_top)))
-          return FALSE;
-
-      if (!(Inside(rect.m_left, rect.m_bottom) ||
-            rightSide.Inside(rect.m_left, rect.m_bottom) ||
-            leftSide.Inside(rect.m_left, rect.m_bottom)  ||
-            topSide.Inside(rect.m_left, rect.m_bottom)  ||
-            bottomSide.Inside(rect.m_left, rect.m_bottom)))
-        return FALSE;
-
-      if (!(Inside(rect.m_right, rect.m_bottom) ||
-            rightSide.Inside(rect.m_right, rect.m_bottom) ||
-            leftSide.Inside(rect.m_right, rect.m_bottom)  ||
-            topSide.Inside(rect.m_right, rect.m_bottom)  ||
-            bottomSide.Inside(rect.m_right, rect.m_bottom)))
-        return FALSE;
-
-      if (!(Inside(rect.m_right, rect.m_top) ||
-            rightSide.Inside(rect.m_right, rect.m_top) ||
-            leftSide.Inside(rect.m_right, rect.m_top)  ||
-            topSide.Inside(rect.m_right, rect.m_top)  ||
-            bottomSide.Inside(rect.m_right, rect.m_top)))
-        return FALSE;
-
-      return TRUE;
-    }*/
+    bool IsIntersect(CLine& line, int& x, int& y);
+	bool IsIntersect(CLine& line, BPoint& pt);
+    bool WithinBorders(BRect& rect);
 
 	void GetDefaultSettings();
 	void SetDefaultSettings();
@@ -244,15 +195,9 @@ public:
 	void SaveBiot(Biot* pBiot);
 	void LoadBiot(int x, int y);
 
+	ContactLine& Contact(int nMyLineType, int nEnemyLineType);
+
 public:
-	int m_nCellHeight;
-	int m_nCellWidth;
-	void TraceResources();
-	void DiffuseResources();
-	CResources * m_matCells;
-	int m_nCellsHigh;
-	int m_nCellsAcross;
-	bool m_bSineSun;
 	CBitmap           m_topBitmap;
 	BITMAP            m_topBm;
 
@@ -281,19 +226,19 @@ public:
 
 	// What biot is selected and for what operation
 	DWORD m_selectedId;
-	BOOL  m_bIsSelected;
+	bool  m_bIsSelected;
 
 	int   m_operation;
 
     Side*   side[4];
     HDC     m_hMemoryDC;
     HDC     m_hScreenDC;
-	BOOL    bNetworkSettingsChange;
+	bool    bNetworkSettingsChange;
 
 	// Save the state of these variables	
 
     CBiotList   m_biotList;
-	
+
   private:
 	void CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
 
@@ -312,37 +257,63 @@ public:
 	DWORD   m_dwTicks;
 };
 
-inline BOOL Environment::WithinBorders(BRect& rect)
+
+inline ContactLine& Environment::Contact(int nMyLineType, int nEnemyLineType)
+{
+	ASSERT(nMyLineType < LINES_BASIC);
+	ASSERT(nEnemyLineType < LINES_BASIC);
+	return options.m_contact[nMyLineType][nEnemyLineType];
+}
+
+inline bool Environment::IsIntersect(CLine& line, int& x, int& y)
+{
+	for (int i = 0; i < 4; i++)
+		if (side[i]->IsIntersect(line, x, y))
+			return true;
+	return false;
+}
+
+
+inline bool Environment::IsIntersect(CLine& line, BPoint& pt)
+{
+	for (int i = 0; i < 4; i++)
+		if (side[i]->IsIntersect(line, pt.x, pt.y))
+			return true;
+	return false;
+}	
+
+
+inline bool Environment::WithinBorders(BRect& rect)
 {
 	if (!(Inside(rect.m_left, rect.m_top) ||
 			rightSide.Inside(rect.m_left, rect.m_top) ||
 			leftSide.Inside(rect.m_left, rect.m_top)  ||
 			topSide.Inside(rect.m_left, rect.m_top)  ||
 			bottomSide.Inside(rect.m_left, rect.m_top)))
-		return FALSE;
+		return false;
 
 	if (!(Inside(rect.m_left, rect.m_bottom) ||
 			rightSide.Inside(rect.m_left, rect.m_bottom) ||
 			leftSide.Inside(rect.m_left, rect.m_bottom)  ||
 			topSide.Inside(rect.m_left, rect.m_bottom)  ||
 			bottomSide.Inside(rect.m_left, rect.m_bottom)))
-        return FALSE;
+        return false;
 
 	if (!(Inside(rect.m_right, rect.m_bottom) ||
             rightSide.Inside(rect.m_right, rect.m_bottom) ||
             leftSide.Inside(rect.m_right, rect.m_bottom)  ||
             topSide.Inside(rect.m_right, rect.m_bottom)  ||
             bottomSide.Inside(rect.m_right, rect.m_bottom)))
-        return FALSE;
+        return false;
 
 	if (!(Inside(rect.m_right, rect.m_top) ||
             rightSide.Inside(rect.m_right, rect.m_top) ||
             leftSide.Inside(rect.m_right, rect.m_top)  ||
             topSide.Inside(rect.m_right, rect.m_top)  ||
             bottomSide.Inside(rect.m_right, rect.m_top)))
-        return FALSE;
+        return false;
 
-	return TRUE;
+	return true;
 }
 
 #endif

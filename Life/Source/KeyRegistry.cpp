@@ -14,9 +14,6 @@
 //
 bool CKeyRegistry::IsGoodKey()
 {
-#ifdef _DEVELOPMENT_ENV
-	return true;
-#endif
 	CString sName = GetName();
     int  length   = sName.GetLength();
 	WORD result   = (WORD) GetKey();

@@ -13,7 +13,30 @@
 #include <float.h>
 const double PI      = 3.1415926535898;
 
+class BPoint
+{
+public:
+    int x;
+    int y;
+	BPoint& operator=(BPoint& to) { x = to.x; y = to.y; return *this;}
+	bool operator==(BPoint& to) { return (x == to.x && y == to.y); }
+	void Serialize(CArchive& ar);
+	void Clear() { x = 0; y = 0; }
+};
 
+inline void BPoint::Serialize(CArchive& ar)
+{
+	if (ar.IsStoring())
+	{
+		ar << x;
+		ar << y;
+	}
+	else
+	{
+		ar >> x;
+		ar >> y;
+	}
+}
 
 //////////////////////////////////////////////////////////////////////
 // BRect
@@ -52,12 +75,12 @@ public:
 
 	void  Normalize(void);
 
-	int Touches(const BRect& c) const
+	bool Intersects(const BRect& c) const
 	{
 		return (c.m_right  < m_left  ||
 				c.m_left   > m_right ||
 				c.m_bottom   < m_top   ||
-				c.m_top    > m_bottom)?0:1;
+				c.m_top    > m_bottom)?false:true;
 	} 
 
 	int IsContainedBy(const BRect& c) const
@@ -130,7 +153,8 @@ public:
 		return (m_bottom + m_top) >> 1;
 	}
 
-	POINT& Center(POINT& xy) const
+	// Where is the center of the rectangle?
+	BPoint& Center(BPoint& xy) const
 	{
 		xy.x = CenterX();
 		xy.y = CenterY();
@@ -423,7 +447,7 @@ protected:
 
 	int m_nShortIndex;
 
-	int m_nIndex[BRectSort::ARRAY_MAX];
+//	int m_nIndex[BRectSort::ARRAY_MAX];
 };
 
 
@@ -496,7 +520,7 @@ class CLine
 		Set(X1, Y1, X2, Y2);
     }
 
-	CLine(const POINT& p1, const POINT& p2)
+	CLine(const BPoint& p1, const BPoint& p2)
 	{
 		Set(p1.x, p1.y, p2.x, p2.y);
 	}
@@ -518,6 +542,8 @@ class CLine
 	void Set(int X1, int Y1, double slope);
 
     void Offset(int dx, int dy);
+
+	bool Intersect(CLine &l, BPoint& pt) const;
 
     bool Intersect(CLine &l, int& x, int& y) const;
 
@@ -563,6 +589,11 @@ class CLine
     double m_slope;
     double m_yIntercept;
 };
+
+inline bool CLine::Intersect(CLine &l, BPoint& pt) const
+{
+	return Intersect(l, pt.x, pt.y);
+}
 
 inline void CLine::SetState()
 {

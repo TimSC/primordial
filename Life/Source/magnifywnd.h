@@ -20,7 +20,7 @@ public:
 };
 
 
-#define MAX_ENERGY_HISTORY  21
+const int MAX_ENERGY_HISTORY = 21;
 
 /////////////////////////////////////////////////////////////////////////////
 // CMagnifyWnd frame
@@ -57,13 +57,6 @@ public:
 	long m_colorDistance[5];
 
 	float m_energy[MAX_ENERGY_HISTORY];
-	float m_red[MAX_ENERGY_HISTORY];
-	float m_blue[MAX_ENERGY_HISTORY];
-	float m_green[MAX_ENERGY_HISTORY];
-	float m_e1[MAX_ENERGY_HISTORY];
-	float m_e2[MAX_ENERGY_HISTORY];
-	float m_e3[MAX_ENERGY_HISTORY];
-
 	long  m_energyIndex;
 
 // Operations
@@ -105,8 +98,6 @@ protected:
 	afx_msg void OnBreeding();
 	afx_msg void OnUpdateBreeding(CCmdUI* pCmdUI);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnMetabolism();
-	afx_msg void OnUpdateMetabolism(CCmdUI* pCmdUI);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

@@ -8,8 +8,7 @@
 #include "PLifeDoc.h"
 #include "AboutWnd.h"
 #include "GeneralView.h"
-#include <stdlib.h>
-#include <mmsystem.h>
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -103,8 +102,6 @@ static UINT indicators[] =
 	IDS_POPULATION,
 	IDS_EMPTY,
 	IDS_EXTINCTIONS,
-	IDS_EMPTY,
-	IDS_TICKS,
 	IDS_EMPTY
 };
 
@@ -466,8 +463,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndStatusBar.SetPaneInfo(3, IDS_EMPTY, SBPS_NORMAL, 50);
 	m_wndStatusBar.SetPaneStyle(4, SBPS_NOBORDERS);
 	m_wndStatusBar.SetPaneInfo(5, IDS_EMPTY, SBPS_NORMAL, 50);
-	m_wndStatusBar.SetPaneStyle(6, SBPS_NOBORDERS);
-	m_wndStatusBar.SetPaneInfo(7, IDS_EMPTY, SBPS_NORMAL, 100);
 //	m_wndStatusBar.SetPaneInfo(3, IDS_EXTINCTIONS, SBPS_NORMAL, 100);
 //	m_wndStatusBar.SetPaneInfo(4, IDS_EXTINCTIONS, SBPS_NORMAL, 100);
 
@@ -492,7 +487,6 @@ void CMainFrame::UpdateStatusBar()
 		m_wndStatusBar.SetPaneText(1, stats.GetDaysStr());
 		m_wndStatusBar.SetPaneText(3, stats.GetPopulationStr());
 		m_wndStatusBar.SetPaneText(5, stats.GetExtinctionsStr());
-		m_wndStatusBar.SetPaneText(7, stats.GetTicksStr());
 	}
 }
 
@@ -950,8 +944,11 @@ void CMainFrame::DisplayBrowser(CString sFileName)
 {
 	CWaitCursor wait;
 
+	CKeyRegistry& key = AfxCommonRegistry();
+	
 	CString sTemp;
-	sTemp = _T("..\\..\\help\\") + sFileName;
+	key.GetString(_T("path"), sTemp);
+	sTemp += _T("\\help\\") + sFileName;
 
 	DWORD nError = (DWORD) ShellExecute(GetSafeHwnd(), NULL, sTemp, NULL, NULL, SW_SHOWNORMAL);
 	if (nError < 32)
@@ -1032,7 +1029,7 @@ void CMainFrame::OnClose()
 
 bool CMainFrame::StatusBarState(bool bSave)
 {
-	LPCTSTR szSection = _T("Placement");
+//	LPCTSTR szSection = _T("Placement");
 	LPCTSTR szStatus  = _T("statusBar");
 
 	if (bSave)
@@ -1090,37 +1087,3 @@ void CMainFrame::OnActivateApp(BOOL bActive, HTASK hTask)
 		::SetPriorityClass(AfxGetInstanceHandle(), IDLE_PRIORITY_CLASS);
 	}
 }
-
-LARGE_INTEGER CMainFrame::GetTimeTick()
-	{
-	LARGE_INTEGER liFrequency;
-	LARGE_INTEGER liTick;
-	SYSTEM_INFO sysInfo;
-	GetSystemInfo(&sysInfo);
-	
-	if (sysInfo.dwNumberOfProcessors > 1)
-		{
-		//Set Thread Affinity
-		
-		}
-
-	if (QueryPerformanceFrequency(&liFrequency))
-		{
-		if (QueryPerformanceCounter(&liTick))
-			{
-			return liTick;
-			}
-		}
-	
-	liTick.LowPart =  timeGetTime();
-	return liTick;
-	}
-
-DWORD CMainFrame::GetTimerFrequency()
-	{
-	LARGE_INTEGER liFrequency;
-	if (QueryPerformanceFrequency(&liFrequency))
-		return liFrequency.LowPart;
-	else
-		return 1000;
-	}

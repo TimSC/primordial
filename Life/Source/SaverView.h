@@ -17,7 +17,7 @@ protected:
 // Attributes
 public:
 
-	void OnIdle();
+	BOOL OnIdle();
 
 // Operations
 public:

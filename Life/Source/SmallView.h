@@ -18,7 +18,7 @@ public:
 
 // Operations
 public:
-	void OnIdle();
+	BOOL OnIdle();
 	void OnDraw(CDC* pDC);
 
 // Overrides

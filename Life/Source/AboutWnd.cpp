@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////
 // AboutWnd.cpp - Start-up "Splash Screen" Window
-// $Revision: 1.4 $
+// $Revision: 1.5 $
 //
 //
 #include "stdafx.h"
@@ -24,21 +24,22 @@
 #define DITHER_COLORREF(colorref)		((~0x02000000) & (colorref))
 
 // (A subset of) the windows static colors.
-static const COLORREF CLR_BLACK                 = PALETTERGB(   0,   0,   0);
-static const COLORREF CLR_DARK_RED              = PALETTERGB( 128,   0,   0);
-static const COLORREF CLR_DARK_GREEN            = PALETTERGB(   0, 128,   0);
-static const COLORREF CLR_DARK_YELLOW           = PALETTERGB( 128, 128,   0);
-static const COLORREF CLR_DARK_BLUE             = PALETTERGB(   0,   0, 128);
-static const COLORREF CLR_DARK_MAGENTA          = PALETTERGB( 128,   0, 128);
-static const COLORREF CLR_DARK_CYAN             = PALETTERGB(   0, 128, 128);
-static const COLORREF CLR_LIGHT_GRAY            = PALETTERGB( 192, 192, 192);
-static const COLORREF CLR_RED                   = PALETTERGB( 255,   0,   0);
-static const COLORREF CLR_GREEN                 = PALETTERGB(   0, 255,   0);
-static const COLORREF CLR_YELLOW                = PALETTERGB( 255, 255,   0);
-static const COLORREF CLR_BLUE                  = PALETTERGB(   0,   0, 255);
-static const COLORREF CLR_MAGENTA               = PALETTERGB( 255,   0, 255);
-static const COLORREF CLR_CYAN                  = PALETTERGB(   0, 255, 255);
-static const COLORREF CLR_WHITE                 = PALETTERGB( 255, 255, 255);
+static const COLORREF CLR_BLACK					= PALETTERGB(   0,   0,   0);
+static const COLORREF CLR_DARK_RED				= PALETTERGB( 128,   0,   0);
+static const COLORREF CLR_DARK_GREEN				= PALETTERGB(   0, 128,   0);
+static const COLORREF CLR_DARK_YELLOW				= PALETTERGB( 128, 128,   0);
+static const COLORREF CLR_DARK_BLUE				= PALETTERGB(   0,   0, 128);
+static const COLORREF CLR_DARK_MAGENTA				= PALETTERGB( 128,   0, 128);
+static const COLORREF CLR_DARK_CYAN				= PALETTERGB(   0, 128, 128);
+static const COLORREF CLR_LIGHT_GRAY				= PALETTERGB( 192, 192, 192);
+static const COLORREF CLR_RED					= PALETTERGB( 255,   0,   0);
+static const COLORREF CLR_GREEN					= PALETTERGB(   0, 255,   0);
+static const COLORREF CLR_YELLOW				= PALETTERGB( 255, 255,   0);
+static const COLORREF CLR_BLUE					= PALETTERGB(   0,   0, 255);
+static const COLORREF CLR_MAGENTA				= PALETTERGB( 255,   0, 255);
+static const COLORREF CLR_CYAN					= PALETTERGB(   0, 255, 255);
+static const COLORREF CLR_WHITE					= PALETTERGB( 255, 255, 255);
+
 
 /////////////////////////////////////////////////////////////////////////////
 // CSplashWnd static data
@@ -409,8 +410,8 @@ void CSplashWnd::OnCancelMode()
 
 void CSplashWnd::OnTimer(UINT /*nIDEvent*/)
 {
-    // Destroy the splash screen window.
-    Hide();
+	// Destroy the splash screen window.
+	Hide();
 }
 
 

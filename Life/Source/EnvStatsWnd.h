@@ -36,9 +36,6 @@ public:
 
 // Operations
 public:
-	void SetSpecies(bool bDraw = false);
-	bool m_bLogging;
-	CMenu m_menu;
 	CEnvStatsWnd(CEnvStatsWnd** pExternalRef = NULL);
 	virtual ~CEnvStatsWnd();
 
@@ -48,12 +45,7 @@ public:
 	void SetEnergySpread(bool bDraw = false);
 	void SetLineTypes(bool bDraw = false);
 	void SetAgeSpread(bool bDraw = false);
-	void OnEvolution();
-	void SetEvolution(bool bDraw = false);
-	void OnUpdateEvolution(CCmdUI* pCmdUI);
-	void OnUpdateCPUTime(CCmdUI* pCmdUI); 
-	void SetCPUTime(bool bDraw = false);
-	void OnCPUTime(); 
+
 	static BOOL CreateWnd(Environment* pEnv, CWnd* pParentWnd, CEnvStatsWnd** pExternalRef);
 
 
@@ -84,10 +76,6 @@ protected:
 	afx_msg void OnUpdatePopulation(CCmdUI* pCmdUI);
 	afx_msg void OnEnergySpread();
 	afx_msg void OnUpdateEnergySpread(CCmdUI* pCmdUI);
-	afx_msg void OnStatsLog();
-	afx_msg void OnUpdateStatsLog(CCmdUI* pCmdUI);
-	afx_msg void OnSpecies();
-	afx_msg void OnUpdateSpecies(CCmdUI* pCmdUI);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

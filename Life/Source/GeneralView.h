@@ -15,7 +15,7 @@ public:
 
  	void OpenEnvironmentStatistics();
 
-	virtual void OnIdle() = 0;
+	virtual BOOL OnIdle() = 0;
 
 	// Overrides
 	// ClassWizard generated virtual function overrides

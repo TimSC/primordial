@@ -1,5 +1,5 @@
  // LoadBmpFile.cpp
-// $Revision: 1.1 $
+// $Revision: 1.2 $
 //
 // Adapted from Microsoft sample source code and from
 // AfxLoadSysColorBitmap() [\MSDEV\MFC\SRC\BARTOOL.CPP]

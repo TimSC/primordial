@@ -1,5 +1,5 @@
 // CPostData.h : header file
-// $Revision: 1.1 $
+// $Revision: 1.2 $
 //
 /////////////////////////////////////////////////////////////////////////////
 
@@ -7,6 +7,7 @@
 #define CPostData_h
 
 #include "stdio.h"
+#include "etools.h"
 
 //CRC////////////////////////////////////////////////////////////////////////
 //
@@ -68,7 +69,7 @@ public:
 	CPostData& operator <<( BYTE  nValue );
 	CPostData& operator <<( long  nValue );
 	CPostData& operator <<( signed char nValue );
-	CPostData& operator <<( POINT& pValue );
+	CPostData& operator <<( BPoint& pValue );
 
 	CPostData& operator >>( float&  fValue );
 	CPostData& operator >>( double& fValue );
@@ -79,7 +80,7 @@ public:
 	CPostData& operator >>( BYTE&  nValue );
 	CPostData& operator >>( long&  nValue );
 	CPostData& operator >>( signed char& nValue );
-	CPostData& operator >>( POINT& pValue );
+	CPostData& operator >>( BPoint& pValue );
 	CPostData& operator >>( CString& sString );
 
 	BOOL Allocate(int length);
@@ -170,9 +171,9 @@ inline CPostData& CPostData::operator <<( signed char nValue )
 	return *this;
 }
 
-inline CPostData& CPostData::operator <<( POINT& pValue )
+inline CPostData& CPostData::operator <<( BPoint& pValue )
 {
-	Write((LPBYTE) &pValue, sizeof(POINT));
+	Write((LPBYTE) &pValue, sizeof(BPoint));
 	return *this;
 }
 
@@ -245,9 +246,9 @@ inline CPostData& CPostData::operator >>( signed char& nValue )
 	return *this;
 }
 
-inline CPostData& CPostData::operator >>( POINT& pValue )
+inline CPostData& CPostData::operator >>( BPoint& pValue )
 {
-	Read((LPBYTE) &pValue, sizeof(POINT));
+	Read((LPBYTE) &pValue, sizeof(BPoint));
 	return *this;
 }
 

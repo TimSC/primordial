@@ -5,9 +5,6 @@
 // Implementation of vector covering motion and acceleration
 //
 #include "stdafx.h"
-#include <math.h>
-//#include <stdio.h>
-//#include <limits.h>
 #include "vector.h"
 
 Vector::Vector()
@@ -41,6 +38,11 @@ void Vector::Serialize(CArchive& ar)
 		ar << dr;
 		ar << r;
 	}
+}
+
+void Vector::TraceDebug()
+{
+//	TRACE("vector pos(%d,%d,%.3f) rate(%.3f, %.3f, %.3f)\n", int(x),int(y),r,dx,dy,dr);
 }
 
 

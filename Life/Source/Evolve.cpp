@@ -54,14 +54,13 @@ LISTENTRY regenTime[REGENTIME_OPTIONS] = {
   {"Too  Slow",    0x003F},
 };
 
-const int BENEFIT_OPTIONS=6;
+const int BENEFIT_OPTIONS=5;
 LISTENTRY benefit[BENEFIT_OPTIONS] = {
   {"Too Low", 2},
   {"Low", 3},
   {"Normal", 4},
   {"High", 5},
-  {"High Noon", 6},
-  {"Sine Wave", 7}
+  {"High Noon", 6}
 };
 
 const int LIFESPAN_OPTIONS=6;

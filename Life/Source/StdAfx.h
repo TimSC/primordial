@@ -16,10 +16,8 @@
 #pragma warning(disable : 4201)
 #include <mmsystem.h>
 #pragma warning(default : 4201)
-#pragma warning(disable : 4244)
-#pragma warning(disable : 4018)
+#include "BArchive.h"
 
-#define _METABOLISM
 #endif // _AFX_NO_AFXCMN_SUPPORT
 
 

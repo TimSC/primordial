@@ -5,7 +5,7 @@
 
 void CSettings::Serialize(CArchive& a)
 {
-	const int nVersion = 3;
+	const int nVersion = 2;
 
 	if (a.IsStoring())
 	{
@@ -16,7 +16,6 @@ void CSettings::Serialize(CArchive& a)
 		a << m_nSegmentsPerArm;
 		a << m_nArmsPerBiot;
 		a << m_bGenerateOnExtinction;
-		a << m_nSkipGenerations;
 
 		for (int i = 0; i < SIDES; i++)
 		{
@@ -27,14 +26,13 @@ void CSettings::Serialize(CArchive& a)
 		a << m_nHeight;
 		a << m_nWidth;
 		a << m_nSizeChoice;
-
 	}
 	else
 	{
 		int nThisVersion;
 		a >> nThisVersion;
 
-		if (nThisVersion >= nVersion)
+		if (nThisVersion != nVersion)
 		{
 			throw new CArchiveException(CArchiveException::badIndex);
 		}
@@ -45,8 +43,7 @@ void CSettings::Serialize(CArchive& a)
 		a >> m_nSegmentsPerArm;
 		a >> m_nArmsPerBiot;
 		a >> m_bGenerateOnExtinction;
-		if (nThisVersion == 3)
-			a >> m_nSkipGenerations;
+
 		for (int i = 0; i < SIDES; i++)
 		{
 			a >> m_sSideAddress[i];
@@ -57,7 +54,13 @@ void CSettings::Serialize(CArchive& a)
 		a >> m_nWidth;
 		a >> m_nSizeChoice;
 	}
+
+	
+	for (int n = 0; n < LINES_BASIC; n++)
+		for (int m = 0; m < LINES_BASIC; m++)
+			m_contact[n][m].Serialize(a);
 }
+
 
 void CSettings::SanityCheck()
 {
@@ -82,7 +85,7 @@ void CSettings::SanityCheck()
 }
 
 
-CSettings &CSettings::operator=(const CSettings& s)
+CSettings& CSettings::operator=(CSettings& s)
 {
 	m_nSick               = s.m_nSick;
 	m_initialPopulation   = s.m_initialPopulation;
@@ -126,7 +129,11 @@ CSettings &CSettings::operator=(const CSettings& s)
 	m_nHeight     = s.m_nHeight;
 	m_nWidth      = s.m_nWidth;
 	m_nSizeChoice = s.m_nSizeChoice;
-	m_nSkipGenerations = s.m_nSkipGenerations;
+
+	for (int n = 0; n < LINES_BASIC; n++)
+		for(int m = 0; m < LINES_BASIC; m++)
+			m_contact[n][m] = s.m_contact[n][m];
+
 	return *this;
 }
 
@@ -138,7 +145,6 @@ void CSettings::Reset(int nWidth, int nHeight)
 	m_nSegmentsPerArm       = 10;
 	m_nArmsPerBiot          = 0;
 	m_bGenerateOnExtinction = TRUE;
-	m_nSkipGenerations = 0;
 
 	for (int i = 0; i < SIDES; i++)
 	{
@@ -150,4 +156,51 @@ void CSettings::Reset(int nWidth, int nHeight)
 	m_nWidth      = nHeight;
 	m_nSizeChoice = 1;
 
+}
+
+
+void CSettings::SetDefaultContact()
+{
+	// You have and the enemy has
+	m_contact[LINE_LEAF][LINE_LEAF    ].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_LEAF][LINE_SHIELD  ].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_LEAF][LINE_INJECTOR].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_LEAF][LINE_MOUTH   ].Set(ContactLine::Eaten, 0.5);
+	m_contact[LINE_LEAF][LINE_EYE     ].Set(ContactLine::Ignore, 1.0); 
+	m_contact[LINE_LEAF][LINE_TOOTH   ].Set(ContactLine::Damaged, 0.5); 
+
+	m_contact[LINE_SHIELD][LINE_SHIELD  ].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_SHIELD][LINE_LEAF    ].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_SHIELD][LINE_MOUTH   ].Set(ContactLine::Defend, 2.0);
+	m_contact[LINE_SHIELD][LINE_INJECTOR].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_SHIELD][LINE_EYE     ].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_SHIELD][LINE_TOOTH   ].Set(ContactLine::Defend, 0.5); 
+
+	m_contact[LINE_MOUTH][LINE_MOUTH   ].Set(ContactLine::Attack, 1.0);
+	m_contact[LINE_MOUTH][LINE_LEAF    ].Set(ContactLine::Eat, 2.0);
+	m_contact[LINE_MOUTH][LINE_SHIELD  ].Set(ContactLine::Defend, 0.5);
+	m_contact[LINE_MOUTH][LINE_INJECTOR].Set(ContactLine::Eat, 2.0);
+	m_contact[LINE_MOUTH][LINE_EYE     ].Set(ContactLine::Eat, 2.0);
+	m_contact[LINE_MOUTH][LINE_TOOTH   ].Set(ContactLine::Defend, 2.0); 
+
+	m_contact[LINE_INJECTOR][LINE_MOUTH   ].Set(ContactLine::Eaten, 0.5);
+	m_contact[LINE_INJECTOR][LINE_LEAF    ].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_INJECTOR][LINE_SHIELD  ].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_INJECTOR][LINE_INJECTOR].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_INJECTOR][LINE_EYE     ].Set(ContactLine::Ignore, 1.0); 
+	m_contact[LINE_INJECTOR][LINE_TOOTH   ].Set(ContactLine::Damaged, 0.5); 
+
+	m_contact[LINE_EYE][LINE_MOUTH   ].Set(ContactLine::Eaten, 0.5);
+	m_contact[LINE_EYE][LINE_LEAF    ].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_EYE][LINE_SHIELD  ].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_EYE][LINE_INJECTOR].Set(ContactLine::Ignore, 1.0);
+	m_contact[LINE_EYE][LINE_EYE     ].Set(ContactLine::Ignore, 1.0); 
+	m_contact[LINE_EYE][LINE_TOOTH   ].Set(ContactLine::Damaged, 0.5); 
+
+	m_contact[LINE_TOOTH][LINE_MOUTH   ].Set(ContactLine::Defend, 0.5);
+	m_contact[LINE_TOOTH][LINE_LEAF    ].Set(ContactLine::Damage, 2.0);
+	m_contact[LINE_TOOTH][LINE_SHIELD  ].Set(ContactLine::Damage, 2.0);
+	m_contact[LINE_TOOTH][LINE_INJECTOR].Set(ContactLine::Damage, 2.0);
+	m_contact[LINE_TOOTH][LINE_EYE     ].Set(ContactLine::Damage, 2.0); 
+	m_contact[LINE_TOOTH][LINE_TOOTH   ].Set(ContactLine::Defend, 1.0); 
 }

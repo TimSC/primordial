@@ -90,9 +90,10 @@ BOOL CSmallView::PreCreateWindow(CREATESTRUCT& cs)
 /////////////////////////////////////////////////////////////////////////////
 // CSmallView message handlers
 //
-void CSmallView::OnIdle() 
+BOOL CSmallView::OnIdle() 
 {
 	if (m_bStarted)
 		GetDocument()->m_env.Skip(this);
 //	TRACE("idle\n");
+	return m_bStarted;
 }

@@ -20,7 +20,6 @@ IMPLEMENT_DYNCREATE(CWorldSize, CPropertyPage)
 CWorldSize::CWorldSize() : CPropertyPage(CWorldSize::IDD)
 {
 	//{{AFX_DATA_INIT(CWorldSize)
-	m_nSkipGenerations = 0;
 	//}}AFX_DATA_INIT
 	m_psp.dwFlags |= PSP_HASHELP;
 }
@@ -35,6 +34,7 @@ void CWorldSize::DoDataExchange(CDataExchange* pDX)
 	//{{AFX_DATA_MAP(CWorldSize)
 	DDX_Control(pDX, IDC_WIDTH, m_widthCtrl);
 	DDX_Control(pDX, IDC_HEIGHT, m_heightCtrl);
+	DDX_Control(pDX, IDC_ENTIRE_SCREEN, m_sizeCtrl);
 	DDX_Control(pDX, IDC_WIDTH_TEXT, m_widthText);
 	DDX_Control(pDX, IDC_HEIGHT_TEXT, m_heightText);
 	DDX_Text(pDX, IDC_WIDTH, m_nWidth);
@@ -42,9 +42,6 @@ void CWorldSize::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_HEIGHT, m_nHeight);
 	DDV_MinMaxInt(pDX, m_nHeight, 200, 4000);
 	DDX_Radio(pDX, IDC_ENTIRE_SCREEN, m_nSizeChoice);
-	DDX_Control(pDX, IDC_ENTIRE_SCREEN, m_sizeCtrl);
-	DDX_Text(pDX, IDC_SKIP_GEN, m_nSkipGenerations);
-	DDV_MinMaxInt(pDX, m_nSkipGenerations, 0, 16);
 	//}}AFX_DATA_MAP
 }
 
@@ -90,14 +87,12 @@ void CWorldSize::Exchange(CSettings& s, bool bSave)
 		s.m_nWidth      = m_nWidth;     
 		s.m_nHeight     = m_nHeight;    
 		s.m_nSizeChoice = m_nSizeChoice;
-		s.m_nSkipGenerations = m_nSkipGenerations;
 	}
 	else
 	{
 		m_nWidth      = s.m_nWidth;     
 		m_nHeight     = s.m_nHeight;    
 		m_nSizeChoice = s.m_nSizeChoice;
-		m_nSkipGenerations = s.m_nSkipGenerations;
 	}
 }
 
