@@ -392,7 +392,11 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
     m_children       = (BYTE) (Integer(8) + 1);
 	m_attackChildren = (BYTE) Bool();
 	m_attackSiblings = (BYTE) Bool();
+#ifdef _LOW_DIVERSITY
 	m_species        = (BYTE) Integer(2);  // Make fewer species to begin with
+#else
+	m_species        = (BYTE) Integer(INIT_SPECIES) * ((MAX_SPECIES + 1)/ INIT_SPECIES);  // Make fewer species to begin with
+#endif
 	m_adultRatio[0]  = (BYTE) (Integer(6) + 1);
 	m_adultRatio[1]  = (BYTE) (Integer(6) + 1);
 	m_mirrored       = (BYTE) Bool();
@@ -522,7 +526,7 @@ void GeneTrait::Mutate(int chance)
 
 	if (Int1024() < chance)
 		m_attackSiblings = (BYTE) Bool();
-
+#ifdef _LOW_DIVERSITY
 	if (Int1024() < chance)
 	{
 		if (Sign() > 0)
@@ -530,6 +534,32 @@ void GeneTrait::Mutate(int chance)
 		else
 			m_species--;
 	}
+#else
+	if (Int1024() < chance * 2)
+		{
+		if (Sign() > 0)
+			{
+ 			m_species += 1;
+			if (Int1024() < chance) //Take Double Step
+				{
+				m_species += 1;
+				}
+			}
+		else
+			{
+			m_species -= 1;
+			if (Int1024() < chance) //Take Double Step
+				{
+				m_species -= 1;
+				}
+			}
+
+		if (m_species > 253)
+			m_species = MAX_SPECIES;
+		else if (m_species > MAX_SPECIES)
+			m_species = 0;
+		}
+#endif
 
 	if (Int1024() < chance)
 		m_adultRatio[0]     = (BYTE) (Integer(6) + 1);
