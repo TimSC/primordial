@@ -27,67 +27,67 @@ protected:
     double dr;  // Rotation rate in degrees
     double r;   // Rotation position in degrees
 
-	// These variables are calculated based on the difference
-	// of the origin from the center of mass
-	double drx; // Change position X based on rotation rate
-	double dry; // Change position Y based on rotation rate
-
+    // These variables are calculated based on the difference
+    // of the origin from the center of mass
+    double drx; // Change position X based on rotation rate
+    double dry; // Change position Y based on rotation rate
+    
 public:
     double mass;
-
+    
 public:
-
+    
     Vector(void);
-
-	virtual void Serialize(CArchive& ar);
-
+    
+    virtual void Serialize(CArchive& ar);
+    
     // Proposes movement in rotation, and translation
-	// Always call tryRotate first!!
+    // Always call tryRotate first!!
     int tryRotate(const POINT& origin, const POINT& center);
     int tryStepX();
     int tryStepY();
-
-	// Actually make movement
+    
+    // Actually make movement
     void makeStep(void);
-
+    
     int GetX() { return (int) x; }
     int GetY() { return (int) y; }
     void backStepX(void) { x -= dx; }
     void backStepY(void) { y -= dy; }
     void backRotate(void){ r -= dr; }
-
+    
     void invertDeltaY(void) { dy = -dy; }
     void invertDeltaX(void) { dx = -dx; }
-
-	double CheckLimit(const double value) const
+    
+    double CheckLimit(const double value) const
 	{
-		if (value > limit)
-			return limit;
-		else
-			if (value < -limit)
-				return -limit;
-
-		return value;
+	    if (value > limit)
+		return limit;
+	    else
+		if (value < -limit)
+		    return -limit;
+	    
+	    return value;
 	}
-	
-	double CheckRLimit(const double value) const
+    
+    double CheckRLimit(const double value) const
 	{
-		if (value > rlimit)
-			return rlimit;
-		else
-			if (value < -rlimit)
-				return -rlimit;
+	    if (value > rlimit)
+		return rlimit;
+	    else
+		if (value < -rlimit)
+		    return -rlimit;
+	    
+	    return value;
+	}
+    
+    void setDeltaX(const double DX) {
+	dx = CheckLimit(DX);
+    }
 
-		return value;
-	}
-	
-	void setDeltaX(const double DX)
-	{
-		dx = CheckLimit(DX);
-	}
     void setDeltaX(const int DX)
 	{
-		dx = CheckLimit((double) DX);
+	    dx = CheckLimit((double) DX);
 	}
     void setDeltaY(const double DY)
 	{
@@ -246,9 +246,9 @@ inline int Vector::tryStepY(void)
 // Actually make the step
 inline void Vector::makeStep(void)
 {
-	int rx = int(drx);
+//	int rx = int(drx);
 //	drx -= double(vx);
-	int ry = int(dry);
+//	int ry = int(dry);
 //	dry -= double(vy);
 	x += (dx + double(drx));
 	y += (dy + double(dry));
