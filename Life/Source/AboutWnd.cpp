@@ -1,11 +1,10 @@
+//////////////////////////////////////////////////////////////////
 // AboutWnd.cpp - Start-up "Splash Screen" Window
-// $Revision: 1.1 $
+// $Revision: 1.2 $
 //
-
+//
 #include "stdafx.h"
-
 #include "resource.h"
-
 #include "AboutWnd.h"
 #include "GlobalPalette.h"
 #include "LoadBitmap.h"
@@ -42,22 +41,17 @@ static const COLORREF CLR_CYAN					= PALETTERGB(   0, 255, 255);
 static const COLORREF CLR_WHITE					= PALETTERGB( 255, 255, 255);
 
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char BASED_CODE THIS_FILE[] = __FILE__;
-#endif
-
-
 /////////////////////////////////////////////////////////////////////////////
 // CSplashWnd static data
+//
 
 /*static*/ CSplashWnd*	CSplashWnd::s_pSplashWnd	= NULL;
-/*static*/ BOOL			CSplashWnd::s_bIgnoreInput	= FALSE;
+/*static*/ BOOL		CSplashWnd::s_bIgnoreInput	= FALSE;
 
 
 /////////////////////////////////////////////////////////////////////////////
 // CSplashWnd static methods
+//
 
 /*static*/ void
 CSplashWnd::ShowSplashScreen(CString sOwner, CWnd* pParentWnd /*= NULL*/)
