@@ -40,7 +40,7 @@ static const CString cons   = _T("bcdfghjklmnpqrstvwx");
 	Randomizer rand;
 	if (m_sName.IsEmpty())
 	{
-		int max = 1 + rand.Integer(3);
+		int max = 1 + rand.Integer(5);
 
 		for (int i = 0; i < max; i++)
 		{
@@ -76,7 +76,7 @@ void Biot::SetName(CString sName)
 //////////////////////////////////////////////////////////////////////
 // GetFatherName
 //
-CString Biot::GetFatherName()
+CString Biot::GetFatherName() const
 {
 	CString sName;
 	if (m_fatherId == 0)
@@ -117,7 +117,8 @@ CString Biot::GetFullName()
 //////////////////////////////////////////////////////////////////////
 // PercentEnergy
 //
-float Biot::PercentEnergy()
+#ifndef _METABOLISM
+float Biot::PercentEnergy() const
 {
 	float f = ((float) 100 * energy) / ((float) (adultBaseEnergy << 1));
 	if (f > 100.0)
@@ -125,7 +126,7 @@ float Biot::PercentEnergy()
 	else
 		return f;
 }
-
+#endif
 
 //////////////////////////////////////////////////////////////////////
 // FreeBitmaps
@@ -157,7 +158,7 @@ void Biot::ClearSettings(void)
 	m_livingChildren = 0;
 	m_totalChildren  = 0;
 	m_generation     = 0;
-
+	
 	m_hBitmap        = NULL;
 	m_bitmapWidth  = 0;
 	m_bitmapHeight = 0;
@@ -184,16 +185,20 @@ void Biot::ClearSettings(void)
 
 	ZeroMemory(m_retractDrawn,               sizeof(m_retractDrawn));
 	ZeroMemory(m_retractRadius,              sizeof(m_retractRadius));
-
+	
 	for (int i = 0; i < MAX_SYMMETRY; i++)
 		m_retractSegment[i] = -1;
-
+	
 	ZeroMemory(state,    sizeof(state));
 
-	// Statistics
+
+#ifdef _METABOLISM
+	metabolism.ClearSettings();
+#else
+		// Statistics
 	ZeroMemory(m_statEnergy, sizeof(m_statEnergy));
 	m_statIndex = 0;
-
+#endif	
 	int nPeno = 0;
 	for (int nGene = 0; nGene < MAX_SEGMENTS; nGene++)
 		for (int nLine = 0; nLine < MAX_SYMMETRY; nLine++)
@@ -226,14 +231,17 @@ int Biot::RandomCreate(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 	m_motherId = 0;
 
 	vector.setDeltaY(0); 
-	vector.setDeltaX(0);
+	vector.setDeltaX(0); 
 	vector.setDeltaRotate(0);
 
 	Initialize(TRUE);
+#ifdef _METABOLISM
+	metabolism.Randomize();	
+#endif
+
 
 	i = PlaceRandom();
 	SetBonus();
-
 	GetName();
 
 	return i;
@@ -255,14 +263,24 @@ void Biot::Mutate(int chance)
 	trait.Mutate(chance);
 	m_commandArray.Mutate(chance);
 
+#ifdef  _METABOLISM
+	metabolism.adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
+	if (metabolism.energy < metabolism.adultBaseEnergy)
+		metabolism.energy = metabolism.adultBaseEnergy;
+#else	
 	adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
 	if (energy < adultBaseEnergy)
 		energy = adultBaseEnergy;
+#endif
 
 	SetRatio();
 	totalDistance   = Symmetric(ratio);
+
+#ifdef _METABOLISM
+	metabolism.childBaseEnergy = totalDistance * env.options.startEnergy;
+#else
 	childBaseEnergy = totalDistance * env.options.startEnergy;
-  
+#endif   
 	// If not loaded, we need a new ID
 	m_maxAge = trait.GetMaxAge();
 
@@ -294,6 +312,21 @@ void Biot::Mutate(int chance)
 //
 void Biot::SetRatio(void)
 {
+#ifdef _METABOLISM
+  if (metabolism.energy > 0)
+  {
+    ratio = ((2 * metabolism.adultBaseEnergy) / metabolism.energy) + trait.GetAdultRatio() - 1;
+    if (ratio > MAX_RATIO)
+      ratio = MAX_RATIO;
+
+    if (ratio < trait.GetAdultRatio())
+      ratio = trait.GetAdultRatio();
+  }
+  else
+    ratio = MAX_RATIO;
+
+  metabolism.stepEnergy = ((2 * metabolism.adultBaseEnergy) / BaseRatio());
+#else
   if (energy > 0)
   {
     ratio = ((2 * adultBaseEnergy) / energy) + trait.GetAdultRatio() - 1;
@@ -307,6 +340,7 @@ void Biot::SetRatio(void)
     ratio = MAX_RATIO;
 
   stepEnergy = ((2 * adultBaseEnergy) / BaseRatio());
+#endif
 }
 
 
@@ -317,7 +351,16 @@ void Biot::SetRatio(void)
 int Biot::Initialize(BOOL bRandom)
 {
 	int i;
+#ifdef _METABOLISM
+	metabolism.adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
+	if (bRandom || metabolism.energy <= 0)
+		metabolism.energy = metabolism.adultBaseEnergy;
 
+	SetRatio();
+	totalDistance   = Symmetric(ratio);
+
+	metabolism.childBaseEnergy = totalDistance * env.options.startEnergy;
+#else
 	adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
 	if (bRandom || energy <= 0)
 		energy = adultBaseEnergy;
@@ -326,7 +369,7 @@ int Biot::Initialize(BOOL bRandom)
 	totalDistance   = Symmetric(ratio);
 
 	childBaseEnergy = totalDistance * env.options.startEnergy;
-  
+#endif
 	// If not loaded, we need a new ID
 	m_Id     = env.GetID();
 	m_maxAge = trait.GetMaxAge();
@@ -353,7 +396,6 @@ int Biot::PlaceRandom(void)
 
 	Randomizer rand;
 
-
 	for (i = 0; i < 24; i++)
 	{
 		//BUG: Value passed in might be zero, causing divide error in Integer
@@ -361,8 +403,6 @@ int Biot::PlaceRandom(void)
 		origin.y = rand.Integer((env.Height()) + topY  - bottomY) - topY;
 		SetScreenRect();
 
-//		BRectSortPos pos;
-//		pos.
 		BRectSortPos pos;
 		pos.FindRectsIntersecting(*this);
 
@@ -418,7 +458,7 @@ static int side[8][2] = {
 		BRectSortPos pos;
 		pos.FindRectsIntersecting(*this);
 
-      if (env.HitCheck(this, pos) == NULL)
+	  if (env.HitCheck(this, pos) == NULL)
       {
         if (parent.trait.GetDisperseChildren())
         {
@@ -472,7 +512,7 @@ int  nLastGene = -1;
 	ZeroMemory(startPt,  sizeof(startPt));
 	ZeroMemory(nType,    sizeof(nType));
 
-	for (int nLimb = 0; nLimb < trait.GetLines(); nLimb++)
+	for (short nLimb = 0; nLimb < trait.GetLines(); nLimb++)
 	{	
 		nLastGene = -1;
 		int lineType    = trait.GetLineTypeIndex(nLimb);
@@ -619,7 +659,6 @@ double d = double(((start.x - stop.x) * (start.x - stop.x)) +
   return (long) sqrt(d);
 }
 
-
 //////////////////////////////////////////////////////////////////////
 // Draw 
 //
@@ -646,6 +685,10 @@ void Biot::Draw(void)
 //
 void Biot::EraseAndDraw(int operation)
 {
+if ((env.options.m_generation & env.options.m_nSkipGenerations) 
+	!= env.options.m_nSkipGenerations)
+		return;
+
 	HBITMAP hOld;
 	int  lastWidth  = Width();
 	int  lastHeight = Height();
@@ -754,11 +797,19 @@ void Biot::PrepareErase(int operation)
 		case GROW:
 		{
 			ratio--;
+#ifdef _METABOLISM
+			metabolism.stepEnergy = ((2 * metabolism.adultBaseEnergy) / BaseRatio());
+#else
 			stepEnergy = ((2 * adultBaseEnergy) / BaseRatio());
+#endif
 			totalDistance   = Symmetric(ratio);
 			for (int i = 0; i < MAX_GENES; i++)
 				state[i] = distance[i];
+#ifdef _METABOLISM
+			metabolism.childBaseEnergy = totalDistance * env.options.startEnergy;
+#else
 			childBaseEnergy = totalDistance * env.options.startEnergy;
+#endif
 			SetScreenRect();
 			SetBonus();
 			break;
@@ -895,7 +946,7 @@ void Biot::FormBitmap(int pen)
 		int startX;
 		int startY;
 
-		hOldPen = (HPEN) SelectObject(env.m_hMemoryDC, env.options.hPen[0]);
+		hOldPen = (HPEN) ::SelectObject(env.m_hMemoryDC, env.options.hPen[0]);
 		for (i = 0; i < genes; i++)
 		{
 			if (state[i] > 0)
@@ -908,7 +959,7 @@ void Biot::FormBitmap(int pen)
 				if (aPen != pen)
 				{
 					pen = aPen;
-					SelectObject(env.m_hMemoryDC, env.options.hPen[pen]);
+					::SelectObject(env.m_hMemoryDC, env.options.hPen[pen]);
 				}
 
 				startX = startPt[i].x - leftX;
@@ -1079,16 +1130,30 @@ CLine cLine;
 
 	// Statistics
 	if ((m_age & 0x3F) == 0)
-	{
+		{
+#ifdef _METABOLISM
+		metabolism.DoStats(this);		
+#else
 		m_statEnergy[m_statIndex++] = PercentEnergy();
 		if (m_statIndex >= MAX_ENERGY_HISTORY)
 			m_statIndex = 0;
-	}
+#endif
+		}
+
+#ifdef _METABOLISM
+	CResources * cell = GetCell();
+	metabolism.StepMetabolism(cell);
+
+	//If we are choking on a surplus of raw material die
+	//too much of a good thing
+	if ((metabolism.redStore > 30000000) || (metabolism.greenStore > 30000000) || (metabolism.blueStore > 30000000))
+		bDie = TRUE;
+#endif	
 
 	//TODO: Move doesn't take into account rotation!!
 	//TODO: Sometimes huge rotation steps are taken!!
     // Make a move
-    MoveBiot(dx, dy);
+	MoveBiot(dx, dy);
 
     // Is the biot trying to leave the environment?
 	if (!env.WithinBorders(*this))  //IsContainedBy(env))    // JJS!
@@ -1229,7 +1294,7 @@ CLine cLine;
 
 						// Calculate adjusted dx and dy for enemy
 						int edeltaX = enemy->CenterX() - x;//enemy->origin.x - x;
-						int edeltaY = enemy->CenterY() - y;//enemy->origin.y - y;
+						int edeltaY = enemy->CenterY() - y;//enemy->origin.y - y;						double eradius = enemy->vector.distance(edeltaX, edeltaY);
 						double eradius = enemy->vector.distance(edeltaX, edeltaY);
 						ASSERT(eradius < 1000);
            
@@ -1286,6 +1351,12 @@ CLine cLine;
 		if (genes <= 0)
 		{
 			env.PlayResource("PL.TooOld");
+#ifdef _METABOLISM			
+			CResources * cell =  GetCell();
+			cell->m_nRed += metabolism.redStore;  
+			cell->m_nBlue += metabolism.blueStore;  
+			cell->m_nGreen += metabolism.greenStore;
+#endif
 			Erase();
 	        return FALSE;
 		}
@@ -1336,7 +1407,12 @@ CLine cLine;
 
 	if (m_nSick)
 	{
+#ifdef _METABOLISM
+		metabolism.energy -= 2000;
+#else
 		energy -= 2000;
+#endif
+
 		m_nSick--;
 
 		if (!m_nSick)
@@ -1344,8 +1420,13 @@ CLine cLine;
 	}
 	else
 	{
+#ifdef _METABOLISM
+		metabolism.energy += (turnBenefit - totalDistance);
+		metabolism.energy += (long) (metabolism.m_dBonusRatio * turnBenefit);
+#else
 		energy += (turnBenefit - totalDistance);
 		energy += (long) (m_dBonusRatio * turnBenefit);
+#endif
 	}
 
 
@@ -1354,6 +1435,83 @@ CLine cLine;
   //  energy += turnCost;
 
 	// Did we die?
+#ifdef _METABOLISM
+		if (metabolism.energy <= 0 || totalDistance <= 0)
+	{
+		if (totalDistance <= 0 || metabolism.energy >= 0)
+			env.PlayResource("PL.Eaten");
+		else
+			env.PlayResource("PL.NoEnergy");
+		CResources * cell  = GetCell();
+		cell->m_nRed += metabolism.redStore;  
+		cell->m_nBlue += metabolism.blueStore;  
+		cell->m_nGreen += metabolism.greenStore;
+		Erase();
+		return FALSE;
+	}
+		// Is it time to grow, die, or give birth?
+	if ((m_age & 0x0F) == 0x0F)
+	{
+		CheckReproduction();
+
+		if (ratio > trait.GetAdultRatio() && 
+			metabolism.energy > metabolism.stepEnergy)
+		{
+			EraseAndDraw(GROW);
+		}
+
+		if (m_maxAge < m_age)
+		{
+			bDie = TRUE;
+		}
+	}
+
+	if (bInjured && (m_age & env.options.regenTime) == env.options.regenTime)
+	{
+		LONG regenEnergy  = metabolism.childBaseEnergy >> 2;
+		if (metabolism.energy > regenEnergy)
+		{
+			bInjured = FALSE;
+
+			// Regenerate leaves
+			for (i = 0; i < MAX_SYMMETRY && metabolism.energy > regenEnergy; i++)
+			{ 
+				int j = i;
+				while (j < genes)
+				{
+					if (state[j] < distance[j]  && distance[j] > 0)
+					{
+						metabolism.energy   -= env.options.regenCost; //env.leafRegen[nType[j]];
+  
+						state[j]++;
+						bInjured = TRUE;
+						if (state[j] <= 0)
+						{
+							// we cant start growing the next branch unitl we are > 0
+							break;
+						}
+						else
+						{
+							if (state[j] == distance[j] || state[j] == 1)
+								newType = -2;
+
+							if (nType[j] == GREEN_LEAF)
+								turnBenefit += env.options.m_leafEnergy;
+      
+							// How much does this effect our distance?
+							colorDistance[nType[j]]++;
+							totalDistance++;
+
+							//!! We should change mass here
+						}
+					}
+					j += MAX_SYMMETRY;
+				}
+			}
+		}
+	}
+
+#else
 	if (energy <= 0 || totalDistance <= 0)
 	{
 		if (totalDistance <= 0 || energy >= 0)
@@ -1364,9 +1522,7 @@ CLine cLine;
 		Erase();
 		return FALSE;
 	}
-
-
-	// Is it time to grow, die, or give birth?
+		// Is it time to grow, die, or give birth?
 	if ((m_age & 0x0F) == 0x0F)
 	{
 		CheckReproduction();
@@ -1428,6 +1584,7 @@ CLine cLine;
 		}
 	}
 
+#endif
 	return TRUE;
 }
 
@@ -1441,7 +1598,11 @@ void Biot::CheckReproduction()
 	int i;
 
 	// If it has enough energy, and is fertilized if sexual only -> reproduce
+#ifdef _METABOLISM
+	if (metabolism.energy >= (metabolism.adultBaseEnergy << 1))
+#else
 	if (energy >= (adultBaseEnergy << 1))
+#endif
 	{
 		// Automatically lose excess energy above your base energy
 		// Lose energy even if your children can't be placed - life is just not fair!
@@ -1452,9 +1613,11 @@ void Biot::CheckReproduction()
 		{
 			Biot *nBiot;
 			int children = trait.GetNumberOfChildren();
-
+#ifdef _METABOLISM
+			metabolism.energy = metabolism.adultBaseEnergy;
+#else
 			energy = adultBaseEnergy;
-
+#endif
 			for (i = 0; i < children; i++)
 			{
 				nBiot = new Biot(env);
@@ -1473,6 +1636,9 @@ void Biot::CheckReproduction()
 					{
 						env.AddBiot(nBiot);
 						nBiot->SetBonus();
+#ifdef _METABOLISM
+						metabolism.CrossMetabolism(nBiot->metabolism);
+#endif
 					}
 				}
 			}
@@ -1559,20 +1725,23 @@ Biot& Biot::operator=(Biot& copyMe)
 			m_generation = copyMe.m_fatherGeneration + 1;
 			m_sName = copyMe.m_sFatherName;
 			m_sWorldName = copyMe.m_sWorldName;
-		}
+		}		
 //		env.PlayResource("PL.Mate");
 	}
 
 	trait.Mutate(env.options.chance);
-
+	
 	m_commandArray.Mutate(env.options.chance);
 
 	max_genes = MAX_GENES;
 
 	origin.x = copyMe.origin.x;
 	origin.y = copyMe.origin.y;
-        
+#ifdef _METABOLISM       
+	metabolism.energy     = copyMe.metabolism.adultBaseEnergy / copyMe.trait.GetNumberOfChildren();
+#else
 	energy     = copyMe.adultBaseEnergy / copyMe.trait.GetNumberOfChildren();
+#endif
 	m_motherId = copyMe.m_Id;
 	m_fatherId = copyMe.m_mateId;
 
@@ -1642,6 +1811,15 @@ int Biot::Contacter(Biot* enemy, int dx, int dy, int& x, int& y)
 
 								if (bInteract)
 								{
+#ifdef _METABOLISM
+									enemy->metabolism.energy +=  enemyDeltaEnergy;
+									BOOL bNoContact = enemy->AdjustState(j, enemyDelta);
+
+									// Translate for flash color
+									enemy->newType = env.options.newType[enemy->nType[j]];
+
+									metabolism.energy += deltaEnergy;
+#else
 									enemy->energy +=  enemyDeltaEnergy;
 									BOOL bNoContact = enemy->AdjustState(j, enemyDelta);
 
@@ -1649,6 +1827,7 @@ int Biot::Contacter(Biot* enemy, int dx, int dy, int& x, int& y)
 									enemy->newType = env.options.newType[enemy->nType[j]];
 
 									energy += deltaEnergy;
+#endif
 									bNoContact |= AdjustState(i, delta);
 
 									// Translate for flash color
@@ -1689,8 +1868,11 @@ BOOL Biot::ContactLine(Biot& enemy, int nEnemyPeno, int nPeno, short& delta, lon
 {
 	delta = 0;
 	deltaEnergy = 0;
-
+#ifdef _METABOLISM
+	if (enemy.metabolism.energy <= 0 || metabolism.energy <= 0 ||
+#else
 	if (enemy.energy <= 0 || energy <= 0 ||
+#endif
 		(AreSiblings(enemy) && !SiblingsAttack(enemy)) ||
 		(OneIsChild(enemy) && !AttackChildren(enemy)))
 		return FALSE;
@@ -1716,28 +1898,60 @@ BOOL Biot::ContactLine(Biot& enemy, int nEnemyPeno, int nPeno, short& delta, lon
 		return FALSE;
 
 	case CONTACT_EAT:
+		{
 		delta = LengthLoss(nPeno, min(enemy.state[nEnemyPeno], state[nPeno]));
 		ASSERT(delta <= totalDistance);
+#ifdef _METABOLISM
+		// Eat up to twice the percent length of the enemy, depending on how red you are
+		deltaEnergy = (long) (PercentColor(RED_LEAF) * (double) (delta << 1) * ((enemy.metabolism.energy / enemy.totalDistance) + 1));
 
+		if (deltaEnergy > enemy.metabolism.energy)
+			deltaEnergy = enemy.metabolism.energy;
+
+		//Take a proportionate part of their energy complex 1, 2, and 3
+		int nChange = enemy.metabolism.e1store * (float)deltaEnergy/(float)enemy.metabolism.energy;
+		metabolism.e1store += nChange;  enemy.metabolism.e1store -= nChange;
+		nChange = enemy.metabolism.e2store * (float)deltaEnergy/(float)enemy.metabolism.energy;
+		metabolism.e2store += nChange; enemy.metabolism.e2store -= nChange; 
+		nChange = enemy.metabolism.e3store * (float)deltaEnergy/(float)enemy.metabolism.energy;
+		metabolism.e3store += nChange; enemy.metabolism.e3store -= nChange; 
+#else
 		// Eat up to twice the percent length of the enemy, depending on how red you are
 		deltaEnergy = (long) (PercentColor(RED_LEAF) * (double) (delta << 1) * ((enemy.energy / enemy.totalDistance) + 1));
 
 		if (deltaEnergy > enemy.energy)
 			deltaEnergy = enemy.energy;
-
+#endif
 		delta = 0;
+		}
 		break;
 
  	case CONTACT_EATEN:
+		{
 		delta = LengthLoss(nPeno, min(enemy.state[nEnemyPeno], state[nPeno]));
 		ASSERT(delta <= totalDistance);
-	
+#ifdef _METABOLISM	
+		deltaEnergy = (delta << 1) * ((metabolism.energy / totalDistance) + 1);
+
+
+		if (deltaEnergy > metabolism.energy)
+			deltaEnergy = metabolism.energy;
+
+		//Lose a proportionate part of their energy complex 1, 2, and 3
+		int nChange = metabolism.e1store * (float)deltaEnergy/(float)metabolism.energy;
+		enemy.metabolism.e1store += nChange;  metabolism.e1store -= nChange;
+		nChange = metabolism.e2store * (float)deltaEnergy/(float)metabolism.energy;
+		enemy.metabolism.e2store += nChange; metabolism.e2store -= nChange; 
+		nChange = metabolism.e3store * (float)deltaEnergy/(float)metabolism.energy;
+		enemy.metabolism.e3store += nChange; metabolism.e3store -= nChange; 
+#else
 		deltaEnergy = (delta << 1) * ((energy / totalDistance) + 1);
 
 		if (deltaEnergy > energy)
-			deltaEnergy = energy;
-
+			deltaEnergy = energy;		
+#endif
 		deltaEnergy = -deltaEnergy;
+		}
 		break;
 	
 	case CONTACT_DESTROY:
@@ -1757,11 +1971,25 @@ BOOL Biot::ContactLine(Biot& enemy, int nEnemyPeno, int nPeno, short& delta, lon
 
 		double percentDifference =	((double)(colorDistance[RED_LEAF] - enemy.colorDistance[RED_LEAF])) /
 									((double)(colorDistance[RED_LEAF] + enemy.colorDistance[RED_LEAF]));						
-		
+#ifdef _METABOLISM		
+		if (percentDifference > 0)
+			deltaEnergy = (long) (percentDifference * (double) ((delta << 1) * (enemy.metabolism.energy / enemy.totalDistance) + 1));
+		else
+			deltaEnergy = (long) (percentDifference * (double) ((delta << 1) * (metabolism.energy / totalDistance) + 1));
+
+		//Take a proportionate part of their energy complex 1, 2, and 3
+		int nChange = enemy.metabolism.e1store * (float)deltaEnergy/(float)enemy.metabolism.energy;
+		metabolism.e1store += nChange;  enemy.metabolism.e1store -= nChange;
+		nChange = enemy.metabolism.e2store * (float)deltaEnergy/(float)enemy.metabolism.energy;
+		metabolism.e2store += nChange; enemy.metabolism.e2store -= nChange; 
+		nChange = enemy.metabolism.e3store * (float)deltaEnergy/(float)enemy.metabolism.energy;
+		metabolism.e3store += nChange; enemy.metabolism.e3store -= nChange; 
+#else
 		if (percentDifference > 0)
 			deltaEnergy = (long) (percentDifference * (double) ((delta << 1) * (enemy.energy / enemy.totalDistance) + 1));
 		else
 			deltaEnergy = (long) (percentDifference * (double) ((delta << 1) * (energy / totalDistance) + 1));
+#endif
 		break;
 	}
 
@@ -1863,18 +2091,18 @@ short Biot::LengthLoss(int nPeno, short delta)
 // Asexual males do not accept genes
 // 
 inline void Biot::InjectGenes(int type, Biot& enemy)
-{
+	{
 	if (type  == WHITE_LEAF && 
 		enemy.ratio == enemy.trait.GetAdultRatio() &&
 		SpeciesMatch(enemy.trait.GetSpecies()) &&
 		!enemy.trait.IsMale())
-	{
+		{
 		enemy.CopyGenes(*this);
 		enemy.m_mateId = m_Id;
 		enemy.newType  = type;
-		env.PlayResource("PL.Mate");
+		env.PlayResource("PL.Mate");		
+		}
 	}
-}
 
 
 //////////////////////////////////////////////////////////////////////
@@ -1939,7 +2167,11 @@ double translation      = fabs(vector.getDeltaX()) + fabs(vector.getDeltaY());
     *delta = enemy->LengthLoss(eline, *delta);
 
     if ((enemy->totalDistance - ((LONG)*delta)) <= 0)
-      energyTransfer = enemy->energy;
+#ifdef _METABOLISM
+		energyTransfer = enemy->metabolism.energy;
+#else
+		energyTransfer = enemy->energy;
+#endif
     else
     {
       // The greater my relative size, the better
@@ -1952,8 +2184,12 @@ double translation      = fabs(vector.getDeltaX()) + fabs(vector.getDeltaY());
 //        et = (yourSize / (enemySize + yourSize)) + 0.5;
 //      else
 //        et = 1.0;
+#ifdef _METABOLISM
+		et = ((double)enemy->metabolism.energy * (double) (contact * (*delta)) / (double) enemy->totalDistance);
+#else
+		et = ((double)enemy->energy * (double) (contact * (*delta)) / (double) enemy->totalDistance);
+#endif
 
-      et = ((double)enemy->energy * (double) (contact * (*delta)) / (double) enemy->totalDistance);
 
 //      if ((translation + enemyTranslation) > 0)
 //        et *= (0.5 + translation / (translation + enemyTranslation));
@@ -1993,14 +2229,23 @@ double translation      = fabs(vector.getDeltaX()) + fabs(vector.getDeltaY());
     // We got a negative delta here and a totalDistance of zero
     // All lines in state were negative - it may be line zero was attacked
     // You pick your line, pick the enemies, possibly make your next line negative
+#ifdef _METABOLISM
     if ((totalDistance - ((LONG)totalLoss)) <= 0)
+      energyTransfer = -metabolism.energy;
+    else
+    {
+      // The smaller my relative size, the bigger the loss
+      // The larger the delta, as compared to my size, the worse I'm off
+      et = ((double)metabolism.energy * (double) (contact * (*delta)) / (double) totalDistance);
+#else
+	  if ((totalDistance - ((LONG)totalLoss)) <= 0)
       energyTransfer = -energy;
     else
     {
       // The smaller my relative size, the bigger the loss
       // The larger the delta, as compared to my size, the worse I'm off
       et = ((double)energy * (double) (contact * (*delta)) / (double) totalDistance);
-
+#endif
       // The faster my emeny, the more I lose
       if ((translation + enemyTranslation) > 0)
         et *= (0.5 + enemyTranslation / (translation + enemyTranslation));
@@ -2031,6 +2276,11 @@ void Biot::CopyGenes(Biot& enemy)
 	m_sFatherName      = enemy.m_sName;
 	m_sFatherWorldName = enemy.m_sWorldName;
 	m_fatherGeneration = enemy.m_generation;
+	genes2 = enemy.genes;
+#ifdef _METABOLISM
+	memcpy(metabolism.m_matesMetabolism1, enemy.metabolism.metabolism1, sizeof(enemy.metabolism.metabolism1));
+	memcpy(metabolism.m_matesMetabolism2, enemy.metabolism.metabolism2, sizeof(enemy.metabolism.metabolism2));
+#endif
 }
 
 
@@ -2039,22 +2289,26 @@ void Biot::CopyGenes(Biot& enemy)
 //
 //
 void Biot::Serialize(CArchive& ar)
-{
-	const BYTE archiveVersion = 11;
-	long i;
-	
-	if (ar.IsLoading())
 	{
-		BYTE version;
+#ifdef _METABOLISM
+	const BYTE archiveVersion = 12;
+#else
+	const BYTE archiveVersion = 12;
+#endif
+	long i;
+	BYTE version;
+
+	if (ar.IsLoading())
+		{
 		// Check version
 		ar >> version;
-		if (version != archiveVersion)
+		if (version > archiveVersion)
 			AfxThrowArchiveException(CArchiveException::badSchema, _T("Biot"));
-	}
+		}
 	else
-	{
+		{
 		ar << archiveVersion;
-	}
+		}
 
 	// Store or load other objects
 	trait.Serialize(ar);
@@ -2068,10 +2322,15 @@ void Biot::Serialize(CArchive& ar)
 	m_commandArray2.Serialize(ar);
 
 	vector.Serialize(ar);
-
+#ifdef _METABOLISM
+	if (version >= 12)
+			{
+			metabolism.Serialize(ar);
+			}
+#endif
 	// Now handle biot level variables
 	if (ar.IsLoading())
-	{
+		{
 		ar.Read((LPBYTE) state, sizeof(state));
 
 		ar.Read((LPBYTE) m_retractDrawn, sizeof(m_retractDrawn));
@@ -2081,12 +2340,16 @@ void Biot::Serialize(CArchive& ar)
 		ar >> max_genes;
 		ar >> genes;
 		ar >> origin;
+#ifndef _METABOLISM
 		ar >> energy;
+#endif
 		ar >> bDie;
 		ar >> m_Id;
 		ar >> m_motherId;
 		ar >> genes2;
+#ifndef _METABOLISM
 		ar >> stepEnergy;
+#endif
 		ar >> ratio;
 		ar >> m_age;
 		ar >> m_sName;
@@ -2111,9 +2374,9 @@ void Biot::Serialize(CArchive& ar)
 
 		if (ratio < trait.GetAdultRatio())
 			ratio = trait.GetAdultRatio();
-	}
+		}
 	else
-	{
+		{
 		ar.Write((LPBYTE)state, sizeof(state));
 
 		ar.Write((LPBYTE) m_retractDrawn, sizeof(m_retractDrawn));
@@ -2123,29 +2386,39 @@ void Biot::Serialize(CArchive& ar)
 		ar << max_genes;
 		ar << genes;
 		ar << origin;
+#ifndef _METABOLISM
 		ar << energy;
+#endif
 		ar << bDie;
 		ar << m_Id;
 		ar << m_motherId;
 		ar << genes2;
+#ifndef _METABOLISM
 		ar << stepEnergy;
+#endif
 		ar << ratio;
 		ar << m_age;
 		ar << m_sName;
 		ar << m_sWorldName;
 		ar << m_sFatherName;
 		ar << m_sFatherWorldName;
+		}
 	}
-}
 
 
 BOOL Biot::OnOpen()
 {
+#ifdef _METABOLISM
+	metabolism.adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
+
+	totalDistance   = Symmetric(ratio);
+	metabolism.childBaseEnergy = totalDistance * env.options.startEnergy;
+#else
 	adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
 
 	totalDistance   = Symmetric(ratio);
 	childBaseEnergy = totalDistance * env.options.startEnergy;
-
+#endif
 	// Lets assume injury
 	bInjured = TRUE;
 
@@ -2645,4 +2918,679 @@ short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 	return nRate;
 }
 
+#ifdef _METABOLISM
+CResources * Biot::GetCell()
+	{
+	int nRow = origin.y / env.m_nCellHeight + 1;
+	int nCol = origin.x / env.m_nCellWidth + 1;
+	
+	return &(env.m_matCells[env.Cell(nRow, nCol)]);
+	}
+#endif
+/*
+///////////////////////////////////////////////////////////////////
+// PrepareEvent
+//
+// Launches the next event.  It uses the
+// nextEvent of the current event versus the
+// best nextEvent that occurs because of
+// stimulation.
 
+void Biot::RequestNextEvent(int nextDesiredEvent, int nextDesiredLine)
+{
+	// Is there a next event set at all
+	// if there is one already established, should this latest event take
+	// priority
+	if (m_nextEvent == GeneEvent::EVENT_MAX ||
+		event[m_nextEvent].ShouldInterruptMe(event[nextDesiredEvent], (nextDesiredLine != m_nextLine)))
+	{
+		m_nextEvent = nextDesiredEvent;
+		m_nextLine  = nextDesiredLine;
+
+		// Now compare against the current event to determine if we should terminate
+		bTerminateEvent = event[m_currentEvent].ShouldInterruptMe(event[m_nextEvent], (m_nextLine != m_currentLine));
+	}		
+}
+
+void Biot::PrepareEvent(int nextDesiredEvent, int nextDesiredLine)
+{
+	if (m_nextEvent == GeneEvent::EVENT_MAX ||
+		event[m_nextEvent].ShouldInterruptMe(event[nextDesiredEvent], (nextDesiredLine != m_nextLine)))
+	{
+		m_currentEvent = nextDesiredEvent;
+		m_currentLine  = nextDesiredLine;
+	}
+	else
+	{
+		m_currentEvent = m_nextEvent;
+		m_currentLine  = m_nextLine;
+	}
+
+	ZeroMemory(cState, sizeof(cState));
+	m_currentGroup = 0;
+	m_currentWait  = 0;
+	bTerminateEvent = FALSE;
+	m_nextEvent = GeneEvent::EVENT_MAX;
+	ClearReservations();
+	event[m_currentEvent].Initialize(*this);
+}
+
+
+
+
+//////////////////////////////////////////////////////////////
+// Reserves a line
+//
+//
+BOOL Biot::ReserveFullLine(int nLine)
+{
+	ASSERT(nLine < MAX_SYMMETRY && nLine >= 0);
+
+	if (reservedLine[nLine])
+	{
+		TRACE("Rejected Line Command %d\n", nLine);
+		return FALSE;
+	}
+
+	reservedLine[nLine] = 1;
+	return TRUE;
+}
+
+void Biot::ReleaseFullLine(int nLine)
+{
+	ASSERT(nLine < MAX_SYMMETRY && nLine >= 0);
+
+	reservedLineType[nLine] = 0;
+}
+
+
+//////////////////////////////////////////////////////////////
+// Reserves all the lines associated with a type
+//
+//
+BOOL Biot::ReserveLineType(int nLineType)
+{
+	ASSERT(nLineType < MAX_LIMB_TYPES && nLineType >= 0);
+
+	if (reservedLineType[nLineType])
+	{
+		TRACE("Rejected line type reservation %d\n", nLineType);
+		return FALSE;
+	}
+
+	reservedLineType[nLineType] = 1;
+	return TRUE;
+}
+
+void Biot::ReleaseLineType(int nLineType)
+{
+	ASSERT(nLineType < MAX_LIMB_TYPES && nLineType >= 0);
+
+	reservedLineType[nLineType] = 0;
+}
+
+
+//////////////////////////////////////////////////////////////
+// Reserves a segment of all the lines associated with a type
+//
+//
+BOOL Biot::ReserveSegType(int nLineType, int segment)
+{
+	ASSERT(nLineType < MAX_LIMB_TYPES && nLineType >= 0);
+	ASSERT(segment < MAX_SEGMENTS && segment >= 0);
+
+	if (reservedSegType[nLineType][segment])
+	{
+		TRACE("Rejected segment type reservation %d %d\n", nLineType, segment);
+		return FALSE;
+	}
+
+	reservedSegType[nLineType][segment] = 1;
+
+	return TRUE;
+}
+
+
+void Biot::ReleaseSegType(int nLineType, int segment)
+{
+	ASSERT(nLineType < MAX_LIMB_TYPES && nLineType >= 0);
+	ASSERT(segment < MAX_SEGMENTS && segment >= 0);
+
+	reservedSegType[nLineType][segment] = 0;
+}
+
+
+/////////////////////////////////////////////////////////
+// ReserveLine
+//
+// Returns TRUE if the target was reserved. Pass in the
+// segment to reserve.  The line from that segment to the
+// end of the line is reserved.
+//
+inline BOOL Biot::ReserveLine(int nPeno)
+{
+	for (int i = nPeno; i < MAX_GENES; i += MAX_SYMMETRY)
+		if (reserved[i])
+			return FALSE;
+
+	for (i = nPeno; i < MAX_GENES; i += MAX_SYMMETRY)
+		reserved[i]++;
+
+	return TRUE;
+}
+
+
+/////////////////////////////////////////////////////////
+// ReleaseLine
+//
+//
+inline void Biot::ReleaseLine(int nPeno)
+{
+	for (int i = nPeno; i < MAX_GENES; i += MAX_SYMMETRY)
+		reserved[i] = 0;
+}	
+
+/////////////////////////////////////////////////////////
+// ClearReservations
+//
+//
+void Biot::ClearReservations()
+{
+	ZeroMemory(reserved, sizeof(reserved));
+}	
+
+
+/////////////////////////////////////////////////////////
+// MoveArm
+//
+// Moves a biots are starting at one segment and
+// moving outward.  Returns TRUE if the arm
+// should be redrawn.
+//
+void Biot::MoveArm(short nPeno, short degree)
+{
+	for (short i = nPeno; i < MAX_GENES; i += MAX_SYMMETRY)
+	{
+		IncreaseAngle(i, degree);
+	}
+}
+
+
+void Biot::MoveSegment(short nPeno, short degree)
+{
+	GeneSegment& segment = trait.GetSegment(lineNo[nPeno], geneNo[nPeno]);
+
+	if (segment.IsVisible())
+	{
+		m_angle[nPeno] += degree;
+		redraw.SetRedraw(segment.ShouldRedraw(m_angle[nPeno] - m_angleDrawn[nPeno]));
+	}
+}
+
+
+///////////////////////////////////////////////////////////////
+// MoveLineType
+//
+// Moves a lineType and returns TRUE when 
+// the line is in the requested position.  Returns FALSE
+// if the line is not yet in the requested position.
+//
+// We need to reserve line type operations so commands don't
+// fight to complete.
+//
+// rate should always be positive.  offset can be negative or
+// positive.
+//
+BOOL Biot::MoveLineType(int nLineType, short rate, short offset)
+{
+	ASSERT(nLineType < MAX_LIMB_TYPES && nLineType >= 0);
+
+	short& nAngle = m_angleLimbType[nLineType];
+	if (offset != nAngle)
+	{
+		if (offset > nAngle)
+		{
+			nAngle += rate;
+			if (nAngle > offset)
+				nAngle = offset;
+		}
+		else
+		{
+			nAngle -= rate;
+			if (nAngle - rate < offset)
+				nAngle = offset;
+		}
+		redraw.SetRedraw(abs(m_angleLimbType[nLineType] - m_angleLimbTypeDrawn[nLineType]) > 3);
+
+		return (offset == nAngle);
+	}
+	return TRUE;
+}
+
+
+///////////////////////////////////////////////////////////////
+// MoveLine
+//
+// Moves a lineType and returns TRUE when 
+// the line is in the requested position.  Returns FALSE
+// if the line is not yet in the requested position.
+//
+// We need to reserve line type operations so commands don't
+// fight to complete.
+//
+// rate should always be positive.  offset can be negative or
+// positive.
+//
+BOOL Biot::MoveLine(int nLine, short rate, short offset)
+{
+	ASSERT(nLine < MAX_SYMMETRY && nLine >= 0);
+
+	short& nAngle = m_angleLimb[nLine];
+	if (offset != nAngle)
+	{
+		if (offset > nAngle)
+		{
+			nAngle += rate;
+			if (nAngle > offset)
+				nAngle = offset;
+		}
+		else
+		{
+			nAngle -= rate;
+			if (nAngle - rate < offset)
+				nAngle = offset;
+		}
+		redraw.SetRedraw(abs(m_angleLimb[nLine] - m_angleLimbDrawn[nLine]) > 3);
+
+		return (offset == nAngle);
+	}
+	return TRUE;
+}
+
+
+///////////////////////////////////////////////////////////////
+// MoveSegmentType
+//
+// Moves a segment of a lineType and returns TRUE when 
+// the line is in the requested position.  Returns FALSE
+// if the line is not yet in the requested position.
+//
+// We need to reserve line type operations so commands don't
+// fight to complete.
+//
+// rate should always be positive.  offset can be negative or
+// positive.
+//
+BOOL Biot::MoveSegmentType(int nLineType, int nSegment, short rate, short offset)
+{
+	ASSERT(nLineType < MAX_LIMB_TYPES && nLineType >= 0);
+	ASSERT(nSegment < MAX_SEGMENTS && nSegment >= 0);
+
+	GeneSegment& segment = trait.GetSegmentType(nLineType, nSegment);
+	short& nAngle = m_angleLimbTypeSegment[nLineType][nSegment];
+	if (offset != nAngle)
+	{
+		if (offset > nAngle)
+		{
+			nAngle += rate;
+			if (nAngle > offset)
+				nAngle = offset;
+		}
+		else
+		{
+			nAngle -= rate;
+			if (nAngle - rate < offset)
+				nAngle = offset;
+		}
+		redraw.SetRedraw(segment.ShouldRedraw(m_angleLimbTypeSegmentDrawn[nLineType][nSegment] - nAngle));
+
+		return (offset == nAngle);
+	}
+	return TRUE;
+}
+
+
+//////////////////////////////////////////////////////
+// SeekArm
+//
+//
+void Biot::SeekArm(short nPeno, short rate, short offset)
+{
+	short& nAngle = m_angle[nPeno];
+	if (trait.GetSegment(lineNo[nPeno], geneNo[nPeno]).IsVisible() && offset != nAngle)
+	{
+		if (offset > nAngle)
+		{
+			if (nAngle + rate > offset)
+				rate = offset - nAngle;
+			
+			MoveArm(nPeno, rate);
+		}
+		else
+		{
+			
+			if (nAngle - rate < offset)
+				rate = nAngle - offset;
+
+			MoveArm(nPeno, -rate);
+		}
+	}
+}
+
+
+//////////////////////////////////////////////////////
+// SeekSegment
+//
+// If no more seeking is required, it returns TRUE
+//
+void Biot::SeekSegment(short nPeno, short rate, short offset)
+{
+	short& nAngle = m_angle[nPeno];
+	if (offset != nAngle)
+	{
+		if (offset > nAngle)
+		{
+			if (nAngle + rate > offset)
+				IncreaseAngle(nPeno, offset - nAngle);
+			else
+				IncreaseAngle(nPeno, rate);
+		}
+		else
+		{
+			if (nAngle - rate < offset)
+				IncreaseAngle(nPeno, offset - nAngle);
+			else
+				IncreaseAngle(nPeno, -rate);
+		}
+	}
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// IncreaseAngle
+//
+//
+void Biot::IncreaseAngle(short nPeno, short rate)
+{
+	GeneSegment& segment = trait.GetSegment(lineNo[nPeno], geneNo[nPeno]);
+
+	// Is the m_angle visible?
+	if (segment.IsVisible())
+	{
+		// First increase the angle
+		m_angle[nPeno] += rate;
+
+		redraw.SetRedraw(segment.ShouldRedraw(m_angle[nPeno] - m_angleDrawn[nPeno]));
+	}
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// RetractLine
+//
+// Retracts the tip segment on a particular limb.  
+//
+BYTE Biot::RetractLine(short nSegment, short nLimb, short maxRadius)
+{
+   if (m_retractDrawn[nLimb] == m_retractRadius[nLimb] &&
+	   m_retractDrawn[nLimb] < maxRadius)
+   {
+	   m_retractSegment[nLimb] = nSegment;
+	   m_retractRadius[nLimb] += 1;
+	   redraw.SetRedraw(TRUE);
+	   return (BYTE) 1;
+   }
+   return (BYTE) 0;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// ExtendLine
+//
+// Extends the tip segment on a particular limb.  
+//
+BYTE Biot::ExtendLine(short nSegment, short nLimb)
+{
+   if (m_retractDrawn[nLimb] == m_retractRadius[nLimb] &&
+	   m_retractDrawn[nLimb] > 0)
+   {
+	   m_retractSegment[nLimb] = nSegment;
+	   m_retractRadius[nLimb] -= 1;
+	   redraw.SetRedraw(TRUE);
+	   return (BYTE) 1;
+   }
+   return (BYTE) 0;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// RetractLimbType
+//
+// Retracts all the limb tips on a biot for a particular limb type
+//
+// nSegment  - the segment of the limb
+// nLimbType - which limb type?
+// maxRadius - how long does this segment get for that limb type?
+//
+// Returns 1 or 0 for the distance retracted.
+//
+BYTE Biot::RetractLimbType(short nSegment, short nLimbType, short maxRadius)
+{
+	bool bOneLine = false;
+	for (int i = 0; i < trait.GetLines(); i++)
+	{
+		if (nLimbType == trait.GetLineTypeIndex(i))
+		{
+			if (m_retractDrawn[i] != m_retractRadius[i] ||
+				m_retractDrawn[i] >= maxRadius)
+				return 0;
+
+			bOneLine = true;
+		}
+	}
+
+	if (!bOneLine)
+		return 0;
+
+	for (i = 0; i < trait.GetLines(); i++)
+	{
+		if (nLimbType == trait.GetLineTypeIndex(i))
+		{
+		   m_retractSegment[i] = nSegment;
+		   m_retractRadius[i] += 1;
+		}
+	}
+	redraw.SetRedraw(TRUE);
+	return (BYTE) 1;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// ExtendLimbType
+//
+// Extends all the limb tips on a biot for a particular limb type
+//
+// Returns 1 or 0 for the distance extended.
+//
+BYTE Biot::ExtendLimbType(short nSegment, short nLimbType)
+{
+	bool bOneLine = false;
+	for (int i = 0; i < trait.GetLines(); i++)
+	{
+		if (nLimbType == trait.GetLineTypeIndex(i))
+		{
+			if (m_retractDrawn[i] != m_retractRadius[i] ||
+				m_retractDrawn[i] <= 0)
+				return 0;
+
+			bOneLine = true;
+		}
+	}
+
+	if (!bOneLine)
+		return 0;
+
+	for (i = 0; i < trait.GetLines(); i++)
+	{
+		if (nLimbType == trait.GetLineTypeIndex(i))
+		{
+		   m_retractSegment[i] = nSegment;
+		   m_retractRadius[i] -= 1;
+		}
+	}
+	redraw.SetRedraw(TRUE);
+	return (BYTE) 1;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// MoveLimbTypeSegment
+//
+// Move a segment on all limb types
+//
+short Biot::MoveLimbTypeSegment(short nSegment, short nLimbType, short nRate)
+{
+	static const short maxRate = 3;
+	ASSERT(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
+	ASSERT(nSegment < MAX_SEGMENTS && nSegment >= 0);
+	ASSERT(nRate <= maxRate && nRate >= -maxRate);
+
+	short delta = m_angleLimbTypeSegment[nLimbType][nSegment] - m_angleLimbTypeSegmentDrawn[nLimbType][nSegment];
+
+	if (nRate < 0)
+	{
+		if (delta <= -maxRate)
+			return 0;
+
+		nRate = max(nRate, -maxRate - delta);
+	}
+	else
+	{
+		if (delta >= maxRate)
+			return 0;
+
+		nRate = min(nRate, maxRate - delta);
+	}
+
+	m_angleLimbTypeSegment[nLimbType][nSegment] += nRate;     
+	redraw.SetRedraw((delta + nRate) >= maxRate || (delta + nRate) <= -maxRate);
+	return nRate;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// MoveLimbTypeSegments
+//
+// Move all the segments of a limb
+//
+short Biot::MoveLimbTypeSegments(short nLimbType, short nRate)
+{
+	static const short maxRate = 3;
+	ASSERT(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
+	ASSERT(nRate <= maxRate && nRate >= -maxRate);
+
+	short delta = m_angleLimbType[nLimbType] - m_angleLimbTypeDrawn[nLimbType];
+
+	if (nRate < 0)
+	{
+		if (delta <= -maxRate)
+			return 0;
+
+		nRate = max(nRate, -maxRate - delta);
+	}
+	else
+	{
+		if (delta >= maxRate)
+			return 0;
+
+		nRate = min(nRate, maxRate - delta);
+	}
+
+	m_angleLimbType[nLimbType] += nRate;     
+	redraw.SetRedraw((delta + nRate) >= maxRate || (delta + nRate) <= -maxRate);
+	return nRate;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// MoveLimbSegments
+//
+// Move all the segments of a limb
+//
+short Biot::MoveLimbSegments(short nLimb, short nRate)
+{
+	static const short maxRate = 3;
+	ASSERT(nLimb < MAX_SYMMETRY && nLimb >= 0);
+	ASSERT(nRate <= maxRate && nRate >= -maxRate);
+
+	short delta = m_angleLimb[nLimb] - m_angleLimbDrawn[nLimb];
+
+	if (nRate < 0)
+	{
+		if (delta <= -maxRate)
+			return 0;
+
+		nRate = max(nRate, -maxRate - delta);
+	}
+	else
+	{
+		if (delta >= maxRate)
+			return 0;
+
+		nRate = min(nRate, maxRate - delta);
+	}
+
+	m_angleLimb[nLimb] += nRate;     
+	redraw.SetRedraw((delta + nRate) >= maxRate || (delta + nRate) <= -maxRate);
+	return nRate;
+}
+
+
+/////////////////////////////////////////////////////////////////////
+// MoveLimbSegment
+//
+// Moves a segment on a limb
+//
+short Biot::MoveLimbSegment(short nSegment, short nLimb, short nRate)
+{
+	static const short maxRate = 3;
+	ASSERT(nLimb < MAX_SYMMETRY && nLimb >= 0);
+	ASSERT(nSegment < MAX_SEGMENTS && nSegment >= 0);
+	ASSERT(nRate <= maxRate && nRate >= -maxRate);
+
+	int nPeno = nLimb + nSegment * MAX_SYMMETRY;
+	short delta = m_angle[nPeno] - m_angleDrawn[nPeno];
+
+	if (nRate < 0)
+	{
+		if (delta <= -maxRate)
+			return 0;
+
+		nRate = max(nRate, -maxRate - delta);
+	}
+	else
+	{
+		if (delta >= maxRate)
+			return 0;
+
+		nRate = min(nRate, maxRate - delta);
+	}
+
+	m_angleLimb[nPeno] += nRate;     
+	redraw.SetRedraw((delta + nRate) >= maxRate || (delta + nRate) <= -maxRate);
+	return nRate;
+}
+
+
+
+
+CResources * Biot::GetCell()
+	{
+	int nRow = origin.y / env.m_nCellHeight + 1;
+	int nCol = origin.x / env.m_nCellWidth + 1;
+	
+	return &(env.m_matCells[env.Cell(nRow, nCol)]);
+	}
+
+
+*/

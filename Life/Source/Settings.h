@@ -17,14 +17,14 @@ public:
 	CSettings() { Reset(600, 340); }
 
 	// Identity constructor
-	CSettings(CSettings &s){*this = s;}
+	CSettings(const CSettings &/*&s*/){/**this = s;*/}
 
 	int  GetFriction() { return (int) ((1000.0 * friction) + 0.5F); }	
 	void SetFriction(int iFriction) {friction = ((float)iFriction) / 1000.0F; }
 
 	void Serialize(CArchive& a);
 	void Reset(int nWidth, int nHeight);
-	CSettings& operator=(CSettings& s);
+	CSettings& operator=(const CSettings& s);
 	
 	void SanityCheck();
 
@@ -38,6 +38,7 @@ public:
 
 // Public Variables
 public: //Fox BEGIN
+	int m_nSkipGenerations;
     int m_nSick;
 	int m_initialPopulation;		//Population used on restart/new
 	int     m_leafEnergy;

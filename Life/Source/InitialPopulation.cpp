@@ -35,7 +35,7 @@ void CInitialPopulation::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SPIN_POPULATION, m_spinPopulation);
 	DDX_Text(pDX, IDC_SEED, m_nSeed);
 	DDX_Text(pDX, IDC_STARTING_POPULATION, m_nStartingPopulation);
-	DDV_MinMaxInt(pDX, m_nStartingPopulation, 0, 50);
+	DDV_MinMaxInt(pDX, m_nStartingPopulation, 0, 400);
 	DDX_CBIndex(pDX, IDC_TYPES_PER_BIOT, m_nArmTypesPerBiot);
 	DDX_CBIndex(pDX, IDC_SEGMENTS_PER_ARM, m_nSegmentsPerArm);
 	DDX_CBIndex(pDX, IDC_ARMS_PER_BIOT, m_nArmsPerBiot);

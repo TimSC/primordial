@@ -14,6 +14,8 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 const int g_nIcons[] = {IDI_ASEXUAL, IDI_MALE, IDI_ASEXUAL_FEMALE, IDI_FEMALE};
+CString CBreedView::strNames[];
+bool CBreedView::m_bNamesInitialized = false;
 
 /////////////////////////////////////////////////////////////////////////////
 // CBreedView
@@ -31,6 +33,13 @@ CBreedView::CBreedView()
 //	m_energySliderPos = -1;
 //	m_ageSliderPos    = -1;
 	m_pBiot   = NULL;
+	m_bListFilled = false;
+	if (!m_bNamesInitialized)
+		{
+		InitNames();
+		m_bNamesInitialized = true;
+		}
+
 }
 
 CBreedView::~CBreedView()
@@ -55,6 +64,15 @@ void CBreedView::DoDataExchange(CDataExchange* pDX)
 	m_cName.SetLimitText(12);
 //	m_cSpeciesSpin.SetRange(0, 15);
 
+	if (!pDX->m_bSaveAndValidate && !m_bListFilled) 
+		{
+		//Load Species Names
+		m_cSpeciesList.Clear(); 
+		for (int i = 0; i < MAX_SPECIES; i++)
+			m_cSpeciesList.AddString (strNames[i]);
+
+		m_bListFilled = true;
+		}
 
 //	m_energySlider.SetRange(0, 100);
 //	m_energySlider.SetTicFreq(5);
@@ -319,3 +337,37 @@ void CBreedView::OnSave()
  		m_pBiot->trait.SetMale((m_nIcon == 0 || m_nIcon == 1));
 	}
 }
+
+void CBreedView::InitNames()
+	{
+	if (m_bNamesInitialized ) return;
+
+	static CString strPrefix[] = {"Rod", "Rex", "Mod", "Pod", "Bud", "Win", "Do", "So",
+								  "Lil","Spo", "Kil", "Reed", "Boll", "Sing", "Tala", "Que"};
+	static CString strMiddle[] = {"rig", "spo", "sil", "mo" , "kil", "pid", "cav", "vag",
+									"po", "foll", "no", "vic", "bel", "ler", "mab", "dan"};
+	static CString strSuffix[] = {"er", "or", "al", "ling", "noc", "mor", "dor", "gel",
+									"lab", "nat", "able", "gen", "ang", "lan", "er","ed"};	
+	Randomizer rand;
+
+	for (int i = 0; i < MAX_SPECIES + 1; i++)
+		{
+		strNames[i] = strPrefix[rand.Integer(16)] + 
+			(rand.Sign() > 0 ? strMiddle[rand.Integer(16)] : _T("")) + 
+			strSuffix[rand.Integer(16)];
+
+		//Check for Uniqeness
+		bool bFound = false;
+		for (int j = 0; j < i; j++)
+			{
+			if (strNames[i] == strNames[j]) 
+				{
+				strNames[i] += rand.Sign() > 0 ? strMiddle[rand.Integer(16)] : strSuffix[ rand.Integer(16)];
+				j = -1;
+				}
+			}
+		}
+
+
+	m_bNamesInitialized = true;
+	}

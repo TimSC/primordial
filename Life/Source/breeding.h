@@ -11,6 +11,9 @@
 
 #include "Resource.h"
 
+
+#define MAX_SPECIES		63
+
 class CMagnifyWnd;
 
 class CBreedView : public CFormView
@@ -18,7 +21,7 @@ class CBreedView : public CFormView
 public:
 	CBreedView();      
 	DECLARE_DYNCREATE(CBreedView)
-
+	
 // Form Data
 public:
 	//{{AFX_DATA(CBreedView)
@@ -44,10 +47,11 @@ public:
 	CMagnifyWnd* MagnifyWnd();
 
 	void UpdateBiot(Biot* pBiot, DWORD dwBiotID);
-
+	
 // Attributes
 public:
-
+	static CString strNames[MAX_SPECIES + 1];
+	static bool m_bNamesInitialized;
 // Operations
 public:
 
@@ -63,6 +67,8 @@ public:
 
 // Implementation
 	public:
+		bool m_bListFilled;
+		static void InitNames();
 	virtual ~CBreedView();
 #ifdef _DEBUG
 	virtual void AssertValid() const;

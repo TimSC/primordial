@@ -327,3 +327,11 @@ void RandomKey::SetKey(long& lKey)
 	long l = (rand() & 0x0000FFFF);
 	lKey |= (l << 16);
 }
+
+BYTE Randomizer::twoNibbles()
+	{
+	int ntmp = Integer(16);
+	ntmp <<= 4;
+	ntmp += Integer(16);
+	return (BYTE)ntmp;
+	}

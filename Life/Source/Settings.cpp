@@ -5,7 +5,7 @@
 
 void CSettings::Serialize(CArchive& a)
 {
-	const int nVersion = 2;
+	const int nVersion = 3;
 
 	if (a.IsStoring())
 	{
@@ -16,6 +16,7 @@ void CSettings::Serialize(CArchive& a)
 		a << m_nSegmentsPerArm;
 		a << m_nArmsPerBiot;
 		a << m_bGenerateOnExtinction;
+		a << m_nSkipGenerations;
 
 		for (int i = 0; i < SIDES; i++)
 		{
@@ -33,7 +34,7 @@ void CSettings::Serialize(CArchive& a)
 		int nThisVersion;
 		a >> nThisVersion;
 
-		if (nThisVersion != nVersion)
+		if (nThisVersion >= nVersion)
 		{
 			throw new CArchiveException(CArchiveException::badIndex);
 		}
@@ -44,7 +45,8 @@ void CSettings::Serialize(CArchive& a)
 		a >> m_nSegmentsPerArm;
 		a >> m_nArmsPerBiot;
 		a >> m_bGenerateOnExtinction;
-
+		if (nThisVersion == 3)
+			a >> m_nSkipGenerations;
 		for (int i = 0; i < SIDES; i++)
 		{
 			a >> m_sSideAddress[i];
@@ -80,7 +82,7 @@ void CSettings::SanityCheck()
 }
 
 
-CSettings& CSettings::operator=(CSettings& s)
+CSettings &CSettings::operator=(const CSettings& s)
 {
 	m_nSick               = s.m_nSick;
 	m_initialPopulation   = s.m_initialPopulation;
@@ -124,7 +126,7 @@ CSettings& CSettings::operator=(CSettings& s)
 	m_nHeight     = s.m_nHeight;
 	m_nWidth      = s.m_nWidth;
 	m_nSizeChoice = s.m_nSizeChoice;
-
+	m_nSkipGenerations = s.m_nSkipGenerations;
 	return *this;
 }
 
@@ -136,6 +138,7 @@ void CSettings::Reset(int nWidth, int nHeight)
 	m_nSegmentsPerArm       = 10;
 	m_nArmsPerBiot          = 0;
 	m_bGenerateOnExtinction = TRUE;
+	m_nSkipGenerations = 0;
 
 	for (int i = 0; i < SIDES; i++)
 	{

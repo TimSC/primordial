@@ -150,10 +150,8 @@ Biot* CMagnifyWnd::FindBiotByID(int nBiotId)
 
 /*static*/
 BOOL CMagnifyWnd::CreateWnd(Environment* pEnv, CWnd* pParentWnd, CMagnifyWnd** pExternalRef)
-{
-	CMagnifyWnd* pWnd;
-
-	pWnd = new CMagnifyWnd(pExternalRef);
+	{
+	CMagnifyWnd* pWnd = new CMagnifyWnd(pExternalRef);
 
 	if (!pWnd)
 		return NULL;
@@ -216,6 +214,10 @@ BOOL CMagnifyWnd::CreateWnd(Environment* pEnv, CWnd* pParentWnd, CMagnifyWnd** p
 		case ID_BREEDING:
 			pWnd->OnBreeding();
 			break;
+
+		case ID_METABOLISM:
+			pWnd->OnBreeding();
+			break;
 	}
 
 	if (pExternalRef)
@@ -239,6 +241,8 @@ BEGIN_MESSAGE_MAP(CMagnifyWnd, CMiniFrameWnd)
 	ON_COMMAND(ID_BREEDING, OnBreeding)
 	ON_UPDATE_COMMAND_UI(ID_BREEDING, OnUpdateBreeding)
 	ON_WM_CREATE()
+	ON_COMMAND(ID_METABOLISM, OnMetabolism)
+	ON_UPDATE_COMMAND_UI(ID_METABOLISM, OnUpdateMetabolism)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -344,6 +348,12 @@ void CMagnifyWnd::PaintNow(Biot* pBiot)
 				else
 					SetBreeding(pBiot);
 				break;
+			case ID_METABOLISM:
+				if (bNewBiot)
+					OnBreeding();
+				else
+					SetBreeding(pBiot);
+				break;
 		}
 	}
 	else
@@ -420,6 +430,10 @@ BOOL CMagnifyWnd::SetTitle(Biot* pBiot, BOOL bChange)
 
 			case ID_BREEDING:
 				pszTitle = "Biot Breeding";
+				break;
+
+			case ID_METABOLISM:
+				pszTitle = _T("Biot Metabolism");
 				break;
 		}
 
@@ -586,27 +600,113 @@ void CMagnifyWnd::SetEnergy(Biot* pBiot, BOOL bDraw)
 	if (!bDraw && (pBiot->m_age & 0x3F) != 0)
 		return;
 
-	m_graph.SetAutoInc(1);
+	
+#ifdef _METABOLISM
+	for (i = 0; i < pBiot->metabolism.m_statIndex; i++)
+		{
+		m_energy[MAX_ENERGY_HISTORY - 1 - i] = pBiot->metabolism.m_statEnergy[pBiot->metabolism.m_statIndex - i - 1].energy;
+		m_red[MAX_ENERGY_HISTORY - 1 - i] = pBiot->metabolism.m_statEnergy[pBiot->metabolism.m_statIndex - i - 1].red;
+		m_green[MAX_ENERGY_HISTORY - 1 - i] = pBiot->metabolism.m_statEnergy[pBiot->metabolism.m_statIndex - i - 1].green;
+		m_blue[MAX_ENERGY_HISTORY - 1 - i] = pBiot->metabolism.m_statEnergy[pBiot->metabolism.m_statIndex - i - 1].blue;
+		m_e1[MAX_ENERGY_HISTORY - 1 - i] = pBiot->metabolism.m_statEnergy[pBiot->metabolism.m_statIndex - i - 1].e1;
+		m_e2[MAX_ENERGY_HISTORY - 1 - i] = pBiot->metabolism.m_statEnergy[pBiot->metabolism.m_statIndex - i - 1].e2;
+		m_e3[MAX_ENERGY_HISTORY - 1 - i] = pBiot->metabolism.m_statEnergy[pBiot->metabolism.m_statIndex - i - 1].e3;
+		}
 
+	for (i = pBiot->metabolism.m_statIndex; i < MAX_ENERGY_HISTORY; i++)
+		{
+		m_energy[i - pBiot->metabolism.m_statIndex] = pBiot->metabolism.m_statEnergy[i].energy;
+		m_red[i - pBiot->metabolism.m_statIndex] = pBiot->metabolism.m_statEnergy[i].red;
+		m_green[i - pBiot->metabolism.m_statIndex] = pBiot->metabolism.m_statEnergy[i].green;
+		m_blue[i - pBiot->metabolism.m_statIndex] = pBiot->metabolism.m_statEnergy[i].blue;
+		m_e1[i - pBiot->metabolism.m_statIndex] = pBiot->metabolism.m_statEnergy[i].e1;
+		m_e2[i - pBiot->metabolism.m_statIndex] = pBiot->metabolism.m_statEnergy[i].e2;
+		m_e3[i - pBiot->metabolism.m_statIndex] = pBiot->metabolism.m_statEnergy[i].e3;
+		}
+#else
 	for (i = 0; i < pBiot->m_statIndex; i++)
+		{
 		m_energy[MAX_ENERGY_HISTORY - 1 - i] = pBiot->m_statEnergy[pBiot->m_statIndex - i - 1];
+		}
 
 	for (i = pBiot->m_statIndex; i < MAX_ENERGY_HISTORY; i++)
+		{
 		m_energy[i - pBiot->m_statIndex] = pBiot->m_statEnergy[i];
-
-
-	for (i = 0; i < MAX_ENERGY_HISTORY; i++)
-		m_graph.SetGraphData(m_energy[i]);
+		}
+#endif
 
 	m_graph.SetAutoInc(1);
-	if (m_energy[MAX_ENERGY_HISTORY - 1] > m_energy[MAX_ENERGY_HISTORY - 2])
-		m_graph.SetColorData(10);	// Green
-	else
-		if (m_energy[MAX_ENERGY_HISTORY - 1] < m_energy[MAX_ENERGY_HISTORY - 2])
-			m_graph.SetColorData(12);	// Red
-		else
-			m_graph.SetColorData(14); //Yellow
+	m_graph.SetDataReset(9);
+	m_graph.SetGraphType(6);
+	m_graph.SetGraphStyle(4);
+	m_graph.SetBackground(0);
+	m_graph.SetPatternedLines(1);
+	m_graph.SetPatternData(6);
+	m_graph.SetRandomData(0);
 
+	// Only ticks on both axis
+	m_graph.SetTicks(1);
+	m_graph.SetTickEvery(20);
+
+	m_graph.SetNumPoints(MAX_ENERGY_HISTORY);
+
+#ifdef _METABOLISM
+	m_graph.SetNumSets(7);
+#else
+	m_graph.SetNumSets(1);
+#endif
+
+	m_graph.SetAutoInc(1);
+	m_graph.SetColorData(14);	// Yellow
+	m_graph.SetColorData(12);	// Light Red
+	m_graph.SetColorData(10);	// Green
+	m_graph.SetColorData(9);	// Light Blue
+	m_graph.SetColorData(11);	// Light Cyan
+	m_graph.SetColorData(15); 	// White
+	m_graph.SetColorData(6); 	// ??
+
+	m_graph.SetAutoInc(1);
+	CString strLegend;
+	strLegend.Format(_T("Energy %f"), m_energy[MAX_ENERGY_HISTORY - 1]);
+	m_graph.SetLegendText(strLegend);
+#ifdef _METABOLISM
+	strLegend.Format(_T("Red %f"), m_red[MAX_ENERGY_HISTORY - 1]);
+	m_graph.SetLegendText(strLegend);
+	strLegend.Format(_T("Green %f"), m_green[MAX_ENERGY_HISTORY - 1]);
+	m_graph.SetLegendText(strLegend);
+	strLegend.Format(_T("Blue %f"), m_blue[MAX_ENERGY_HISTORY - 1]);
+	m_graph.SetLegendText(strLegend);
+	strLegend.Format(_T("energy complex 1 %f"), m_e1[MAX_ENERGY_HISTORY - 1]);
+	m_graph.SetLegendText(strLegend);
+	strLegend.Format(_T("energy complex 2 %f"), m_e2[MAX_ENERGY_HISTORY - 1]);
+	m_graph.SetLegendText(strLegend);
+	strLegend.Format(_T("energy complex 3 %f"), m_e3[MAX_ENERGY_HISTORY - 1]);
+	m_graph.SetLegendText(strLegend);
+#endif	
+	
+
+	m_graph.SetAutoInc(1);	
+	for (i = 0; i < MAX_ENERGY_HISTORY; i++)
+		m_graph.SetGraphData(m_energy[i]);
+#ifdef _METABOLISM
+	for (i = 0; i < MAX_ENERGY_HISTORY; i++)
+		m_graph.SetGraphData(m_red[i]);
+
+	for (i = 0; i < MAX_ENERGY_HISTORY; i++)
+		m_graph.SetGraphData(m_green[i]);
+	
+	for (i = 0; i < MAX_ENERGY_HISTORY; i++)
+		m_graph.SetGraphData(m_blue[i]);
+	
+	for (i = 0; i < MAX_ENERGY_HISTORY; i++)
+		m_graph.SetGraphData(m_e1[i]);
+	
+	for (i = 0; i < MAX_ENERGY_HISTORY; i++)
+		m_graph.SetGraphData(m_e2[i]);
+	
+	for (i = 0; i < MAX_ENERGY_HISTORY; i++)
+		m_graph.SetGraphData(m_e3[i]);
+#endif
 	m_graph.SetDrawMode(3);
 }
 
@@ -665,3 +765,18 @@ int CMagnifyWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 }
 
 
+
+void CMagnifyWnd::OnMetabolism() 
+	{
+	Biot* pBiot = m_pEnv->FindBiotByID(m_pEnv->m_selectedId);
+	m_choice = ID_METABOLISM;
+	m_graph.ShowWindow(SW_HIDE);	
+	SetBreeding(pBiot);
+	m_breedView.ShowWindow(SW_SHOWNORMAL);	
+	}
+
+void CMagnifyWnd::OnUpdateMetabolism(CCmdUI* pCmdUI) 
+	{
+	pCmdUI->SetCheck(m_choice == ID_METABOLISM);
+	pCmdUI->Enable(m_pEnv->GetSelectedBiot() != NULL);	
+	}

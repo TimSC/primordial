@@ -18,13 +18,14 @@
 #include "EnvStatsWnd.h"
 #include "BiotEditor.h"
 #include "settings.h"
-
-
+#include "Resources.h"
 // Predefine Biot to the Environment
 class Biot;
 class Environment;
 class CSettings;
 
+#define MAX_SPECIES		63
+#define INIT_SPECIES	8
 ///////////////////////////////////////////////////////////////////////
 // CEnvironmentStats
 //
@@ -60,6 +61,16 @@ public:
 
 
 public:
+	double m_dblStdNewActivity;
+	double m_dblMeanNewActivity;
+	long m_nNewActivity;
+	double m_dblStdActivity;
+	float m_dblMeanCumActivity;
+	int m_nCumulativeActivity;
+	static int m_arCumulativeActivity[MAX_SPECIES + 1];
+	int m_nDiversity;
+	CString GetTicksStr();
+	double m_dblSecsPerBiot;
 	long m_births;
 	long m_deaths;
 	long m_arrivals;
@@ -163,7 +174,7 @@ public:
 	int  FindBiot(int x, int y);
 	void MoveBiot(Biot* pBiot) { m_sort.Move((BRectItem*) pBiot); }
 	void MoveBiot(Biot* pBiot, BRect* pOrigRect) { m_sort.Move((BRectItem*) pBiot, pOrigRect); }
-		
+			
 	int  GetPopulation() { return m_biotList.GetSize(); }
 	void Serialize(CArchive& ar);
 	void DeleteContents();
@@ -184,7 +195,43 @@ public:
       return FALSE;
     }
 
+	int Cell(int nRow, int nCol)
+		{
+		return nRow * m_nCellsHigh + nCol;	
+		}
+
     BOOL WithinBorders(BRect& rect);
+    /*{
+        if (!(Inside(rect.m_left, rect.m_top) ||
+              rightSide.Inside(rect.m_left, rect.m_top) ||
+              leftSide.Inside(rect.m_left, rect.m_top)  ||
+              topSide.Inside(rect.m_left, rect.m_top)  ||
+             bottomSide.Inside(rect.m_left, rect.m_top)))
+          return FALSE;
+
+      if (!(Inside(rect.m_left, rect.m_bottom) ||
+            rightSide.Inside(rect.m_left, rect.m_bottom) ||
+            leftSide.Inside(rect.m_left, rect.m_bottom)  ||
+            topSide.Inside(rect.m_left, rect.m_bottom)  ||
+            bottomSide.Inside(rect.m_left, rect.m_bottom)))
+        return FALSE;
+
+      if (!(Inside(rect.m_right, rect.m_bottom) ||
+            rightSide.Inside(rect.m_right, rect.m_bottom) ||
+            leftSide.Inside(rect.m_right, rect.m_bottom)  ||
+            topSide.Inside(rect.m_right, rect.m_bottom)  ||
+            bottomSide.Inside(rect.m_right, rect.m_bottom)))
+        return FALSE;
+
+      if (!(Inside(rect.m_right, rect.m_top) ||
+            rightSide.Inside(rect.m_right, rect.m_top) ||
+            leftSide.Inside(rect.m_right, rect.m_top)  ||
+            topSide.Inside(rect.m_right, rect.m_top)  ||
+            bottomSide.Inside(rect.m_right, rect.m_top)))
+        return FALSE;
+
+      return TRUE;
+    }*/
 
 	void GetDefaultSettings();
 	void SetDefaultSettings();
@@ -198,6 +245,14 @@ public:
 	void LoadBiot(int x, int y);
 
 public:
+	int m_nCellHeight;
+	int m_nCellWidth;
+	void TraceResources();
+	void DiffuseResources();
+	CResources * m_matCells;
+	int m_nCellsHigh;
+	int m_nCellsAcross;
+	bool m_bSineSun;
 	CBitmap           m_topBitmap;
 	BITMAP            m_topBm;
 
@@ -238,7 +293,7 @@ public:
 	// Save the state of these variables	
 
     CBiotList   m_biotList;
-
+	
   private:
 	void CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
 
@@ -256,7 +311,6 @@ public:
 	// Should we sleep between loops to slow things down?
 	DWORD   m_dwTicks;
 };
-
 
 inline BOOL Environment::WithinBorders(BRect& rect)
 {

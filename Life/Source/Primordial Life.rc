@@ -87,11 +87,11 @@ IDR_MAINFRAME MENU PRELOAD DISCARDABLE
 BEGIN
     POPUP "&Simulation"
     BEGIN
-        MENUITEM "Start Si&mulation",           ID_SIMULATION_STARTSIMULATION
+        MENUITEM "Start Si&mulation\tF5",       ID_SIMULATION_STARTSIMULATION
 
         MENUITEM "S&ettings...",                ID_SIMULATION_SETTINGS
         MENUITEM SEPARATOR
-        MENUITEM "&New...\tCtrl+N",             ID_FILE_NEW
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
         MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
@@ -136,6 +136,14 @@ BEGIN
         MENUITEM "&Composition",                ID_COMPOSITION
         MENUITEM "&Energy",                     ID_ENERGY
         MENUITEM "&Breeding",                   ID_BREEDING
+    END
+END
+
+IDR_STATS_MENU MENU DISCARDABLE 
+BEGIN
+    POPUP "Statistics"
+    BEGIN
+        MENUITEM "Logging",                     IDC_STATS_LOG
     END
 END
 
@@ -519,6 +527,9 @@ BEGIN
     LTEXT           "Height:",IDC_HEIGHT_TEXT,146,69,24,8
     GROUPBOX        "Habitat Size",IDC_STATIC,9,5,223,85
     LTEXT           "Width:",IDC_WIDTH_TEXT,80,69,22,8
+    LTEXT           "Generations to skip",IDC_STATIC,21,100,62,8
+    EDITTEXT        IDC_SKIP_GEN,89,99,39,10,ES_RIGHT | ES_AUTOHSCROLL | 
+                    ES_NUMBER
 END
 
 IDD_INITIAL_POPULATION DIALOG DISCARDABLE  0, 0, 240, 146
@@ -924,6 +935,9 @@ BEGIN
     BUTTON      ID_LINE_TYPES
     BUTTON      ID_AGE_SPREAD
     BUTTON      ID_ENERGY_SPREAD
+    BUTTON      ID_SPECIES
+    BUTTON      ID_EVOLUTION
+    BUTTON      ID_CPUTIME
 END
 
 IDR_BIOTSTATS TOOLBAR DISCARDABLE  75, 20
@@ -932,6 +946,7 @@ BEGIN
     BUTTON      ID_ENERGY
     BUTTON      ID_COMPOSITION
     BUTTON      ID_BREEDING
+    BUTTON      ID_METABOLISM
 END
 
 
@@ -939,43 +954,6 @@ END
 //
 // Dialog Info
 //
-
-IDD_BREEDING DLGINIT
-BEGIN
-    IDC_SPECIES, 0x403, 7, 0
-0x6552, 0x7078, 0x646f, "\000" 
-    IDC_SPECIES, 0x403, 6, 0
-0x6f50, 0x7364, 0x006f, 
-    IDC_SPECIES, 0x403, 6, 0
-0x6f53, 0x6166, 0x0072, 
-    IDC_SPECIES, 0x403, 7, 0
-0x6146, 0x7a72, 0x6c65, "\000" 
-    IDC_SPECIES, 0x403, 8, 0
-0x655a, 0x6d6c, 0x636f, 0x006b, 
-    IDC_SPECIES, 0x403, 8, 0
-0x6f4d, 0x6b63, 0x6973, 0x006c, 
-    IDC_SPECIES, 0x403, 7, 0
-0x6953, 0x646c, 0x6d75, "\000" 
-    IDC_SPECIES, 0x403, 7, 0
-0x7544, 0x626d, 0x726f, "\000" 
-    IDC_SPECIES, 0x403, 7, 0
-0x6f42, 0x6e72, 0x7369, "\000" 
-    IDC_SPECIES, 0x403, 7, 0
-0x694e, 0x6173, 0x6b63, "\000" 
-    IDC_SPECIES, 0x403, 6, 0
-0x6341, 0x656b, 0x006c, 
-    IDC_SPECIES, 0x403, 5, 0
-0x6c45, 0x6f6d, "\000" 
-    IDC_SPECIES, 0x403, 6, 0
-0x6f4d, 0x6977, 0x006e, 
-    IDC_SPECIES, 0x403, 6, 0
-0x6957, 0x646e, 0x006f, 
-    IDC_SPECIES, 0x403, 6, 0
-0x6f44, 0x6f72, 0x0064, 
-    IDC_SPECIES, 0x403, 7, 0
-0x6f52, 0x7264, 0x7865, "\000" 
-    0
-END
 
 IDD_NEW_SIMULATION DLGINIT
 BEGIN
@@ -1144,6 +1122,7 @@ BEGIN
     IDS_POPULATION          " Population"
     IDS_EXTINCTIONS         " Extinctions"
     IDS_EMPTY               " "
+    IDS_TICKS               "Milliseconds Per Biot"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -1162,6 +1141,8 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     ID_ENERGY_SPREAD        "\nEnergy Spread"
+    ID_EVOLUTION            "Display Evolutionary Measures"
+    IDC_STATS_LOG           "Turn Logging On or Off"
 END
 
 #endif    // English (U.S.) resources

@@ -51,6 +51,7 @@
 #define HABITAT_OPTIONS                 173
 #define IDB_BOTTOM                      174
 #define IDB_TOP                         175
+#define IDR_STATS_MENU                  176
 #define IDC_NEWPOPULATION               1000
 #define IDC_OLDPOPULATION               1001
 #define IDC_OLDSEED                     1002
@@ -153,6 +154,7 @@
 #define IDC_COMBO1                      1083
 #define IDC_VIEW_SERVERS                1084
 #define OPW_TAB                         1085
+#define IDC_SKIP_GEN                    1087
 #define DLG_SCRNSAVECONFIGURE           2003
 #define DLG_ABOUTHELP1                  2004
 #define DLG_SCRNSAVECONFIGURE1          2005
@@ -189,19 +191,25 @@
 #define ID_AGE_SPREAD                   32806
 #define ID_LINE_TYPES                   32807
 #define ID_ENERGY_SPREAD                32809
+#define ID_EVOLUTION                    32810
+#define ID_CPUTIME                      32811
+#define IDC_STATS_LOG                   32812
+#define ID_SPECIES                      32813
+#define ID_METABOLISM                   32814
 #define IDS_DAY                         61204
 #define IDS_POPULATION                  61205
 #define IDS_EXTINCTIONS                 61206
 #define IDS_EMPTY                       61207
+#define IDS_TICKS                       61208
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        176
-#define _APS_NEXT_COMMAND_VALUE         32810
-#define _APS_NEXT_CONTROL_VALUE         1086
+#define _APS_NEXT_RESOURCE_VALUE        178
+#define _APS_NEXT_COMMAND_VALUE         32815
+#define _APS_NEXT_CONTROL_VALUE         1088
 #define _APS_NEXT_SYMED_VALUE           109
 #endif
 #endif

@@ -7,7 +7,7 @@
 //
 #include "stdafx.h"
 #include "Primordial Life.h"
-
+#include <mmsystem.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -16,6 +16,9 @@
 #include "evolve.h"
 #include "environ.h"
 #include "biots.h"
+#include "PLifeDoc.h"
+#include "GeneralView.h"
+#include "Resources.h"
 #include "ZipFile.h"
 
 // from evolve.cpp
@@ -246,10 +249,17 @@ DWORD CEnvStats::ToGenerations(LPCTSTR szDays)
 // Sample
 // 
 //
+#define LOWER_LIMIT   50
+#define UPPER_LIMIT   250
+
+int CEnvStats::m_arCumulativeActivity[MAX_SPECIES + 1]; 
 void CEnvStats::Sample(Environment& env)
 {
+	//static long arCumulativeActivity[32];
+	if (m_days == 0.0)  //first time
+		memset(m_arCumulativeActivity, 0, sizeof(m_arCumulativeActivity));
 	m_days += .05;
-
+	
 	m_population = env.m_biotList.GetSize();
 
 	if (m_population > m_peakPopulation)
@@ -259,21 +269,67 @@ void CEnvStats::Sample(Environment& env)
     long     colorDistance[WHITE_LEAF + 2];
 	ZeroMemory(colorDistance, sizeof(colorDistance));
 	DWORD maxAge = 0;
-
+	long m_Diversity[MAX_SPECIES + 1];
+	memset(m_Diversity, 0, sizeof(m_Diversity));
+	//memset(arCumulativeActivity, 0, sizeof(m_arCumulativeActivity));
+	//vector < CString > m_lstSpecies;
 	for (int j = 0; j < m_population; j++)
-	{
+		{
 		Biot* pBiot = env.m_biotList[j];
 
 		if (pBiot->m_age > maxAge)
 			maxAge = pBiot->m_age;
 
 		for (int i = 0; i < WHITE_LEAF + 1; i++)
-		{
+			{
 			colorDistance[i] += pBiot->colorDistance[i];
 			colorDistance[WHITE_LEAF + 1] += pBiot->colorDistance[i];
+			}
+		m_Diversity[pBiot->trait.GetSpecies()]++;
 		}
-	}
 
+	m_nDiversity = 0;
+	m_nCumulativeActivity = 0;
+	for (int i = 0; i < (MAX_SPECIES + 1); i++)
+		{
+		if (m_Diversity[i] > 0)
+			{
+			m_nDiversity++;
+			m_arCumulativeActivity[i] += m_Diversity[i];
+			m_nCumulativeActivity += m_arCumulativeActivity[i];
+			}
+		else
+			m_arCumulativeActivity[i] = 0;
+		}
+	
+	m_dblStdActivity = 0.0;
+	m_nNewActivity = 0;
+	m_dblMeanCumActivity = (float)m_nCumulativeActivity / (float)m_nDiversity;
+	for (i = 0; i < (MAX_SPECIES + 1); i++)
+		{
+		if (m_arCumulativeActivity[i] == 0) continue;
+		if ((m_arCumulativeActivity[i] < UPPER_LIMIT) && (m_arCumulativeActivity[i] > LOWER_LIMIT))
+			m_nNewActivity += m_arCumulativeActivity[i];
+
+		double dblTmp = m_arCumulativeActivity[i] - m_dblMeanCumActivity;
+		m_dblStdActivity +=  (dblTmp * dblTmp);
+		}
+
+	m_dblMeanNewActivity = (float)m_nNewActivity / (float)m_nDiversity;
+	m_dblStdActivity = sqrt(m_dblStdActivity)/(float)m_nDiversity;
+	
+	m_dblStdNewActivity = 0.0;
+	for (i = 0; i < (MAX_SPECIES + 1); i++)
+		{
+		double dblTmp;
+		if ((m_arCumulativeActivity[i] < UPPER_LIMIT) && (m_arCumulativeActivity[i] > LOWER_LIMIT))
+			{
+			dblTmp = m_arCumulativeActivity[i] - m_dblMeanNewActivity;
+			m_dblStdNewActivity += (dblTmp * dblTmp);
+			}
+		}
+
+	m_dblStdNewActivity = sqrt(m_dblStdNewActivity)/ (float)m_nDiversity;
 	m_ageRange = max(maxAge + 1, GENERATIONS * INTERVALS);
 	m_ageIntervals = INTERVALS;
 
@@ -287,8 +343,11 @@ void CEnvStats::Sample(Environment& env)
 		Biot* pBiot = env.m_biotList[j];
 
 		m_ages[(pBiot->m_age * m_ageIntervals) / m_ageRange]++;
+#ifdef _METABOLISM
+		m_energy[(int) (pBiot->metabolism.PercentEnergy() / (100.0 / ENERGY_LEVELS))]++;
+#else
 		m_energy[(int) (pBiot->PercentEnergy() / (100.0 / ENERGY_LEVELS))]++;
-
+#endif
 		m_freeEnvArea -= pBiot->Area();
 	}
 
@@ -361,7 +420,7 @@ CString CEnvStats::GetExtinctionsStr()
 //
 void CEnvStats::Serialize(CArchive& ar)
 {
-	const long archVersion = 2;
+	const long archVersion = 5;
 
 	if (ar.IsLoading())
 	{
@@ -383,6 +442,22 @@ void CEnvStats::Serialize(CArchive& ar)
 		ar >> m_perLtBlue;
 		ar >> m_ageRange;
 		ar >> m_ageIntervals;
+		if (version >= 3)
+			ar >> m_dblSecsPerBiot;
+		if (version >= 4)
+			{
+			ar >> m_nDiversity;
+			ar >> m_nCumulativeActivity;
+			ar >> m_dblMeanCumActivity;
+			ar.Read(m_arCumulativeActivity, sizeof(m_arCumulativeActivity));
+			}
+		if (version >= 5)
+			{
+			ar >> m_dblStdActivity;
+			ar >> m_nNewActivity;
+			ar >> m_dblMeanNewActivity;
+			ar >> m_dblStdNewActivity;
+			}
 		ar.Read(m_ages, sizeof(m_ages));
 		ar.Read(m_energy, sizeof(m_energy));
 	}
@@ -405,6 +480,15 @@ void CEnvStats::Serialize(CArchive& ar)
 		ar << m_perLtBlue;
 		ar << m_ageRange;
 		ar << m_ageIntervals;
+		ar << m_dblSecsPerBiot;
+		ar << m_nDiversity;
+		ar << m_nCumulativeActivity;
+		ar << m_dblMeanCumActivity;
+		ar.Write( m_arCumulativeActivity, sizeof(m_arCumulativeActivity));
+		ar << m_dblStdActivity;
+		ar << m_nNewActivity;
+		ar << m_dblMeanNewActivity;
+		ar << m_dblStdNewActivity;
 		ar.Write(m_ages, sizeof(m_ages));
 		ar.Write(m_energy, sizeof(m_energy));
 	}
@@ -470,7 +554,7 @@ Environment::Environment()
 	Clear();
 
 	m_pMagnifyWnd  = NULL;
-	m_pEnvStatsWnd = NULL;
+	m_pEnvStatsWnd = NULL;	
 }
 //Fox END
 
@@ -484,6 +568,7 @@ Environment::~Environment(void)
 	for (int i = 0; i <= MAX_LEAF; i++)
 		if (options.hPen[i] != NULL)
 			DeleteObject(options.hPen[i]);
+	delete [] m_matCells;
 }
 
 
@@ -595,7 +680,6 @@ void Environment::Clear()
 	m_statsList.RemoveAll();
 
 	m_dwTicks      = timeGetTime();
-
 }
 //Fox END
 
@@ -714,7 +798,6 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 //	pNew = new Biot(*this);
 //	pNew = m_biotList[0];
 //	m_sort.Add(pNew);
-
 }
      
 
@@ -768,6 +851,25 @@ void Environment::OnNew(CScrollView* pView, RECT worldRect, int population, int 
 
 	options.startNew = 1;
 	Set(&worldRect);
+
+	int nWidth = this->Width();
+	int nHeight = this -> Height();
+	
+	m_nCellWidth = nWidth / 50;
+	if (m_nCellWidth < 50 ) 
+		m_nCellWidth = 50;
+	
+	m_nCellHeight = nHeight / 50;
+	if (m_nCellHeight < 50 ) 
+		m_nCellHeight = 50;
+
+	m_nCellsAcross = nWidth / m_nCellWidth + 1;
+	m_nCellsHigh = nHeight / m_nCellHeight + 1;
+	//Allocate Pointer to Cells 
+	m_matCells = new CResources [m_nCellsHigh * m_nCellsAcross];
+	for (int nRow = 0; nRow < m_nCellsHigh * m_nCellsAcross; nRow++)
+		m_matCells[nRow].Randomize();
+
 
 	options.m_initialPopulation  = population;
 	options.maxLineSegments      = (MAX_GENES / MAX_SYMMETRY);
@@ -843,14 +945,31 @@ void Environment::OnNew(CScrollView* pView, RECT worldRect, int population, int 
 // Skip
 //
 //
+LARGE_INTEGER SubtractLI(LARGE_INTEGER & liTickEnd,LARGE_INTEGER & liTickStart)
+	{
+	LARGE_INTEGER liResult;
+	if (liTickStart.LowPart > liTickEnd.LowPart)
+		{
+		//Need to Borrow from High Part
+		liResult.LowPart = liTickStart.LowPart + 1;
+		liTickEnd.HighPart --;
+		}
+	else
+		liResult.LowPart = liTickEnd.LowPart - liTickStart.LowPart;
+
+	liResult.HighPart = liTickEnd.HighPart - liTickStart.HighPart;
+	return liResult;
+	}
+
 void Environment::Skip(CScrollView* pView)
 {
-//	ASSERT(0);
 	int i;
 	Biot* pBiot;
-
+	static double dblAverageTicks = 0.0;
 	if (m_bBlocked)
 		return;
+	if (options.m_generation == 0)
+		m_bSineSun = (options.m_leafEnergy == 7);
 
 //	bool bSample = ((options.m_generation & 0x000001FF) == 0x00000000);
 
@@ -914,10 +1033,33 @@ void Environment::Skip(CScrollView* pView)
 		sock.UnlockAll();
 	}
 */
+	if ((options.m_generation & CEnvStats::SAMPLE_TIME) == CEnvStats::SAMPLE_TIME)
+		{
+		if (m_bSineSun)
+			options.m_leafEnergy = (int)10 * cos(m_stats.m_days);
+		m_stats.Sample(*this);
+		m_statsList.AddTail(m_stats);
+		m_stats.NewSample();
+		if (m_statsList.GetCount() > 100)
+			m_statsList.RemoveHead();
 
-	DWORD dwTicks = timeGetTime(); 
+		AfxMainFrame().UpdateStatusBar();
+
+		if (m_pEnvStatsWnd)
+			m_pEnvStatsWnd->PaintNow();
+
+		if (m_stats.PercentUncoveredByBiots() < 0.50)
+			{
+			m_biotList[Integer(m_biotList.GetSize())]->m_nSick = options.m_nSick;
+			}
+
+		}
+
+	LARGE_INTEGER liTickStart = AfxMainFrame().GetTimeTick();
+	//DWORD dwTicks = timeGetTime(); 
 	// Process all the biots now
-	while ((timeGetTime() - dwTicks) < 200)
+	//while ((timeGetTime() - dwTicks) < 1/*200*/)
+	while (true)
 	{
 		pBiot = m_biotList.NextBiot();
 
@@ -926,30 +1068,12 @@ void Environment::Skip(CScrollView* pView)
 			// Another approach would store the delta time between each loop
 			// and if it was under a certain threshold, it would add a sleep
 			// statement.
-			if ((timeGetTime() - m_dwTicks) < 25)
-				Sleep(8);
+			//***if ((timeGetTime() - m_dwTicks) < 25)
+			//***	Sleep(8);
 
-			m_dwTicks = timeGetTime();
+			//m_dwTicks = timeGetTime();
 
-			if ((options.m_generation & CEnvStats::SAMPLE_TIME) == CEnvStats::SAMPLE_TIME)
-			{
-				m_stats.Sample(*this);
-				m_statsList.AddTail(m_stats);
-				m_stats.NewSample();
-				if (m_statsList.GetCount() > 100)
-					m_statsList.RemoveHead();
-
-				AfxMainFrame().UpdateStatusBar();
-
-				if (m_pEnvStatsWnd)
-					m_pEnvStatsWnd->PaintNow();
-
-				if (m_stats.PercentUncoveredByBiots() < 0.50)
-				{
-					m_biotList[Integer(m_biotList.GetSize())]->m_nSick = options.m_nSick;
-				}
-
-			}
+			
 
 			options.m_generation++;
 
@@ -998,7 +1122,22 @@ void Environment::Skip(CScrollView* pView)
 				}
 			}
 		}
+	if (m_biotList.Looped()) break;
 	}
+
+	LARGE_INTEGER liTickEnd = AfxMainFrame().GetTimeTick();
+	LARGE_INTEGER liTicks = SubtractLI(liTickEnd,liTickStart);
+	long nPopulation = m_biotList.GetSize();
+	if (nPopulation == 0) nPopulation = -1;
+	DWORD lTicksPerBiot = liTicks.HighPart == 0 ? liTicks.LowPart / nPopulation : 0x8fffffffL;
+	//double dblSecsPerBiot = double(lTicksPerBiot) / (double) AfxMainFrame().GetTimerFrequency();
+	CEnvStats& stats = AfxMainFrame().GetGeneralView()->GetDocument()->m_env.m_stats;
+	dblAverageTicks += ((double(lTicksPerBiot) / (double) AfxMainFrame().GetTimerFrequency()));
+	dblAverageTicks *= 0.03;
+	stats.m_dblSecsPerBiot = dblAverageTicks;
+	stats.m_population = nPopulation;
+		//double(lTicksPerBiot) / (double) AfxMainFrame().GetTimerFrequency();
+	AfxMainFrame().UpdateStatusBar();
 
 	if (m_biotList.GetSize() < 4)
 	{
@@ -1015,7 +1154,8 @@ void Environment::Skip(CScrollView* pView)
 
 	// Let the window paint now
 	FreeBitPadDC();
-
+	DiffuseResources();
+	//TraceResources();
 	VERIFY(::DeleteDC(m_hMemoryDC));
 	VERIFY(pView->ReleaseDC(pScreenDC));
 	m_hScreenDC = NULL;
@@ -1049,14 +1189,14 @@ void Environment::DeleteContents()
 //
 //
 void Environment::AddBiot(Biot* pNewBiot)
-{
-	if (pNewBiot)
 	{
+	if (pNewBiot)
+		{
 		m_sort.Add(pNewBiot);
 		m_biotList.Add(pNewBiot);
 		m_sort.TraceDebug();
+		}
 	}
-}
 
 
 //////////////////////////////////////////////////////////////////////
@@ -1258,7 +1398,8 @@ void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
 	pos.FindRectsInPoint(x, y);
 	Biot* pNewBiot = dynamic_cast<Biot*>(m_sort.IterateRects(pos));
 
-	if (pNewBiot == NULL)
+	int nBiot = m_biotList.FindBiotByPoint(x, y);
+	if (nBiot < 0)
 	{
 		if (operation == IDC_RELOCATE && pBiot)
 		{
@@ -1328,7 +1469,11 @@ void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
 
 		case IDC_FEED:
 			PlayResource("PL.Feed");
+#ifdef _METABOLISM
+			pBiot->metabolism.energy += pBiot->metabolism.childBaseEnergy;
+#else
 			pBiot->energy += pBiot->childBaseEnergy;
+#endif
 			pBiot->newType = GREEN_LEAF;
 			break;
 
@@ -1594,7 +1739,7 @@ void Environment::Serialize(CArchive& ar)
 void Environment::SaveBiot(Biot* pBiot)
 {
 	static char BASED_CODE szFilter[] = _T("Biot Files (*.bot)|*.bot|");
-
+	
 	CFileDialog dlg(FALSE, _T("bot"), pBiot->GetFullName(), 
 		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST,
 		szFilter);
@@ -1715,4 +1860,214 @@ void Environment::LoadBiot(int x, int y)
 	}
 }
 
+CString CEnvStats::GetTicksStr()
+	{
+	CString sString;
+	sString.Format(_T("%0.6f"), m_dblSecsPerBiot * 1000);
+	TRACE(sString + _T("\n"));
+	return sString;
 
+	}
+
+void Environment::DiffuseResources()
+	{
+	CResources * pResources = new CResources[m_nCellsHigh * m_nCellsAcross];
+	
+	for (int nRow = 0 ; nRow < m_nCellsHigh; nRow++)
+		for (int nCol = 0; nCol < m_nCellsAcross; nCol++)
+			{
+			//What Flows Up?
+			if (CResources::m_nDensityGreen > 0)
+				{
+				if (nRow > 0)
+					{
+					int nGreenDiff = m_matCells[Cell(nRow, nCol)].m_nGreen - m_matCells[Cell(nRow - 1, nCol)].m_nGreen;
+					if (nGreenDiff > 0)
+						{//Diffuse Up by 10% of difference
+						nGreenDiff *= 0.1; //Diffuse at least one unit of green
+						pResources[Cell(nRow - 1, nCol)].m_nGreen += ((nGreenDiff == 0) ? 1 : nGreenDiff);
+						m_matCells[Cell(nRow, nCol)].m_nGreen -= (nGreenDiff == 0) ? 1 : nGreenDiff;
+						}
+					}
+				}
+
+			if (CResources::m_nDensityBlue > 0)
+				{
+				if (nRow > 0)
+					{
+					int nBlueDiff = m_matCells[Cell(nRow, nCol)].m_nBlue - m_matCells[Cell(nRow - 1, nCol)].m_nBlue;
+					if (nBlueDiff > 0)
+						{//Diffuse Up by 10% of difference
+						nBlueDiff *= 0.1; //Diffuse at least one unit of blue
+						pResources[Cell(nRow - 1, nCol)].m_nBlue += ((nBlueDiff == 0) ? 1 : nBlueDiff);
+						m_matCells[Cell(nRow, nCol)].m_nBlue -= (nBlueDiff == 0) ? 1 : nBlueDiff;
+						}
+					}
+				}
+
+			if (CResources::m_nDensityRed > 0)
+				{
+				if (nRow > 0)
+					{
+					int nRedDiff = m_matCells[Cell(nRow, nCol)].m_nRed - m_matCells[Cell(nRow - 1, nCol)].m_nRed;
+					if (nRedDiff > 0)
+						{//Diffuse Up by 10% of difference
+						nRedDiff *= 0.1; //Diffuse at least one unit of red
+						pResources[Cell(nRow - 1, nCol)].m_nRed += ((nRedDiff == 0) ? 1 : nRedDiff);
+						m_matCells[Cell(nRow, nCol)].m_nRed -= (nRedDiff == 0) ? 1 : nRedDiff;
+						}
+					}
+				}
+
+			//What Flows Down?
+			if (CResources::m_nDensityGreen < 0)
+				{
+				if (nRow < (m_nCellsHigh - 1))
+					{
+					int nGreenDiff = m_matCells[Cell(nRow, nCol)].m_nGreen - m_matCells[Cell(nRow + 1, nCol)].m_nGreen;
+					if (nGreenDiff > 0)
+						{//Diffuse Down by 10% of difference
+						nGreenDiff *= 0.1; //Diffuse at least one unit of green						
+						pResources[Cell(nRow + 1, nCol)].m_nGreen += ((nGreenDiff == 0) ? 1 : nGreenDiff);
+						m_matCells[Cell(nRow, nCol)].m_nGreen -= (nGreenDiff == 0) ? 1 : nGreenDiff;		
+						}
+					}
+				}
+
+			if (CResources::m_nDensityBlue < 0)
+				{
+				if (nRow < (m_nCellsHigh - 1))
+					{
+					int nBlueDiff = m_matCells[Cell(nRow, nCol)].m_nBlue - m_matCells[Cell(nRow + 1, nCol)].m_nBlue;
+					if (nBlueDiff > 0)
+						{//Diffuse Down by 10% of difference
+						nBlueDiff *= 0.1; //Diffuse at least one unit of blue
+						pResources[Cell(nRow + 1, nCol)].m_nBlue += ((nBlueDiff == 0) ? 1 : nBlueDiff);
+						m_matCells[Cell(nRow, nCol)].m_nBlue -= (nBlueDiff == 0) ? 1 : nBlueDiff;		
+						}
+					}
+				}
+
+			if (CResources::m_nDensityRed < 0)
+				{
+				if (nRow < (m_nCellsHigh - 1))
+					{
+					int nRedDiff = m_matCells[Cell(nRow, nCol)].m_nRed - m_matCells[Cell(nRow + 1, nCol)].m_nRed;
+					if (nRedDiff > 0)
+						{//Diffuse Down by 10% of difference
+						nRedDiff *= 0.1; //Diffuse at least one unit of red
+						pResources[Cell(nRow + 1, nCol)].m_nRed += ((nRedDiff == 0) ? 1 : nRedDiff);
+						m_matCells[Cell(nRow, nCol)].m_nRed -= (nRedDiff == 0) ? 1 : nRedDiff;		
+						}
+					}
+				}
+
+			//What Flows Sideways?
+			if (CResources::m_nDensityGreen == 0)
+				{
+				if ((m_matCells[Cell(nRow, nCol)].Sign() > 0) && (nCol < (m_nCellsAcross - 1)))
+					{//To Right
+					int nGreenDiff = m_matCells[Cell(nRow, nCol)].m_nGreen - m_matCells[Cell(nRow, nCol + 1)].m_nGreen;
+					if (nGreenDiff > 0)
+						{//Diffuse Right by 10% of difference
+						nGreenDiff *= 0.1; //Diffuse at least one unit of green
+						pResources[Cell(nRow, nCol + 1)].m_nGreen += (nGreenDiff == 0) ? 1 : nGreenDiff;
+						m_matCells[Cell(nRow, nCol)].m_nGreen -= (nGreenDiff == 0) ? 1 : nGreenDiff;
+						}
+					}
+				else if (nCol > 0)
+					{
+					int nGreenDiff = m_matCells[Cell(nRow, nCol)].m_nGreen - m_matCells[Cell(nRow, nCol - 1)].m_nGreen;	
+					if (nGreenDiff > 0)
+						{//Diffuse Left by 10% of difference
+						nGreenDiff *= 0.01; //Diffuse at least one unit of green
+						pResources[Cell(nRow, nCol - 1)].m_nGreen += (nGreenDiff == 0) ? 1 : nGreenDiff;
+						m_matCells[Cell(nRow, nCol)].m_nGreen -= (nGreenDiff == 0) ? 1 : nGreenDiff;
+						}
+					}
+					
+				}
+
+			if (CResources::m_nDensityBlue == 0)
+				{
+				if ((m_matCells[Cell(nRow, nCol)].Sign() > 0) && (nCol < (m_nCellsAcross - 1)))
+					{//To Right
+					int nBlueDiff = m_matCells[Cell(nRow, nCol)].m_nBlue - m_matCells[Cell(nRow, nCol + 1)].m_nBlue;
+					if (nBlueDiff > 0)
+						{//Diffuse Right by 10% of difference
+						nBlueDiff *= 0.1; //Diffuse at least one unit of Blue
+						pResources[Cell(nRow, nCol + 1)].m_nBlue += (nBlueDiff == 0) ? 1 : nBlueDiff;
+						m_matCells[Cell(nRow, nCol)].m_nBlue -= (nBlueDiff == 0) ? 1 : nBlueDiff;
+						}
+					}
+				else if (nCol > 0)
+					{
+					int nBlueDiff = m_matCells[Cell(nRow, nCol)].m_nBlue - m_matCells[Cell(nRow, nCol - 1)].m_nBlue;	
+					if (nBlueDiff > 0)
+						{//Diffuse Left by 10% of difference
+						nBlueDiff *= 0.01; //Diffuse at least one unit of Blue
+						pResources[Cell(nRow, nCol - 1)].m_nBlue += (nBlueDiff == 0) ? 1 : nBlueDiff;
+						m_matCells[Cell(nRow, nCol)].m_nBlue -= (nBlueDiff == 0) ? 1 : nBlueDiff;
+						}
+					}
+					
+				}
+
+			if (CResources::m_nDensityRed == 0)
+				{
+				if ((m_matCells[Cell(nRow, nCol)].Sign() > 0) && (nCol < (m_nCellsAcross - 1)))
+					{//To Right
+					int nRedDiff = m_matCells[Cell(nRow, nCol)].m_nRed - m_matCells[Cell(nRow, nCol + 1)].m_nRed;
+					if (nRedDiff > 0)
+						{//Diffuse Right by 10% of difference
+						nRedDiff *= 0.1; //Diffuse at least one unit of Red
+						pResources[Cell(nRow, nCol + 1)].m_nRed += (nRedDiff == 0) ? 1 : nRedDiff;
+						m_matCells[Cell(nRow, nCol)].m_nRed -= (nRedDiff == 0) ? 1 : nRedDiff;
+						}
+					}
+				else if (nCol > 0)
+					{
+					int nRedDiff = m_matCells[Cell(nRow, nCol)].m_nRed - m_matCells[Cell(nRow, nCol - 1)].m_nRed;	
+					if (nRedDiff > 0)
+						{//Diffuse Left by 10% of difference
+						nRedDiff *= 0.01; //Diffuse at least one unit of Red
+						pResources[Cell(nRow, nCol - 1)].m_nRed += (nRedDiff == 0) ? 1 : nRedDiff;
+						m_matCells[Cell(nRow, nCol)].m_nRed -= (nRedDiff == 0) ? 1 : nRedDiff;
+						}
+					}
+				}
+			}
+
+	for (nRow = 0 ; nRow < m_nCellsHigh; nRow++)
+		for (int nCol = 0; nCol < m_nCellsAcross; nCol++)
+			m_matCells[Cell(nRow, nCol)] += pResources[Cell(nRow, nCol)];
+
+
+	delete [] pResources;
+	}
+
+void Environment::TraceResources()
+	{
+	CString strOut;
+	int nCells = m_nCellsAcross * m_nCellsHigh;
+	for (int n = 0; n < nCells;)
+		{
+		if (n + 5 < nCells)
+			{
+			strOut.Format("%s%s%s%s%s\n", m_matCells[n++].Trace(), 
+				m_matCells[n++].Trace(), m_matCells[n++].Trace(), 
+				m_matCells[n++].Trace(), m_matCells[n++].Trace());
+			TRACE(strOut);
+			}
+		else
+			{
+			while (n < nCells)
+				{
+				strOut.Format(_T("%s"), m_matCells[n++].Trace());
+				TRACE(strOut);
+				}
+			TRACE(_T("\n"));
+			break;
+			}
+		}
+	}

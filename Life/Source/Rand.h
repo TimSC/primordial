@@ -38,6 +38,7 @@ private:
 	}
 
 public:
+	BYTE twoNibbles();
 	Randomizer(void);
 
 	// Set up seed
@@ -49,6 +50,9 @@ public:
 	// Helpful random methods
 	int Integer(int max)
 	{
+		int rtmp = rand() % 8;
+		for (int i = 0; i < rtmp; i++)
+			rand();
 		return rand() % max;
 	}
 
