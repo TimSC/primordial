@@ -335,7 +335,9 @@ bool BRectSort::SortAll()
 	{
 		bSorted |= m_pArray[i]->Sort();
 
+#ifdef _TRACE_SORT
 		m_pArray[i]->TraceDebug(i);
+#endif
 	}
 	return bSorted;
 }

@@ -52,7 +52,9 @@ void CMetabolism::CrossMetabolism(CMetabolism & pBiot)
 	Randomizer rand;
 	int Crossover1 = rand.Integer(9);
 	int Crossover2 = rand.Integer(9);
-		
+	int Crossover3 = rand.Integer(3);
+	int Crossover4 = rand.Integer(9);
+	
 	if (m_matesMetabolism1[0] > 0)
 		{	
 		for (int i = 0; i < 9; i++)
@@ -98,17 +100,86 @@ void CMetabolism::CrossMetabolism(CMetabolism & pBiot)
 				
 	for (int i = 0; i < 3; i++)
 		{
-		pBiot.m_inspiration[i] = m_inspiration[i];
-		pBiot.m_expiration[i] = m_expiration[i];
+		if (m_matesInspiration[0] > 0)
+			{
+			if (i < Crossover3)
+				{
+				pBiot.m_inspiration[i] = m_inspiration[i];
+				}
+			else
+				{
+				pBiot.m_inspiration[i] = m_matesInspiration[i];
+				}
+			}
+		else
+			{
+			if (i != Crossover3)
+				{
+				pBiot.m_inspiration[i] = m_inspiration[i];
+				}
+			else
+				{
+				pBiot.m_inspiration[i] = rand.Byte();
+				}
+			}
+		if (m_matesExpiration[0] > 0)
+			{
+			if (i < Crossover3)
+				{
+				pBiot.m_expiration[i] = m_expiration[i];
+				}
+			else
+				{
+				pBiot.m_expiration[i] = m_matesExpiration[i];
+				}
+			}
+		else
+			{
+			if (i != Crossover3)
+				{
+				pBiot.m_expiration[i] = m_expiration[i];
+				}
+			else
+				{
+				pBiot.m_expiration[i] = rand.Byte();
+				}
+			}		
 		}
 
-	//Lose amount of red green and blue store equivalent to childs body structure
-	TransferMaterial(redStore, pBiot.redStore, (float)0.1);
-	TransferMaterial(greenStore, pBiot.greenStore, (float)0.1);
-	TransferMaterial(blueStore, pBiot.blueStore, (float)0.1);
-	TransferMaterial(e1store, pBiot.e1store, (float)0.1);
-	TransferMaterial(e2store, pBiot.e2store, (float)0.1);
-	TransferMaterial(e3store, pBiot.e3store, (float)0.1);
+	for (i = 0; i < 9; i++)
+		{
+		if (m_arMatesMetabolicLimits[0] > 0)
+			{
+			if (i < Crossover4)
+				{
+				pBiot.m_arMetabolicLimits[i] = m_arMetabolicLimits[i];	
+				}
+			else
+				{
+				pBiot.m_arMetabolicLimits[i] = m_arMatesMetabolicLimits[0];
+				}
+			}
+		else
+			{
+			if (i != Crossover4)
+				{
+				pBiot.m_arMetabolicLimits[i] = m_arMetabolicLimits[i];
+				}
+			else
+				{
+				pBiot.m_arMetabolicLimits[i] = 265 + rand.Integer(1920);
+				}
+			}
+		
+		}
+
+	//Lose amount of metabolic resources equivalent to childs body structure
+	TransferMaterial(redStore, pBiot.redStore, (float)0.25);
+	TransferMaterial(greenStore, pBiot.greenStore, (float)0.25);
+	TransferMaterial(blueStore, pBiot.blueStore, (float)0.25);
+	TransferMaterial(e1store, pBiot.e1store, (float)0.25);
+	TransferMaterial(e2store, pBiot.e2store, (float)0.25);
+	TransferMaterial(e3store, pBiot.e3store, (float)0.25);
 	}
 
 
@@ -116,15 +187,24 @@ void CMetabolism::StepMetabolism(CResources * cell)
 	{
 	//Get Input from Environment	
 	TransferMaterial(cell->m_nRed, redIn, (float)m_inspiration[0]/(float)1550);
-	//int nRed = cell->m_nRed * ((float)m_inspiration[0]/(float)1550);
-	//redIn += nRed; cell->m_nRed -= nRed;
+	if (redIn > m_arMetabolicLimits[0])
+		{
+		cell->m_nRed += redIn - m_arMetabolicLimits[0];
+		redIn = m_arMetabolicLimits[0];
+		}
 	TransferMaterial(cell->m_nBlue, blueIn, (float)m_inspiration[1]/(float)1550);
-	//int nBlue = cell->m_nBlue * ((float)m_inspiration[1]/(float)1550); 
-	//blueIn += nBlue; cell->m_nBlue -= nBlue;
+	if (blueIn > m_arMetabolicLimits[1])
+		{
+		cell->m_nBlue += blueIn - m_arMetabolicLimits[1];
+		blueIn = m_arMetabolicLimits[1];
+		}
 	TransferMaterial(cell->m_nGreen, greenIn, (float)m_inspiration[2]/(float)1550);
-	//int nGreen = cell->m_nGreen * ((float)m_inspiration[2]/(float)1550);
-	//greenIn = nGreen; cell->m_nGreen -= nGreen;
-
+	if (greenIn > m_arMetabolicLimits[2])
+		{
+		cell->m_nGreen += greenIn - m_arMetabolicLimits[2];
+		greenIn = m_arMetabolicLimits[2];
+		}
+	
 
 	//Carry out reactions to produce intermediates
 	bool bE1 = false;
@@ -163,6 +243,23 @@ void CMetabolism::StepMetabolism(CResources * cell)
 					}
 				break;
 			}
+		}
+
+
+	if (e1store > m_arMetabolicLimits[3])
+		{
+		e1store = m_arMetabolicLimits[3];
+		energy *= 0.9;
+		}
+	if (e2store > m_arMetabolicLimits[4])
+		{
+		e2store = m_arMetabolicLimits[4];
+		energy *= 0.9;
+		}
+	if (e3store > m_arMetabolicLimits[5])
+		{
+		e3store = m_arMetabolicLimits[5];
+		energy *= 0.9;
 		}
 
 	//Carry out reactions to produce building blocks
@@ -205,19 +302,30 @@ void CMetabolism::StepMetabolism(CResources * cell)
 
 	//Throw Away Waste products
 	TransferMaterial(redStore, cell->m_nRed, ((float)m_expiration[0]/(float)1550));
-	//nRed = redStore * ((float)m_expiration[0]/(float)1550);
-	//ASSERT(nRed <= redStore);
-	//cell->m_nRed += nRed; redStore -= nRed;
+	if (redStore > m_arMetabolicLimits[6])
+		{
+		cell->m_nRed += redStore - m_arMetabolicLimits[6];
+		redStore = m_arMetabolicLimits[6];
+		energy *= 0.8;		//Feel the effects of Metabolic poisioning
+		}
+	
 
 	TransferMaterial(blueStore, cell->m_nBlue, ((float)m_expiration[1]/(float)1550));
-	//nBlue = blueStore * ((float)m_expiration[1]/(float)1550);
-	//ASSERT(nBlue <= blueStore);
-	//cell->m_nBlue +=  nBlue; blueStore -= nBlue;
+	if (blueStore > m_arMetabolicLimits[7])
+		{
+		cell->m_nBlue += blueStore - m_arMetabolicLimits[7];
+		blueStore = m_arMetabolicLimits[7];
+		energy *= 0.8;		//Feel the effects of Metabolic poisioning
+		}
+	
 	
 	TransferMaterial(greenStore, cell->m_nGreen, ((float)m_expiration[2]/(float)1550));
-	//nGreen = greenStore * ((float)m_expiration[2]/(float)1550);
-	//ASSERT(nGreen <= greenStore);
-	//cell->m_nGreen += nGreen; greenStore -= nGreen;
+	if (greenStore > m_arMetabolicLimits[8])
+		{
+		cell->m_nGreen += greenStore - m_arMetabolicLimits[8];
+		greenStore = m_arMetabolicLimits[8];
+		energy *= 0.8;		//Feel the effects of Metabolic poisioning
+		}
 	
 	}
 
@@ -237,11 +345,23 @@ float CMetabolism::PercentEnergy() const
 
 void CMetabolism::ClearSettings()
 	{
-	ZeroMemory(m_matesMetabolism1,        sizeof(m_matesMetabolism1));
-	ZeroMemory(m_matesMetabolism2,        sizeof(m_matesMetabolism2));
-	ZeroMemory(metabolism1,               sizeof(metabolism1));
-	ZeroMemory(metabolism2,               sizeof(metabolism2));
+	ZeroMemory(m_matesMetabolism1,			sizeof(m_matesMetabolism1));
+	ZeroMemory(m_matesMetabolism2,			sizeof(m_matesMetabolism2));
+	ZeroMemory(metabolism1,					sizeof(metabolism1));
+	ZeroMemory(metabolism2,					sizeof(metabolism2));
 	ZeroMemory(m_statEnergy,				sizeof(m_statEnergy));
+	ZeroMemory(m_arMetabolicLimits,			sizeof(m_arMetabolicLimits));
+	ZeroMemory(m_arMatesMetabolicLimits,	sizeof(m_arMatesMetabolicLimits));
+	ZeroMemory(m_matesInspiration,			sizeof(m_matesInspiration));
+	ZeroMemory(m_matesExpiration,			sizeof(m_matesExpiration));
+	ZeroMemory(m_inspiration,				sizeof(m_inspiration));
+	ZeroMemory(m_expiration,				sizeof(m_expiration));
+
+	energy = 0;
+	adultBaseEnergy = 0;
+	childBaseEnergy = 0;
+	stepEnergy = 0;
+	m_dBonusRatio = 0.0;
 	m_statIndex = 0;
 	redIn = 0;
 	greenIn = 0;
@@ -273,6 +393,8 @@ void CMetabolism::Randomize()
 	redStore = 64 + rand.Integer(92);
 	greenStore = 64 + rand.Integer(92);
 	blueStore = 64 + rand.Integer(92);
+	for (i = 0; i < 9; i++)
+		m_arMetabolicLimits[i] = 265 + rand.Integer(1920);
 	redIn = 0;
 	blueIn = 0;
 	greenIn = 0;
@@ -284,13 +406,13 @@ void CMetabolism::Randomize()
 void CMetabolism::DoStats(Biot * pBiot)
 	{//(redStore + greenStore + blueStore)
 	m_statEnergy[m_statIndex].energy = PercentEnergy();
-	m_statEnergy[m_statIndex].red = (float)(10 * redStore) / (float) pBiot->colorDistance [RED_LEAF];
-	m_statEnergy[m_statIndex].blue = (float)(10 * blueStore) / (float) pBiot->colorDistance [BLUE_LEAF];
-	m_statEnergy[m_statIndex].green = (float)(10 * greenStore) / (float)pBiot->colorDistance [GREEN_LEAF];
+	m_statEnergy[m_statIndex].red = (float)(100 * redStore) / (float) m_arMetabolicLimits[6];
+	m_statEnergy[m_statIndex].blue = (float)(100 * blueStore) / (float) m_arMetabolicLimits[7];
+	m_statEnergy[m_statIndex].green = (float)(100 * greenStore) / (float)m_arMetabolicLimits[8];
 
-	m_statEnergy[m_statIndex].e1 = (float)(100 * e1store) / (float)(e1store + e2store + e3store) ;
-	m_statEnergy[m_statIndex].e2 = (float)(100 * e2store) / (float)(e1store + e2store + e3store) ;
-	m_statEnergy[m_statIndex++].e3 = (float)(100 * e3store) / (float)(e1store + e2store + e3store) ;
+	m_statEnergy[m_statIndex].e1 = (float)(100 * e1store) / (float)m_arMetabolicLimits[3] ;
+	m_statEnergy[m_statIndex].e2 = (float)(100 * e2store) / (float)m_arMetabolicLimits[4] ;
+	m_statEnergy[m_statIndex++].e3 = (float)(100 * e3store) / (float)m_arMetabolicLimits[5] ;
 
 
 	if (m_statIndex >= MAX_ENERGY_HISTORY)
@@ -299,7 +421,7 @@ void CMetabolism::DoStats(Biot * pBiot)
 
 void CMetabolism::Serialize(CArchive& ar)
 	{
-	const BYTE archiveVersion = 12;
+	const BYTE archiveVersion = 13;
 	long i;
 	BYTE version;
 
@@ -327,7 +449,7 @@ void CMetabolism::Serialize(CArchive& ar)
 		ar.Read((LPBYTE) m_matesInspiration, sizeof(m_matesInspiration));
 		ar.Read((LPBYTE) m_matesExpiration, sizeof(m_matesExpiration));
 		ar.Read((LPBYTE) m_statEnergy, sizeof(m_statEnergy));
-		
+		ar.Read((LPBYTE) m_arMetabolicLimits, sizeof(m_arMetabolicLimits));
 		
 		ar >> redIn;
 		ar >> greenIn;
@@ -356,7 +478,7 @@ void CMetabolism::Serialize(CArchive& ar)
 		ar.Write((LPBYTE) m_matesInspiration, sizeof(m_matesInspiration));
 		ar.Write((LPBYTE) m_matesExpiration, sizeof(m_matesExpiration));
 		ar.Write((LPBYTE) m_statEnergy, sizeof(m_statEnergy));
-		
+		ar.Write((LPBYTE) m_arMetabolicLimits, sizeof(m_arMetabolicLimits));
 		
 		ar << redIn;
 		ar << greenIn;
@@ -391,7 +513,7 @@ void CMetabolism::TransferMaterial(DWORD &from, DWORD &to, int nChange)
 			from -= nChange;
 			to += nChange;
 			}
-		else
+		else 
 			{
 			to += from;
 			from = 0;		

@@ -1146,8 +1146,8 @@ CLine cLine;
 
 	//If we are choking on a surplus of raw material die
 	//too much of a good thing
-	if ((metabolism.redStore > 30000000) || (metabolism.greenStore > 30000000) || (metabolism.blueStore > 30000000))
-		bDie = TRUE;
+	//if ((metabolism.redStore > 30000000) || (metabolism.greenStore > 30000000) || (metabolism.blueStore > 30000000))
+	//	bDie = TRUE;
 #endif	
 
 	//TODO: Move doesn't take into account rotation!!
@@ -1436,7 +1436,13 @@ CLine cLine;
 
 	// Did we die?
 #ifdef _METABOLISM
-		if (metabolism.energy <= 0 || totalDistance <= 0)
+	Randomizer rand;
+	BYTE handOfFate = rand.Byte();
+	//if (handOfFate > 245)
+	//	{
+	//	metabolism.energy *= 0.25;
+	//	}
+	if (metabolism.PercentEnergy() <= 0.001 || totalDistance <= 0)
 	{
 		if (totalDistance <= 0 || metabolism.energy >= 0)
 			env.PlayResource("PL.Eaten");
@@ -1450,7 +1456,7 @@ CLine cLine;
 		return FALSE;
 	}
 		// Is it time to grow, die, or give birth?
-	if ((m_age & 0x0F) == 0x0F)
+	if (((m_age & 0x0F) == 0x0F) && (m_age > m_maxAge >> 3))
 	{
 		CheckReproduction();
 
@@ -1599,9 +1605,9 @@ void Biot::CheckReproduction()
 
 	// If it has enough energy, and is fertilized if sexual only -> reproduce
 #ifdef _METABOLISM
-	if (metabolism.energy >= (metabolism.adultBaseEnergy << 1))
+	if ((metabolism.energy >= (metabolism.adultBaseEnergy  * 0.8)) && (m_nSick == 0))
 #else
-	if (energy >= (adultBaseEnergy << 1))
+	if (energy >= (adultBaseEnergy >> 1))
 #endif
 	{
 		// Automatically lose excess energy above your base energy
@@ -1614,7 +1620,7 @@ void Biot::CheckReproduction()
 			Biot *nBiot;
 			int children = trait.GetNumberOfChildren();
 #ifdef _METABOLISM
-			metabolism.energy = metabolism.adultBaseEnergy;
+			metabolism.energy = (metabolism.adultBaseEnergy >> 1);
 #else
 			energy = adultBaseEnergy;
 #endif
@@ -2280,6 +2286,9 @@ void Biot::CopyGenes(Biot& enemy)
 #ifdef _METABOLISM
 	memcpy(metabolism.m_matesMetabolism1, enemy.metabolism.metabolism1, sizeof(enemy.metabolism.metabolism1));
 	memcpy(metabolism.m_matesMetabolism2, enemy.metabolism.metabolism2, sizeof(enemy.metabolism.metabolism2));
+	memcpy(metabolism.m_matesInspiration, enemy.metabolism.m_inspiration, sizeof(enemy.metabolism.m_inspiration));
+	memcpy(metabolism.m_matesExpiration, enemy.metabolism.m_expiration, sizeof(enemy.metabolism.m_expiration));
+	memcpy(metabolism.m_arMatesMetabolicLimits, enemy.metabolism.m_arMetabolicLimits, sizeof(enemy.metabolism.m_arMatesMetabolicLimits));
 #endif
 }
 

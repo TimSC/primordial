@@ -785,7 +785,7 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 		}
 	}
 //	m_sort.SortAll();
-	m_sort.TraceDebug();
+//	m_sort.TraceDebug();
 //	m_sort.SetIncrementalSort(true);
 
 //	BRectSortPos pos;
@@ -1194,7 +1194,9 @@ void Environment::AddBiot(Biot* pNewBiot)
 		{
 		m_sort.Add(pNewBiot);
 		m_biotList.Add(pNewBiot);
+#ifdef _TRACE_SORT
 		m_sort.TraceDebug();
+#endif
 		}
 	}
 

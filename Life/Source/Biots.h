@@ -405,6 +405,9 @@ public:
       Offset(x, y);
       origin.x += x;
       origin.y += y;
+#ifdef _METABOLISM
+	  metabolism.energy -= (x * x + y * y) * 10;
+#endif
     }
 
 	short CheckWhite(int type)

@@ -42,7 +42,7 @@ void CInitialPopulation::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_GENERATE, m_bGenerateOnExtinction);
 	//}}AFX_DATA_MAP
 
-	m_spinPopulation.SetRange(0, 50);
+	m_spinPopulation.SetRange(0, 400);
 }
 
 

@@ -52,22 +52,24 @@ public:
 	BYTE	metabolism1[9]; //High Nibble of each Byte gives Energy Cost/Gain of Step
 	BYTE	metabolism2[9];	//Low Nibble of Each Byte gives the amount of corresponding 
 							//Metabolite that participates in reaction
+	DWORD	m_arMetabolicLimits[9];		
 
-	BYTE m_matesExpiration[3];
-	BYTE m_matesInspiration[3];
-	BYTE m_matesMetabolism2[9];
-	BYTE m_matesMetabolism1[9];
+	BYTE	m_matesExpiration[3];
+	BYTE	m_matesInspiration[3];
+	BYTE	m_matesMetabolism2[9];
+	BYTE	m_matesMetabolism1[9];
+	DWORD	m_arMatesMetabolicLimits[9];
 
-
-	LONG     childBaseEnergy;
-	LONG     adultBaseEnergy;
-    LONG     stepEnergy;
+	LONG    childBaseEnergy;
+	LONG    adultBaseEnergy;
+    LONG    stepEnergy;
 
 	double m_dBonusRatio;
 	CMetStat m_statEnergy[MAX_ENERGY_HISTORY];
 	int  m_statIndex;
 // Operations
 public:
+	
 	void	TransferMaterial(DWORD & from, DWORD & to, int nChange);
 	void	TransferMaterial(DWORD &from, DWORD& to, float ratio);
 	void	DoStats(Biot * pBiot);
