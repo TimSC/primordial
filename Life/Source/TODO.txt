@@ -47,3 +47,5 @@
 - It may be that a biot shouldn't count a collision because an enemy line is removed but it doesn't know that
 - The injector doesn't color the other biot on contact.
 - Sometimes biots get completely killed, and have no length (apparent at least) and they don't die!!
+
+.
