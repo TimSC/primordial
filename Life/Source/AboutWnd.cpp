@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////
 // AboutWnd.cpp - Start-up "Splash Screen" Window
-// $Revision: 1.2 $
+// $Revision: 1.3 $
 //
 //
 #include "stdafx.h"
@@ -410,8 +410,8 @@ void CSplashWnd::OnCancelMode()
 
 void CSplashWnd::OnTimer(UINT /*nIDEvent*/)
 {
-	// Destroy the splash screen window.
-	Hide();
+    // Destroy the splash screen window.
+    Hide();
 }
 
 
