@@ -2,17 +2,15 @@
 #ifndef biots_h
 #define biots_h
 
+#include "Resources.h"	// Added by ClassView
 #include "etools.h"
 #include "vector.h"
 #include "genotype.h"
 #include "Brain.h"
-
-// Sensor Definitions
-//
-// bit
-// 1	
-
-
+#ifdef _METABOLISM
+#include "Resources.h"
+#include "Metabolism.h"
+#endif
 #define DSTERASE  (DWORD)0x00220326
 
  //////////////////////////////////////////////////////////////////////
@@ -98,13 +96,9 @@ private:
 class Biot: public BRectItem
 {
   public:
-	Biot(Environment& environment);
-	~Biot(void);
-	
-	int m_bitmapWidth;
-	int m_bitmapHeight;
-	void CheckBitmapSize(int width, int height);
-
+//////////////////////////////////////////////////////////////////
+//Enumerations
+//////////////////////////////////////////////////////////////////
 	enum {
 		IS_HUNGRY = 0,  // Histeresis
 		IS_INJURED,     // Any injury
@@ -122,24 +116,6 @@ class Biot: public BRectItem
 		PERCENT_ENERGY,
 	};
 
-	// Biot Naming
-	CString GetName();
-	CString GetWorldName()           { return m_sWorldName;  }
-	CString GetFullName();
-	CString GetFatherName();
-	void SetName(CString sName);
-	void SetWorldName(CString sName) { m_sWorldName = sName; }
-
-
-	void Mutate(int chance);
-
-    void ClearSettings(void);
-    void Draw(void);
-    void SetErasePosition(void);
-    void Erase(void);
-    void FormBitmap(int pen = -1);
-    void FormMask(void);
-    void FreeBitmaps();
 	enum {
 		NORMAL,
 		REDRAW,
@@ -147,177 +123,96 @@ class Biot: public BRectItem
 		RECALCULATE,
 		GROW
 	};
-	void PrepareErase(int operation);
-	void PrepareDraw(int operation);
-	void EraseAndDraw(int operation);
-    void WallBounce(int x, int y);
-	
-	void Motion(const double deltaX, const double deltaY, double Vx, double Vy, const double radius);
 
-    void MoveBiot(int x, int y);
 
-	void SetScreenRect() 
-	{
-		Set(leftX + origin.x, topY + origin.y, rightX + origin.x + 1, bottomY + origin.y + 1);
-	}
-
-#if defined(_DEBUG)
-	void Trace(LPCSTR s) { if (m_Id == 22) TRACE(s); }
-	void Trace(LPCSTR s, int value) { if (m_Id == 22) TRACE(s, value); }
-#else
-	void Trace(LPCSTR) {};
-	void Trace(LPCSTR, int) {};
-#endif
-
-    BOOL Move(void);
-
-	void  Reject(int side);
-    int   RandomCreate(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
-    int   Initialize(BOOL bRandom = FALSE);
-    int   Contacter(Biot* enemy, int dx, int dy, int& x, int& y);
-	virtual void  Serialize(CArchive& ar);
-
-    short LengthLoss(int nPeno, short delta);
+/////////////////////////////////////////////////////////////////
+//Public Variables
+/////////////////////////////////////////////////////////////////
+    BOOL     bTerminateEvent;
+	BOOL     m_nSick;
+	BOOL     m_bDrawn;
+	BOOL     m_bSelected;	
+	BOOL     bInjured;
+    BOOL     bDie;
+#pragma message ("Remove flap")
+	short    flap[MAX_GENES]; 
+	short    m_angle[MAX_GENES];
+	short    m_angleDrawn[MAX_GENES];
+	short    m_angleLimbType[MAX_LIMB_TYPES];
+	short    m_angleLimbTypeDrawn[MAX_LIMB_TYPES];
+	short    m_angleLimb[MAX_SYMMETRY];
+	short    m_angleLimbDrawn[MAX_SYMMETRY];
+	short    m_angleLimbTypeSegment[MAX_LIMB_TYPES][MAX_SEGMENTS];
+	short    m_angleLimbTypeSegmentDrawn[MAX_LIMB_TYPES][MAX_SEGMENTS];
+	short   m_retractDrawn[MAX_SYMMETRY];	// The retraction actually drawn
+	short   m_retractRadius[MAX_SYMMETRY];	// The retraction requested
+	short   m_retractSegment[MAX_SYMMETRY];	// The segment being retracted	
+    short     distance[MAX_GENES];
+#pragma message ("Remove reserved")
+	BYTE     reservedLineType[MAX_LIMB_TYPES];
+	BYTE     reservedSegType[MAX_LIMB_TYPES][MAX_SEGMENTS];
+	BYTE     reservedLine[MAX_SYMMETRY];
+	BYTE     reserved[MAX_GENES]; 
+	BYTE     geneNo[MAX_GENES];
+	BYTE     lineNo[MAX_GENES];
     
-    long Distance(POINT& start, POINT& stop);
-    LONG Symmetric(int aRatio);
-    LONG LineContact(int line, int eline, Biot* enemy, short* delta);
-    BOOL AdjustState(int index, short delta);
-	BOOL OnOpen();
-  
-	short Translate(double radius, double& newX, double& newY, int degrees, int aRatio);
-    
-    Biot& operator=(Biot& copyMe);
-
-    int      newType;
+	int      newType;
+	int		m_bitmapWidth;
+	int		m_bitmapHeight;
+	int     m_internalState;
+	int      m_currentEvent;   // What event are we running
+	int      m_nextEvent;	
+	int      m_currentGroup;	// What commandGroup is running	
+	int      m_currentLine;		// What line sensed the event?
+	int      m_nextLine;	
+	int      m_currentWait;		// How much time so far on a command group
     DWORD    m_age;
 	DWORD    m_maxAge;
 
-    BOOL     bDie;
-    LONG     energy;
-    LONG     childBaseEnergy;
+	//Metabolism - 
+    //LONG    energy;
+	//LONG	redIn;
+	//LONG	blueIn;
+	//LONG	greenIn;
+	//LONG	redStore;
+	//LONG	greenStore;	
+	//LONG	blueStore;
+	//LONG	e1store;
+	//LONG	e2store;
+	//LONG	e3store;
+	//BYTE	m_inspiration[3];
+	//BYTE	m_expiration[3];
+	//BYTE	metabolism1[9]; //High Nibble of each Byte gives Energy Cost/Gain of Step
+	//BYTE	metabolism2[9];	//Low Nibble of Each Byte gives the amount of corresponding 
+							//Metabolite that participates in reaction
 
-    Collision collider[MAX_COLLISIONS];
-    void RemoveCollisions(DWORD age);
-    int  FindCollision(int enemyId);
-    int  AddCollision(int enemyId);
-    void ClearCollisions(void){for(int i = 0; i < MAX_COLLISIONS; i++) collider[i].id = -1; }
+	//BYTE m_matesExpiration[3];
+	//BYTE m_matesInspiration[3];
+	//BYTE m_matesMetabolism2[9];
+	//BYTE m_matesMetabolism1[9];
 
-    Vector   vector;
-
-
-	short    m_angle[MAX_GENES];
-	short    m_angleDrawn[MAX_GENES];
-
-	short    m_angleLimbType[MAX_LIMB_TYPES];
-	short    m_angleLimbTypeDrawn[MAX_LIMB_TYPES];
-
-	short    m_angleLimb[MAX_SYMMETRY];
-	short    m_angleLimbDrawn[MAX_SYMMETRY];
-
-	short    m_angleLimbTypeSegment[MAX_LIMB_TYPES][MAX_SEGMENTS];
-	short    m_angleLimbTypeSegmentDrawn[MAX_LIMB_TYPES][MAX_SEGMENTS];
-
-	short    MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate);
-	short    MoveLimbTypeSegments(int nLimbType, int nRate);
-	short    MoveLimbSegments(int nLimbType, int nRate);
-	short    MoveLimbSegment(int nSegment, int nLimb, int nRate);
-
-	// The retraction actually drawn
-	// The retraction requested
-	// The segment being retracted
-	short   m_retractDrawn[MAX_SYMMETRY];
-	short   m_retractRadius[MAX_SYMMETRY];
-	short   m_retractSegment[MAX_SYMMETRY];
-
-	// Retract or extend the tip of a limb
-	BYTE    RetractLine(int nSegment, int nLimb, int maxRadius);
-	BYTE    ExtendLine(int nSegment, int nLimb);
-	BYTE    RetractLimbType(int nSegment, int nLimbType, int maxRadius);
-	BYTE    ExtendLimbType(int nSegment, int nLimbType);
-
-
-	CommandLimbStore m_store[MAX_SYMMETRY];
-
-	CommandArray m_commandArray;
-	CommandArray m_commandArray2;
-	int          m_internalState;
-
-	BYTE     geneNo[MAX_GENES];
-	BYTE     lineNo[MAX_GENES];
-
-	BOOL     bTerminateEvent;
-
-
-	BOOL     m_nSick;
-	BOOL     m_bDrawn;
-	BOOL     m_bSelected;
-
-	void MoveArm(int nPeno, short degree);
-	void MoveSegment(int nPeno, short degree);
-	void SeekSegment(int nPeno, short degree, short offset);
-	void SeekArm(int nPeno, short rate, short offset);
-	void IncreaseAngle(int nPeno, short rate);
-	BOOL MoveLineType(int nLineType, short rate, short offset);
-	BOOL MoveSegmentType(int nLineType, int nSegment, short rate, short offset);
-	BOOL MoveLine(int nLine, short rate, short offset);
-
-	CRedraw redraw;
-
+	//LONG     childBaseEnergy;
     POINT     startPt[MAX_GENES];
     POINT     stopPt[MAX_GENES];
-    short     distance[MAX_GENES];
+    Collision collider[MAX_COLLISIONS];
+	Vector   vector;
+	CommandLimbStore m_store[MAX_SYMMETRY];
+	CommandArray m_commandArray;
+	CommandArray m_commandArray2;
+	// What is the state of each command in the command group
+    //CSTATE   cState[GeneCommandGroup::COMMANDS_PER_GROUP];
+	//GeneResponse        response[GeneEvent::RESPONSE_GROUPS];
+	//GeneCommandGroup    group[GeneCommandGroup::COMMAND_GROUPS];
+	CRedraw redraw;
     GeneTrait trait;
-
-	BOOL IsSegmentDamaged(int nPeno) { return (state[nPeno] != distance[nPeno]); }
-	BOOL IsSegmentMissing(int nPeno) { return (state[nPeno] <= 0); }
-	short GetSegmentLength(int nPeno) { return distance[nPeno]; }
-
-	void CheckReproduction();
-
-	// Bonus is related to your total size
-	void SetBonus() { m_dBonusRatio = ((double)Area()) / 40000.0; }
-
-private:
-    Environment& env;
-
 public:
 	// Do not save these variables
-	float m_statEnergy[MAX_ENERGY_HISTORY];
-	int  m_statIndex;
-
-    HBITMAP  m_hBitmap;
-
-	// Normal Variables
-//	GeneEvent	 event[GeneEvent::EVENT_MAX];
-	CString      m_sName;
-	CString      m_sWorldName;
-	CString      m_sFatherName;
-	CString      m_sFatherWorldName;
-
-    // Genes stored from mating
-//	GeneResponse        response2[GeneEvent::RESPONSE_GROUPS];
-//	GeneCommandGroup    group2[GeneCommandGroup::COMMAND_GROUPS];
-//	GeneEvent           event2[GeneEvent::EVENT_MAX];
-    GeneTrait           trait2;
-
-	double m_dBonusRatio;		// Storage for the bonus ratio
-	int    m_livingChildren;	// The number of living children this biot has
-	int    m_totalChildren;		// The number of childen this biot has contributed to
-	DWORD  m_fatherId;          // The Id of the father (if any)
-    DWORD  m_motherId;
-	DWORD  m_mateId;
-    DWORD  m_Id;
-	DWORD  m_generation;		// Indicates how far down the line a child is
-	DWORD  m_fatherGeneration;
-
-    POINT    origin;
+	BYTE     color[MAX_GENES];
     short    nType[MAX_GENES];
     short    state[MAX_GENES];
-//    BYTE     typeState[MAX_GENES];
-	BYTE     color[MAX_GENES];
-
-    BOOL     bInjured;
+	//int  m_statIndex;
+	int    m_livingChildren;	// The number of living children this biot has
+	int    m_totalChildren;		// The number of childen this biot has contributed to
     int      genes2;
     int      topY;
     int      bottomY;
@@ -332,19 +227,186 @@ public:
     long     turnBenefit;
     long     totalDistance;
     long     colorDistance[WHITE_LEAF + 1];
-    long     adultBaseEnergy;
-    long     stepEnergy;
-    int  PlaceRandom(void);
-    BOOL PlaceNear(Biot& parent);
-    BOOL ChangeDirection(Biot* enemy, int dx, int dy);
-    void SetRatio(void);
-    void SetSymmetry(void);
-    void CopyGenes(Biot& enemy);
-    void InjectGenes(int type, Biot& enemy);
+#ifdef _METABOLISM
+	CMetabolism metabolism;
+#else
+	LONG		energy;
+    long		adultBaseEnergy;
+    long		stepEnergy;
+	LONG		childBaseEnergy;
+	int			m_statIndex;
+	float		m_statEnergy[MAX_ENERGY_HISTORY];
+	double		m_dBonusRatio;		// Storage for the bonus ratio
+#endif
+	DWORD  m_fatherId;          // The Id of the father (if any)
+    DWORD  m_motherId;
+	DWORD  m_mateId;
+    DWORD  m_Id;
+	DWORD  m_generation;		// Indicates how far down the line a child is
+	DWORD  m_fatherGeneration;
+	//float m_statEnergy[MAX_ENERGY_HISTORY];
+	//double m_dBonusRatio;		// Storage for the bonus ratio
+    POINT    origin;
+    HBITMAP  m_hBitmap;
 
-	float PercentEnergy();
+	// Normal Variables
+	//GeneEvent	 event[GeneEvent::EVENT_MAX];
+	CString      m_sName;
+	CString      m_sWorldName;
+	CString      m_sFatherName;
+	CString      m_sFatherWorldName;
 
- 
+    // Genes stored from mating
+	//GeneResponse        response2[GeneEvent::RESPONSE_GROUPS];
+	//GeneCommandGroup    group2[GeneCommandGroup::COMMAND_GROUPS];
+	//GeneEvent           event2[GeneEvent::EVENT_MAX];
+    GeneTrait           trait2;
+
+//    BYTE     typeState[MAX_GENES];
+/////////////////////////////////////////////////////////////////
+//Private  Member Variables
+/////////////////////////////////////////////////////////////////
+private:
+    Environment& env;
+
+///////////////////////////////////////////////////////////////////////
+// Constructors
+///////////////////////////////////////////////////////////////////////
+public:
+//	void CrossMetabolism(Biot * pBiot);
+//	int MetabolicPath(long metabolite, BYTE coefficient);
+	
+//	void StepMetabolism();
+	Biot(Environment& environment);
+	~Biot(void);
+	Biot& operator=(Biot& copyMe);
+	int  RandomCreate(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
+    int  Initialize(BOOL bRandom = FALSE);
+    void ClearSettings(void);
+/////////////////////////////////////////////////////////////////////////
+//Constant Functions - These functions do not change 
+//the internal state of the Biot
+/////////////////////////////////////////////////////////////////////////
+#ifndef _METABOLISM
+	float PercentEnergy() const;
+#endif
+	CString GetFatherName() const;	
+/////////////////////////////////////////////////////////////////////////
+//Mutater Functions - These functions do change 
+//the internal state of the Biot
+/////////////////////////////////////////////////////////////////////////
+    int		AddCollision(int enemyId);
+    BOOL	AdjustState(int nPeno, short delta);
+	void	ChangeType(int nPeno, int aType);
+    void	ChangeColorEvent(int nPeno, int aType);
+    BOOL	ChangeDirection(Biot* enemy, int dx, int dy);
+    void	CheckBitmapSize(int width, int height);		
+	void	CheckReproduction();
+    void	ClearCollisions(void){for(int i = 0; i < MAX_COLLISIONS; i++) collider[i].id = -1; }
+	void	ClearReservations();
+    int		Contacter(Biot* enemy, int dx, int dy, int& x, int& y);
+	BOOL	ContactLine(Biot& enemy, int nEnemyPeno, int nPeno, short& delta, long& deltaEnergy);
+    void	CopyGenes(Biot& enemy);
+	long	Distance(POINT& start, POINT& stop);
+    void	Draw(void);
+    void	Erase(void);
+	void	EraseAndDraw(int operation);
+	BYTE	ExtendLimbType(int nSegment, int nLimbType);
+	BYTE	ExtendLine(int nSegment, int nLimb);
+    int		FindCollision(int enemyId);
+    void	FormBitmap(int pen = -1);
+    void	FormMask(void);
+    void	FreeBitmaps();
+#ifdef _METABOLISM	
+	CResources * GetCell();
+#endif
+	CString GetName();
+	CString GetFullName();
+	short	GetSegmentLength(int nPeno) { return distance[nPeno]; }
+	void	IncreaseAngle(int nPeno, short rate);
+    void	InjectGenes(int type, Biot& enemy);
+	BOOL	IsReserved(int nPeno);
+	BOOL	IsSegmentDamaged(int nPeno) { return (state[nPeno] != distance[nPeno]); }
+	BOOL	IsSegmentMissing(int nPeno) { return (state[nPeno] <= 0); }
+    short	LengthLoss(int nPeno, short delta);
+    LONG	LineContact(int line, int eline, Biot* enemy, short* delta);
+	void	Motion(const double deltaX, const double deltaY, double Vx, double Vy, const double radius);
+    BOOL	Move(void);
+	void	MoveArm(int nPeno, short degree);
+	short	MoveLimbSegment(int nSegment, int nLimb, int nRate);	
+	short	MoveLimbSegments(int nLimbType, int nRate);
+	short	MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate);
+	short	MoveLimbTypeSegments(int nLimbType, int nRate);
+	BOOL	MoveLine(int nLine, short rate, short offset);
+	BOOL	MoveLineType(int nLineType, short rate, short offset);
+	void	MoveSegment(int nPeno, short degree);
+	BOOL	MoveSegmentType(int nLineType, int nSegment, short rate, short offset);
+	void	Mutate(int chance);    
+	BOOL	OnOpen();
+    BOOL	PlaceNear(Biot& parent);
+    int		PlaceRandom(void);
+	void	PrepareDraw(int operation);
+	void	PrepareErase(int operation);
+	void	PrepareEvent(int nextDesiredEvent, int nextDesiredLine);
+	void	Reject(int side);
+	void	ReleaseFullLine(int nLine);
+	void	ReleaseLine(int nPeno);
+	void	ReleaseLineType(int nLineType);
+	void	ReleaseSegment(int nPeno);
+	void	ReleaseSegType(int nLineType, int segment);
+    void	RemoveCollisions(DWORD age);
+//	void	RequestNextEvent(int nextDesiredEvent, int nextDesiredLine);
+	BOOL	ReserveFullLine(int nLine);
+	BOOL	ReserveLine(int nPeno);
+	BOOL	ReserveLineType(int nLineType);
+	BOOL	ReserveSegment(int nPeno);
+	BOOL	ReserveSegType(int nLineType, int segment);
+	BYTE	RetractLimbType(int nSegment, int nLimbType, int maxRadius);
+	BYTE	RetractLine(int nSegment, int nLimb, int maxRadius);// Retract or extend the tip of a limb
+	void	SeekArm(int nPeno, short rate, short offset);
+	void	SeekSegment(int nPeno, short degree, short offset);
+	virtual void  Serialize(CArchive& ar);
+    void	SetErasePosition(void);
+	void	SetName(CString sName);	
+    void	SetRatio(void);
+    void	SetSymmetry(void);
+    LONG	Symmetric(int aRatio);
+	short	Translate(double radius, double& newX, double& newY, int degrees, int aRatio);
+    void	ValidateBorderMovement(double& dx, double& dy);
+    void	WallBounce(int x, int y);	
+
+	///////////////////////////////////////////////////////////////////////////////////////
+//Inline Functions
+///////////////////////////////////////////////////////////////////////////////////////
+#ifdef _METABOLISM
+	void SetBonus() { metabolism.m_dBonusRatio = ((double)Area()) / 40000.0; }
+#else
+	void SetBonus() { m_dBonusRatio = ((double)Area()) / 40000.0; }
+#endif
+
+#if defined(_DEBUG)
+	void Trace(LPCSTR s) { if (m_Id == 22) TRACE(s); }
+	void Trace(LPCSTR s, int value) { if (m_Id == 22) TRACE(s, value); }
+#else
+	void Trace(LPCSTR) {};
+	void Trace(LPCSTR, int) {};
+#endif
+
+	CString GetWorldName() const      { return m_sWorldName; }
+	void SetWorldName(CString sName) { m_sWorldName = sName; }
+
+	void SetScreenRect() 
+	{
+		Set(leftX + origin.x, topY + origin.y, rightX + origin.x + 1, bottomY + origin.y + 1);
+	}
+
+	void MoveBiot(int x, int y)
+    {
+      Offset(x, y);
+      origin.x += x;
+      origin.y += y;
+    }
+
 	short CheckWhite(int type)
 	{
 		// If IsMale(), 
@@ -378,23 +440,22 @@ public:
 
     BOOL SiblingsAttack(Biot& enemy) { return (trait.GetAttackSiblings() || enemy.trait.GetAttackSiblings()); }
 
-	BOOL ContactLine(Biot& enemy, int nEnemyPeno, int nPeno, short& delta, long& deltaEnergy);
+	
 
     BOOL AttackChildren(Biot& enemy) { return (trait.GetAttackChildren() ||
                                               enemy.trait.GetAttackChildren()); }
-    // Species match if there id is within one of each other.  There are
+    // Species match if their id is within one of each other.  There are
     // 16 identifiers possible.  This allows species to drift apart.  Otherwise
     // a mutation of id would case a single creature to be alone.
     BOOL SpeciesMatch(int enemySpecies) {
       enemySpecies = abs (enemySpecies - trait.GetSpecies());
-      return (enemySpecies <= 1 || enemySpecies >= 15);
+      return (enemySpecies <= 1 || enemySpecies >= 31);
     }
 
 	double PercentColor(int color) { return ((double) colorDistance[color]) / ((double) totalDistance); }
 
     int BaseRatio(void) { return ratio - (trait.GetAdultRatio() - 1); }
 
-    void  ValidateBorderMovement(double& dx, double& dy);
 
 	short minShort(int a, short b)
 	{
@@ -403,14 +464,41 @@ public:
 };
 
 
+/////////////////////////////////////////////////////////
+// IsReserved
 //
-// Move the bounding rectangle and the origin
+// Returns TRUE if the target was reserved.
 //
-inline void Biot::MoveBiot(int x, int y)
+inline BOOL Biot::IsReserved(int nPeno)
 {
-	Offset(x, y);
-	origin.x += x;
-	origin.y += y;
+	return reserved[nPeno];
+}
+
+
+/////////////////////////////////////////////////////////
+// ReserveSegment
+//
+// Returns TRUE if the target was reserved. Pass in the
+// segment to reserve.
+//
+inline BOOL Biot::ReserveSegment(int nPeno)
+{
+	if (!reserved[nPeno])
+	{
+		reserved[nPeno]++;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
+/////////////////////////////////////////////////////////
+// ReleaseSegment
+//
+//
+inline void Biot::ReleaseSegment(int nPeno)
+{
+	reserved[nPeno] = 0;
 }
 
 
@@ -424,5 +512,125 @@ inline void Biot::PrepareDraw(int operation)
 	if (operation != NORMAL)
 		FormBitmap(newType);
 }
+
+
+///////////////////////////////////////////////////////////////////////////
+//Reference Counted Auto Pointer Class
+template <class T> 
+class ObjVar;
+
+template <class T>
+class Counted
+	{
+    friend class ObjVar<T>;
+private:
+    Counted(T* pT) : Count(0), my_pT(pT) { ASSERT(pT != 0); }
+    ~Counted()   { ASSERT(Count == 0); delete my_pT; }
+
+    unsigned GetRef()  { return ++Count; }
+    unsigned FreeRef() { ASSERT(Count!=0); return --Count; }
+
+    T* const my_pT;
+    unsigned Count;
+	};
+
+template <class T>
+class ObjVar
+	{
+public:
+     ObjVar();
+     ObjVar(T* pT);
+     ~ObjVar();
+     ObjVar(const ObjVar<T>& rVar);
+
+     ObjVar<T>& operator=(const ObjVar<T>& rVar);
+        
+     T* operator->();
+     const T* operator->() const;
+     friend bool operator==(const ObjVar<T>& lhs, const ObjVar<T>& rhs);
+
+     bool Null() const {return m_pCounted == 0};
+     void SetNull() { UnBind(); }
+
+private:
+     void UnBind();
+     Counted<T>* m_pCounted;
+	};
+
+
+template<class T>
+ObjVar<T>::ObjVar(): m_pCounted(0) {}
+
+template<class T>
+ObjVar<T>::ObjVar(T* pT)
+	{
+    m_pCounted = new Counted<T>(pT);
+    m_pCounted->GetRef();
+	}
+
+template<class T>
+ObjVar<T>::~ObjVar()
+	{
+    UnBind();
+	}
+
+template<class T>
+void ObjVar<T>::UnBind()
+	{
+    if (!Null() && m_pCounted->FreeRef() == 0)       
+		delete m_pCounted;
+    m_pCounted = 0;
+	}
+
+template<class T>
+T* ObjVar<T>::operator->()
+	{
+    if (Null())
+        throw NulRefException();
+    return m_pCounted->my_pT;
+	}
+
+template<class T>
+const T* ObjVar<T>::operator->() const
+	{
+    if (Null())
+        throw NulRefException();
+    return m_pCounted->my_pT;
+	}
+
+template<class T>
+ObjVar<T>::ObjVar(const ObjVar<T>& rVar)
+	{
+    m_pCounted = rVar.m_pCounted;
+    if (!Null())
+        m_pCounted->GetRef();
+	}
+
+
+
+template<class T>
+ObjVar<T>&  ObjVar<T>::operator=(const ObjVar<T>& rVar)
+	{
+    if (!rVar.Null())
+        rVar.m_pCounted->GetRef();
+    UnBind();
+    m_pCounted = rVar.m_pCounted;
+    return *this;
+	}
+
+template<class T>
+bool operator==(const ObjVar<T>& lhs, const ObjVar<T>& rhs)
+	{
+    return lhs.m_pCounted->my_pT == rhs.m_pCounted->my_pT;
+        // or *(lhs.m_pCounted->my_pT) == *(rhs.....)
+	}
+
+template<class T>
+bool operator!=(const ObjVar<T>& lhs, const ObjVar<T>& rhs)
+	{
+    return !(lhs == rhs);
+	}
+
+typedef ObjVar< Biot > BiotPtr;
 
 #endif
