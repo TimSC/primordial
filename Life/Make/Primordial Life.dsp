@@ -235,6 +235,10 @@ SOURCE=..\source\MainFrm.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=..\Source\metabolism.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=..\source\NetworkDlg.cpp
 # End Source File
 # Begin Source File
@@ -280,6 +284,10 @@ SOURCE=.\ReadMe.txt
 # Begin Source File
 
 SOURCE=..\Source\Registry.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=..\Source\Resources.cpp
 # End Source File
 # Begin Source File
 
@@ -392,6 +400,10 @@ SOURCE=..\source\MainFrm.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\Source\metabolism.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\Source\MfnZFile.h
 # End Source File
 # Begin Source File
@@ -429,6 +441,14 @@ SOURCE=..\Source\Rand.h
 # Begin Source File
 
 SOURCE=.\source\Registry.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Source\resource.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\Source\Resources.h
 # End Source File
 # Begin Source File
 
@@ -571,14 +591,18 @@ SOURCE=..\Res\Environment.pal
 
 SOURCE=..\Res\InternetExplorer.pal
 # End Source File
+# Begin Source File
+
+SOURCE=.\Scraps.txt
+# End Source File
 # End Target
 # End Project
-# Section Primordial Life : {8856F961-340A-11D0-A96B-00C04FD705A2}
-# 	2:21:DefaultSinkHeaderFile:webbrowser.h
-# 	2:16:DefaultSinkClass:CWebBrowser
-# End Section
 # Section Primordial Life : {D30C1661-CDAF-11D0-8A3E-00C04FC9E26E}
 # 	2:5:Class:CWebBrowser
 # 	2:10:HeaderFile:webbrowser.h
 # 	2:8:ImplFile:webbrowser.cpp
+# End Section
+# Section Primordial Life : {8856F961-340A-11D0-A96B-00C04FD705A2}
+# 	2:21:DefaultSinkHeaderFile:webbrowser.h
+# 	2:16:DefaultSinkClass:CWebBrowser
 # End Section
