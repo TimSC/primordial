@@ -944,11 +944,8 @@ void CMainFrame::DisplayBrowser(CString sFileName)
 {
 	CWaitCursor wait;
 
-	CKeyRegistry& key = AfxCommonRegistry();
-	
 	CString sTemp;
-	key.GetString(_T("path"), sTemp);
-	sTemp += _T("\\help\\") + sFileName;
+	sTemp = _T("..\\..\\help\\") + sFileName;
 
 	DWORD nError = (DWORD) ShellExecute(GetSafeHwnd(), NULL, sTemp, NULL, NULL, SW_SHOWNORMAL);
 	if (nError < 32)
