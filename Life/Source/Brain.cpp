@@ -2,6 +2,8 @@
 //
 // Implements the biot brain
 //
+// CVS Test by C. Niederberger (cniederb, niederberger@inf.ethz.ch) - please ignore
+//
 #include "stdafx.h"
 #include "Rand.h"
 #include "Genotype.h"
