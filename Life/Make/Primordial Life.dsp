@@ -45,7 +45,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Yu"stdafx.h" /c
-# ADD CPP /nologo /MT /W4 /GR /GX /Zi /O2 /I "..\source" /I "." /I "..\..\zlib" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Yu"stdafx.h" /FD /c
+# ADD CPP /nologo /MT /W4 /GR /GX /Zi /O2 /I "..\source" /I "." /I "..\..\zlib" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /FR /Yu"stdafx.h" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -81,8 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /debug /machine:I386
-# ADD LINK32 zlibdll.lib Winmm.lib /nologo /subsystem:windows /pdb:"..\..\Output\Debug/Primordial Life.pdb" /debug /machine:I386 /out:"..\..\Bin\Debug/Primordial Life.exe" /libpath:"..\..\zlib"
-# SUBTRACT LINK32 /pdb:none
+# ADD LINK32 zlibdll.lib Winmm.lib /nologo /subsystem:windows /profile /debug /machine:I386 /out:"..\..\Bin\Debug/Primordial Life.exe" /libpath:"..\..\zlib"
 
 !ELSEIF  "$(CFG)" == "Primordial Life - Win32 Saver"
 
@@ -235,10 +234,6 @@ SOURCE=..\source\MainFrm.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\Source\metabolism.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\source\NetworkDlg.cpp
 # End Source File
 # Begin Source File
@@ -287,10 +282,6 @@ SOURCE=..\Source\Registry.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=..\Source\Resources.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=..\source\SaverView.cpp
 # End Source File
 # Begin Source File
@@ -330,6 +321,10 @@ SOURCE=..\Source\ZipFile.cpp
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl;fi;fd"
+# Begin Source File
+
+SOURCE=..\Source\BArchive.h
+# End Source File
 # Begin Source File
 
 SOURCE=..\source\BiotEditor.h
@@ -400,10 +395,6 @@ SOURCE=..\source\MainFrm.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\Source\metabolism.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\Source\MfnZFile.h
 # End Source File
 # Begin Source File
@@ -441,14 +432,6 @@ SOURCE=..\Source\Rand.h
 # Begin Source File
 
 SOURCE=.\source\Registry.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\Source\resource.h
-# End Source File
-# Begin Source File
-
-SOURCE=..\Source\Resources.h
 # End Source File
 # Begin Source File
 
@@ -593,16 +576,16 @@ SOURCE=..\Res\InternetExplorer.pal
 # End Source File
 # Begin Source File
 
-SOURCE=.\Scraps.txt
+SOURCE=..\Source\TODO.txt
 # End Source File
 # End Target
 # End Project
+# Section Primordial Life : {8856F961-340A-11D0-A96B-00C04FD705A2}
+# 	2:21:DefaultSinkHeaderFile:webbrowser.h
+# 	2:16:DefaultSinkClass:CWebBrowser
+# End Section
 # Section Primordial Life : {D30C1661-CDAF-11D0-8A3E-00C04FC9E26E}
 # 	2:5:Class:CWebBrowser
 # 	2:10:HeaderFile:webbrowser.h
 # 	2:8:ImplFile:webbrowser.cpp
-# End Section
-# Section Primordial Life : {8856F961-340A-11D0-A96B-00C04FD705A2}
-# 	2:21:DefaultSinkHeaderFile:webbrowser.h
-# 	2:16:DefaultSinkClass:CWebBrowser
 # End Section

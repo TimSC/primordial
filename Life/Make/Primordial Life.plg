@@ -3,74 +3,14 @@
 <pre>
 <h1>Build Log</h1>
 <h3>
---------------------Configuration: Primordial Life - Win32 Release--------------------
+--------------------Configuration: Primordial Life - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "D:\DOCUME~1\dthayer\LOCALS~1\Temp\RSP1B3.tmp" with contents
-[
-/nologo /MT /W4 /GR /GX /Zi /O2 /I "..\source" /I "." /I "..\..\zlib" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_DEVELOPMENT_ENV" /Fp"..\..\Build\Release/Primordial Life.pch" /Yu"stdafx.h" /Fo"..\..\Build\Release/" /Fd"..\..\Build\Release/" /FD /c 
-"D:\cygwin\home\dpthayer\primordial\Life\Source\Biots.cpp"
-]
-Creating command line "cl.exe @D:\DOCUME~1\dthayer\LOCALS~1\Temp\RSP1B3.tmp" 
-Creating temporary file "D:\DOCUME~1\dthayer\LOCALS~1\Temp\RSP1B6.tmp" with contents
-[
-Winmm.lib zlibdll.lib /nologo /subsystem:windows /profile /machine:I386 /out:"..\..\Bin\Release/Primordial Life.exe" /libpath:"..\..\zlib" 
-\cygwin\home\dpthayer\primordial\Build\Release\AboutWnd.obj
-\cygwin\home\dpthayer\primordial\Build\Release\BiotEditor.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Biots.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Brain.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Breeding.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Connect.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Environ.obj
-\cygwin\home\dpthayer\primordial\Build\Release\EnvStatsWnd.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Etools.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Evolve.obj
-\cygwin\home\dpthayer\primordial\Build\Release\GeneralView.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Genotype.obj
-\cygwin\home\dpthayer\primordial\Build\Release\GlobalPalette.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Graph1.obj
-\cygwin\home\dpthayer\primordial\Build\Release\HelpPropertySheet.obj
-\cygwin\home\dpthayer\primordial\Build\Release\InitialPopulation.obj
-\cygwin\home\dpthayer\primordial\Build\Release\KeyRegistry.obj
-\cygwin\home\dpthayer\primordial\Build\Release\LoadBitmap.obj
-\cygwin\home\dpthayer\primordial\Build\Release\MagnifyWnd.obj
-\cygwin\home\dpthayer\primordial\Build\Release\MainFrm.obj
-\cygwin\home\dpthayer\primordial\Build\Release\metabolism.obj
-\cygwin\home\dpthayer\primordial\Build\Release\NetworkDlg.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Palette.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Picture.obj
-\cygwin\home\dpthayer\primordial\Build\Release\PLifeDoc.obj
-\cygwin\home\dpthayer\primordial\Build\Release\PLifeView.obj
-\cygwin\home\dpthayer\primordial\Build\Release\PostData.obj
-\cygwin\home\dpthayer\primordial\Build\Release\PrimCmdLine.obj
-"\cygwin\home\dpthayer\primordial\Build\Release\Primordial Life.obj"
-\cygwin\home\dpthayer\primordial\Build\Release\RAND.OBJ
-\cygwin\home\dpthayer\primordial\Build\Release\Registry.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Resources.obj
-\cygwin\home\dpthayer\primordial\Build\Release\SaverView.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Settings.obj
-\cygwin\home\dpthayer\primordial\Build\Release\SmallView.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Sock.obj
-\cygwin\home\dpthayer\primordial\Build\Release\Stat.obj
-\cygwin\home\dpthayer\primordial\Build\Release\StdAfx.obj
-\cygwin\home\dpthayer\primordial\Build\Release\vector.obj
-\cygwin\home\dpthayer\primordial\Build\Release\WorldSize.obj
-\cygwin\home\dpthayer\primordial\Build\Release\ZipFile.obj
-"\cygwin\home\dpthayer\primordial\Build\Release\Primordial Life.res"
-]
-Creating command line "link.exe @D:\DOCUME~1\dthayer\LOCALS~1\Temp\RSP1B6.tmp"
-<h3>Output Window</h3>
-Compiling...
-Biots.cpp
-Remove flap
-Remove reserved
-D:\cygwin\home\dpthayer\primordial\Life\Source\Biots.cpp(2240) : warning C4146: unary minus operator applied to unsigned type, result still unsigned
-Linking...
 
 
 
 <h3>Results</h3>
-Primordial Life.exe - 0 error(s), 1 warning(s)
+Primordial Life.exe - 0 error(s), 0 warning(s)
 </pre>
 </body>
 </html>
