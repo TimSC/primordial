@@ -14,7 +14,7 @@
 //
 // bit
 // 1	
-
+const int MAX_ENERGY_HISTORY = 21;
 
 #define DSTERASE  (uint32_t)0x00220326
 
@@ -102,7 +102,7 @@ class Biot: public BRectItem
 {
   public:
 	Biot(Environment& environment);
-	~Biot(void);
+    virtual ~Biot(void);
 	
 	int m_bitmapWidth;
 	int m_bitmapHeight;
@@ -178,7 +178,7 @@ class Biot: public BRectItem
     int   RandomCreate(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
     int   Initialize(bool bRandom = false);
     int   Contacter(Biot* enemy, int dx, int dy, int& x, int& y);
-    virtual void  Serialize(QDataStream& ar);
+//    virtual void  Serialize(QDataStream& ar);
 
     short LengthLoss(int nPeno, short delta);
     

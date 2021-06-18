@@ -38,7 +38,7 @@ void ProductTerm::Debug()
 	m_dwMask = 0xFFFFFFFF;
 	m_dwInvert = 0x00000000;
 }
-
+/*
 void ProductTerm::Serialize(QDataStream& ar)
 {
 	if (ar.IsStoring())
@@ -52,7 +52,7 @@ void ProductTerm::Serialize(QDataStream& ar)
 		ar >> m_dwInvert;
 	}
 }
-
+*/
 
 //
 // ProductArray (Contains an array of product definitions)
@@ -87,7 +87,7 @@ void ProductArray::Debug()
 		m_productSum[i].Debug();
 }
 
-
+/*
 void ProductArray::Serialize(QDataStream& ar)
 {
 	for (int i = 0; i < GetTermCount(); i++)
@@ -96,6 +96,7 @@ void ProductArray::Serialize(QDataStream& ar)
 	for (int i = 0; i < GetSumCount(); i++)
 		m_productSum[i].Serialize(ar);
 }
+*/
 
 void ProductArray::Crossover(ProductArray& productArray)
 {
@@ -157,7 +158,7 @@ void ProductSum::Debug()
     m_bTrue = true;
 }
 
-
+/*
 void ProductSum::Serialize(QDataStream& ar)
 {
 	Randomizer rand;
@@ -180,7 +181,7 @@ void ProductSum::Serialize(QDataStream& ar)
 		ar >> m_bTrue;
 	}
 }
-
+*/
 
 void ProductSum::Crossover(ProductSum& productSum)
 {
@@ -225,7 +226,7 @@ bool ProductSum::IsTrue(ProductArray& productArray, uint32_t dwSensor)
 // CommandArgument
 //
 //
-
+/*
 void CommandArgument::Serialize(QDataStream& ar)
 {
 	if (ar.IsLoading())
@@ -245,6 +246,7 @@ void CommandArgument::Serialize(QDataStream& ar)
 		ar << m_degrees;
 	}
 }
+*/
 
 void CommandArgument::Randomize(void)
 {
@@ -315,7 +317,7 @@ void CommandArray::Randomize()
 		m_commandLimbType[i].Randomize();
 }
 
-
+/*
 void CommandArray::Serialize(QDataStream& ar)
 {
 	for (int i = 0; i < GetCommandCount(); i++)
@@ -326,6 +328,7 @@ void CommandArray::Serialize(QDataStream& ar)
 	for (int i = 0; i < GetTypeCount(); i++)
 		m_commandLimbType[i].Serialize(ar);
 }
+*/
 
 void CommandArray::Crossover(CommandArray& commandArray)
 {
@@ -390,7 +393,7 @@ void CommandLimbType::Randomize()
 		m_sumref[i]    = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
 	}
 }
-
+/*
 void CommandLimbType::Serialize(QDataStream& ar)
 {
 	Randomizer rand;
@@ -416,7 +419,7 @@ void CommandLimbType::Serialize(QDataStream& ar)
 		}
 	}
 }
-
+*/
 
 void CommandLimbType::Crossover(CommandLimbType& commandLimbType)
 {
@@ -450,6 +453,7 @@ CommandLimbType& CommandLimbType::operator=(CommandLimbType& commandLimbType)
 // Each limb, regardless of type, has associated state information
 // to store.
 //
+/*
 void CommandLimbStore::Serialize(QDataStream& ar)
 {
 	if (ar.IsStoring())
@@ -464,8 +468,7 @@ void CommandLimbStore::Serialize(QDataStream& ar)
 		ar >> m_nLimb;
 		ar.Read(&command, sizeof(command));
 	}
-}
-
+}*/
 void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
 {
 	m_nLimbType = nLimbType;

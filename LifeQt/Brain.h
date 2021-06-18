@@ -7,6 +7,7 @@
 #pragma once
 #include <stdint.h>
 #include <QDataStream>
+#include "Genotype.h"
 
 #if defined(DEBUG_BRAIN)
 #define BTRACE0(sz)              TRACE0(sz)
@@ -35,7 +36,7 @@ public:
 	void Mutate(int nChance);
 	void Randomize();
 	void Debug();
-    void Serialize(QDataStream &ar);
+//    void Serialize(QDataStream &ar);
     bool IsTrue(uint32_t m_sensor);
 	ProductTerm& operator=(ProductTerm& term);
 
@@ -82,7 +83,7 @@ public:
 	void Mutate(int nChance);
 	void Randomize();
 	void Debug();
-    void Serialize(QDataStream& ar);
+//    void Serialize(QDataStream& ar);
 	void Crossover(ProductSum& productSum);
 
 	ProductSum& operator=(ProductSum& productSum);
@@ -121,7 +122,7 @@ public:
 	void Mutate(int nChance);
 	void Randomize();
 	void Debug();
-    void Serialize(QDataStream& ar);
+//    void Serialize(QDataStream& ar);
 	void Crossover(ProductArray& productArray);
 	ProductArray& operator=(ProductArray& productArray);
 
@@ -174,7 +175,7 @@ public:
 	// Genetic Functions
     void Randomize();
     void Mutate(int chance);
-    void Serialize(QDataStream& ar);
+//    void Serialize(QDataStream& ar);
 
 	enum {
 		COMMAND_FLAP_LIMB_SEGMENT = 0, 
@@ -246,7 +247,7 @@ public:
 
 	void Mutate(int nChance);
 	void Randomize();
-    void Serialize(QDataStream& ar);
+//    void Serialize(QDataStream& ar);
 	void Crossover(CommandLimbType& commandLimbType);
 
 	int GetCommand(int index);
@@ -296,7 +297,7 @@ public:
 
 	void Mutate(int nChance);
 	void Randomize();
-    void Serialize(QDataStream& ar);
+//    void Serialize(QDataStream& ar);
 	void Crossover(CommandArray& commandArray);
 	CommandArray& operator=(CommandArray& commandArray);
 	CommandArgument& GetCommandArgument(int nLimbType, int nCommand);
@@ -519,7 +520,7 @@ union CommandType {
 class CommandLimbStore
 {
 public:
-    void Serialize(QDataStream& ar);
+//    void Serialize(QDataStream& ar);
 	void Initialize(int nLimbType, int nLimb, Biot& biot);
     void Execute(Biot& biot, uint32_t dwSensor);
 

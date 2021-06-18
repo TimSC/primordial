@@ -24,7 +24,7 @@ Biot::Biot(Environment& environment) : env(environment)
 
 Biot::~Biot(void)
 {
-	FreeBitmaps();
+//	FreeBitmaps();
 }
 
 
@@ -33,32 +33,32 @@ Biot::~Biot(void)
 //
 std::string Biot::GetName()
 {
-static const std::string vowels = ("aeiouy");
-static const std::string cons   = ("bcdfghjklmnpqrstvwx");
+    static const std::string vowels = ("aeiouy");
+    static const std::string cons   = ("bcdfghjklmnpqrstvwx");
 
 	Randomizer rand;
-	if (m_sName.IsEmpty())
+    if (m_sName.empty())
 	{
         int max = 1 + rand.Integer(3);
 
 		for (int i = 0; i < max; i++)
 		{
-            if (rand.bool())
+            if (rand.Bool())
 			{
-				m_sName += vowels[rand.Integer(vowels.GetLength())];
-				m_sName += cons[rand.Integer(vowels.GetLength())];
+                m_sName += vowels[rand.Integer(vowels.length())];
+                m_sName += cons[rand.Integer(vowels.length())];
 			}
 			else
 			{
-				m_sName += cons[rand.Integer(vowels.GetLength())];
-				m_sName += vowels[rand.Integer(vowels.GetLength())];
+                m_sName += cons[rand.Integer(vowels.length())];
+                m_sName += vowels[rand.Integer(vowels.length())];
 			}
 		}
 
-        if (rand.bool())
-			m_sName += vowels[rand.Integer(vowels.GetLength())];
+        if (rand.Bool())
+            m_sName += vowels[rand.Integer(vowels.length())];
 
-		m_sName.SetAt(0, (char) toupper(m_sName[0]));
+        m_sName[0] = (char) toupper(m_sName[0]);
 	}
 	return m_sName;
 }
@@ -80,18 +80,21 @@ std::string Biot::GetFatherName()
     std::string sName;
 	if (m_fatherId == 0)
 	{
-		sName = _T("No");
+        sName = "No";
 	}
 	else
 	{
 		if (m_fatherGeneration > 0)
-			sName.Format(_T(":%lu"), m_fatherGeneration);
-		sName = m_sFatherName + sName;
+        {
+            QString sNameTmp = QString::asprintf(":%lu", m_fatherGeneration);
+            sName = sNameTmp.toStdString();
+        }
+        sName = m_sFatherName + sName;
 
-		if (!m_sFatherWorldName.IsEmpty())
-			sName += _T(" of ") + m_sFatherWorldName;
+        if (!m_sFatherWorldName.empty())
+            sName += " of " + m_sFatherWorldName;
 	}
-	return sName;
+    return sName;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -102,12 +105,13 @@ std::string Biot::GetFullName()
     std::string sName;
 	if (m_generation > 0)
 	{
-		sName.Format(_T(":%lu"), m_generation);
+        QString sNameTmp = QString::asprintf(":%lu", m_generation);
+        sName = sNameTmp.toStdString();
 	}
 	sName = GetName() + sName;
 
-	if (!GetWorldName().IsEmpty())
-		sName += _T(" of ") + GetWorldName();
+    if (!GetWorldName().empty())
+        sName += " of " + GetWorldName();
 
 	return sName;
 }
@@ -129,6 +133,7 @@ float Biot::PercentEnergy()
 //////////////////////////////////////////////////////////////////////
 // FreeBitmaps
 //
+/*
 void Biot::FreeBitmaps()
 {
 	if (m_hBitmap)
@@ -140,7 +145,7 @@ void Biot::FreeBitmaps()
 	m_bitmapWidth  = 0;
 	m_bitmapHeight = 0;
 }
-
+*/
 
 //////////////////////////////////////////////////////////////////////
 // Clear Settings
@@ -157,7 +162,7 @@ void Biot::ClearSettings(void)
 	m_totalChildren  = 0;
 	m_generation     = 0;
 
-	m_hBitmap        = NULL;
+//	m_hBitmap        = NULL;
 	m_bitmapWidth  = 0;
 	m_bitmapHeight = 0;
 	m_nSick        = 0;
@@ -172,25 +177,26 @@ void Biot::ClearSettings(void)
     m_bDrawn     = false;
     m_bSelected  = false;
 
-	ZeroMemory(m_angle,                      sizeof(m_angle));
-	ZeroMemory(m_angleLimbType,              sizeof(m_angleLimbType));
-	ZeroMemory(m_angleLimbTypeDrawn,         sizeof(m_angleLimbTypeDrawn));
-	ZeroMemory(m_angleLimbTypeSegmentDrawn,  sizeof(m_angleLimbTypeSegmentDrawn));
-	ZeroMemory(m_angleLimbTypeSegment,       sizeof(m_angleLimbTypeSegment));
-	ZeroMemory(m_angleDrawn,                 sizeof(m_angleDrawn));
-	ZeroMemory(m_angleLimb,                  sizeof(m_angleLimb));
-	ZeroMemory(m_angleLimbDrawn,             sizeof(m_angleLimbDrawn));
+    for(int i=0; i<MAX_GENES; i++)
+        m_angle[i] = 0;
+    memset(m_angleLimbType,              0x00, sizeof(m_angleLimbType));
+    memset(m_angleLimbTypeDrawn,         0x00, sizeof(m_angleLimbTypeDrawn));
+    memset(m_angleLimbTypeSegmentDrawn,  0x00, sizeof(m_angleLimbTypeSegmentDrawn));
+    memset(m_angleLimbTypeSegment,       0x00, sizeof(m_angleLimbTypeSegment));
+    memset(m_angleDrawn,                 0x00, sizeof(m_angleDrawn));
+    memset(m_angleLimb,                  0x00, sizeof(m_angleLimb));
+    memset(m_angleLimbDrawn,             0x00, sizeof(m_angleLimbDrawn));
 
-	ZeroMemory(m_retractDrawn,               sizeof(m_retractDrawn));
-	ZeroMemory(m_retractRadius,              sizeof(m_retractRadius));
+    memset(m_retractDrawn,               0x00, sizeof(m_retractDrawn));
+    memset(m_retractRadius,              0x00, sizeof(m_retractRadius));
 
 	for (int i = 0; i < MAX_SYMMETRY; i++)
 		m_retractSegment[i] = -1;
 
-	ZeroMemory(state,    sizeof(state));
+    memset(state,    0x00, sizeof(state));
 
 	// Statistics
-	ZeroMemory(m_statEnergy, sizeof(m_statEnergy));
+    memset(m_statEnergy, 0x00, sizeof(m_statEnergy));
 	m_statIndex = 0;
 
 	int nPeno = 0;
@@ -356,8 +362,8 @@ int Biot::PlaceRandom(void)
 	for (i = 0; i < 24; i++)
 	{
 		//BUG: Value passed in might be zero, causing divide error in Integer
-		origin.x = rand.Integer((env.Width()) + leftX - rightX)  - leftX;
-		origin.y = rand.Integer((env.Height()) + topY  - bottomY) - topY;
+        origin.setX(rand.Integer((env.Width()) + leftX - rightX)  - leftX);
+        origin.setY(rand.Integer((env.Height()) + topY  - bottomY) - topY);
 		SetScreenRect();
 
 //		BRectSortPos pos;
@@ -373,10 +379,10 @@ int Biot::PlaceRandom(void)
   if (i > 8)
     env.NoRoomToGiveBirth();
 
-  vector.setX(origin.x);
-  vector.setY(origin.y);
+  vector.setX(origin.x());
+  vector.setY(origin.y());
 
-  FormBitmap();
+  //FormBitmap();
   SetErasePosition();
   return i;
 }
@@ -408,8 +414,8 @@ static int side[8][2] = {
     if (nPos > 7)
       nPos -= 8;
 
-	  origin.x = parent.origin.x + parent.Width() * side[nPos][0];
-	  origin.y = parent.origin.y + parent.Height() * side[nPos][1];
+      origin.setX(parent.origin.x() + parent.Width() * side[nPos][0]);
+      origin.setY(parent.origin.y() + parent.Height() * side[nPos][1]);
 	  SetScreenRect();
 
     if (IsContainedBy(env))
@@ -466,10 +472,10 @@ int  nLastGene = -1;
 	turnBenefit    = 0;
 	redraw.ClearRedraw();
 
-	ZeroMemory(distance, sizeof(distance));
-	ZeroMemory(stopPt,   sizeof(stopPt));
-	ZeroMemory(startPt,  sizeof(startPt));
-	ZeroMemory(nType,    sizeof(nType));
+    memset(distance, 0x00, sizeof(distance));
+    memset(stopPt,   0x00, sizeof(stopPt));
+    memset(startPt,  0x00, sizeof(startPt));
+    memset(nType,    0x00, sizeof(nType));
 
 	for (int nLimb = 0; nLimb < trait.GetLines(); nLimb++)
 	{	
@@ -497,8 +503,8 @@ int  nLastGene = -1;
 
 				if (nLastGene < 0)
 				{
-					startPt[nPeno].x = 0;
-					startPt[nPeno].y = 0;
+                    startPt[nPeno].setX(0);
+                    startPt[nPeno].setY(0);
 				}
 				else
 				{
@@ -1289,7 +1295,7 @@ CLine cLine;
 		if (genes <= 0)
 		{
 			env.PlayResource("PL.TooOld");
-			Erase();
+            //Erase();
             return false;
 		}
         bChangeSize = true;
@@ -1311,26 +1317,26 @@ CLine cLine;
 	// Should we recalculate (top priority)
 	if (redraw.ShouldRedraw() || dr)
 	{
-		EraseAndDraw(RECALCULATE);
+        //EraseAndDraw(RECALCULATE);
 	}
 	else
 	{
 		if (bChangeSize)
 		{
-			EraseAndDraw(REFORM);
+            //EraseAndDraw(REFORM);
 		}
 		else
 		{
 			// Do we just need to reform the bitmap?
 			if (lastType != newType || lastType != -1)
 			{
-				EraseAndDraw(REFORM);
+                //EraseAndDraw(REFORM);
 			}
 			else
 			{
 				if (dx || dy)
 				{
-					EraseAndDraw(NORMAL);
+                    //EraseAndDraw(NORMAL);
 				}
 			}
 		}
@@ -1364,7 +1370,7 @@ CLine cLine;
 		else
 			env.PlayResource("PL.NoEnergy");
 
-		Erase();
+        //Erase();
         return false;
 	}
 
@@ -1377,7 +1383,7 @@ CLine cLine;
 		if (ratio > trait.GetAdultRatio() && 
 			energy > stepEnergy)
 		{
-			EraseAndDraw(GROW);
+            //EraseAndDraw(GROW);
 		}
 
 		if (m_maxAge < m_age)
@@ -2041,6 +2047,7 @@ void Biot::CopyGenes(Biot& enemy)
 // Serialize
 //
 //
+/*
 void Biot::Serialize(QDataStream& ar)
 {
     const int8_t archiveVersion = 11;
@@ -2140,7 +2147,7 @@ void Biot::Serialize(QDataStream& ar)
 		ar << m_sFatherWorldName;
 	}
 }
-
+*/
 
 bool Biot::OnOpen()
 {
@@ -2160,7 +2167,7 @@ bool Biot::OnOpen()
 
 //	if (env.WithinBorders(*this))
 //	{
-		FormBitmap();
+        //FormBitmap();
 		SetErasePosition();
 //		return true;
 //	}

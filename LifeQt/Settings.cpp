@@ -1,7 +1,7 @@
 //#include "primordial life.h"
 #include "Settings.h"
 #include <QDateTime>
-
+/*
 void CSettings::Serialize(QDataStream& a)
 {
 	const int nVersion = 2;
@@ -55,7 +55,7 @@ void CSettings::Serialize(QDataStream& a)
 		a >> m_nSizeChoice;
 	}
 }
-
+*/
 void CSettings::SanityCheck()
 {
 	if (m_nStartingPopulation > 50)

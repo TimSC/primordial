@@ -39,7 +39,7 @@ public:
 
     Vector(void);
 
-    virtual void Serialize(QDataStream& ar);
+    //virtual void Serialize(QDataStream& ar);
 
     // Proposes movement in rotation, and translation
 	// Always call tryRotate first!!

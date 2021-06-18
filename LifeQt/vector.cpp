@@ -20,6 +20,7 @@ Vector::Vector()
 // Physics as interpreted by me.
 //
 //
+/*
 void Vector::Serialize(QDataStream& ar)
 {
 	if (ar.IsLoading())
@@ -41,5 +42,5 @@ void Vector::Serialize(QDataStream& ar)
 		ar << r;
 	}
 }
-
+*/
 

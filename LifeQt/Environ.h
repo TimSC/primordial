@@ -48,7 +48,7 @@ public:
     static std::string ToDays(uint32_t dwAge);
     static uint32_t   ToGenerations(const std::string &szDays);
 
-    virtual void Serialize(QDataStream& ar);
+    //virtual void Serialize(QDataStream& ar);
 
 	enum {
 		SAMPLES     = 100,
@@ -99,7 +99,7 @@ class CEnvStatsList : public QList<CEnvStats *>
 {
 public:
 	CEnvStatsList(){};
-    virtual void Serialize(QDataStream& ar);
+    //virtual void Serialize(QDataStream& ar);
 
 };
 
@@ -125,7 +125,7 @@ public:
 
 	void FreeAll();
 
-    virtual void  Serialize(QDataStream& ar, Environment& env);
+    //virtual void  Serialize(QDataStream& ar, Environment& env);
 
 private:
 	int  m_nBiot;
@@ -167,7 +167,7 @@ public:
 	void MoveBiot(Biot* pBiot, BRect* pOrigRect) { m_sort.Move((BRectItem*) pBiot, pOrigRect); }
 		
     int  GetPopulation() { return m_biotList.size(); }
-    void Serialize(QDataStream& ar);
+    //void Serialize(QDataStream& ar);
 	void DeleteContents();
 //	void Skip(CScrollView* pView);
 //    void BiotOperation(CScrollView* pView, int x, int y, int operation);

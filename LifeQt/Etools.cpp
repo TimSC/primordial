@@ -253,6 +253,7 @@ int BRect::Contains(int x, int y)
 //
 // Takes or sets the state of the randmizer
 //
+/*
 void BRect::Serialize(QDataStream& ar)
 {
 	if (ar.IsStoring())
@@ -270,7 +271,7 @@ void BRect::Serialize(QDataStream& ar)
 		ar >> m_bottom;
 	}
 }
-
+*/
 
 //////////////////////////////////////////////////////////////////
 // NextSizeTwo
@@ -381,7 +382,7 @@ void BRectSort::Remove(BRectItem* pItem)
 void BRectSort::FreeAll()
 {
 	for (int i = 0; i < ARRAY_MAX; i++)
-		m_pArray[i]->RemoveAll();
+        m_pArray[i]->clear();
 }
 
 // Searching methods
@@ -420,7 +421,7 @@ BRectItem* BRectSort::IterateRects(BRectSortPos& sortPos)
 	{
 		for (int i = pArray->GetPos(&sortPos) - 1; i >= 0; i--)
 		{
-			BRectItem* pItem = 	pArray->GetAt(i);
+            BRectItem* pItem = 	pArray->at(i);
 			if (pItem->m_indexBottom >= sortPos.m_indexBottom &&	
 				pItem->m_indexRight  >= sortPos.m_indexRight  &&
 				pItem->m_indexLeft   <  sortPos.m_indexLeft   &&
@@ -433,9 +434,9 @@ BRectItem* BRectSort::IterateRects(BRectSortPos& sortPos)
 	}
 	else
 	{
-		for (int i = pArray->GetPos(&sortPos); i < pArray->GetSize(); i++)
+        for (int i = pArray->GetPos(&sortPos); i < pArray->size(); i++)
 		{
-			BRectItem* pItem = 	pArray->GetAt(i);
+            BRectItem* pItem = 	pArray->at(i);
 			if (pItem->m_indexBottom >= sortPos.m_indexBottom &&	
 				pItem->m_indexRight  >= sortPos.m_indexRight  &&
 				pItem->m_indexLeft   <  sortPos.m_indexLeft   &&
@@ -462,15 +463,15 @@ bool BRectSort::FindShortestArray(BRectSortPos& sortPos, int nLeft, int nTop, in
 	if (!sortPos.m_bInitialized)
 	{
 		sortPos.m_indexRight   = m_arrayRight.GreaterPos(nRight);
-		nSmallestArraySize    = m_arrayRight.GetSize() - sortPos.m_indexRight;
+        nSmallestArraySize    = m_arrayRight.size() - sortPos.m_indexRight;
 		sortPos.m_nShortIndex = ARRAY_RIGHT;
 		if (nSmallestArraySize == 0)
 			return false;
 
 		sortPos.m_indexBottom    = m_arrayBottom.GreaterPos(nBottom);
-		if (nSmallestArraySize > m_arrayBottom.GetSize() - sortPos.m_indexBottom)
+        if (nSmallestArraySize > m_arrayBottom.size() - sortPos.m_indexBottom)
 		{
-			nSmallestArraySize = m_arrayBottom.GetSize() - sortPos.m_indexBottom;
+            nSmallestArraySize = m_arrayBottom.size() - sortPos.m_indexBottom;
 			sortPos.m_nShortIndex = ARRAY_BOTTOM;
 			if (nSmallestArraySize == 0)
 				return false;
@@ -501,11 +502,11 @@ bool BRectSort::FindShortestArray(BRectSortPos& sortPos, int nLeft, int nTop, in
 
 void BRectArray::TraceDebug(int nIndex)
 {
-	for (int j = 0; j < GetSize(); j++)
+    for (int j = 0; j < size(); j++)
 	{
-		TRACE("Array %d, index %d, rectIndex %d, value %d, biot%x\n", nIndex, j,
-			GetPos(GetAt(j)), Coordinate(GetAt(j)), GetAt(j));
-        assert(ValidateRect(j, GetAt(j)));
+        //TRACE("Array %d, index %d, rectIndex %d, value %d, biot%x\n", nIndex, j,
+        //    GetPos(at(j)), Coordinate(at(j)), at(j));
+        assert(ValidateRect(j, at(j)));
 	}
 }
 
@@ -517,14 +518,14 @@ bool BRectArray::Sort(int nStartIndex /*=0*/, int nStopIndex /*=GetSize()*/)
 
 	for (int i = nStartIndex; i < nStopIndex - 1; i++)
 	{
-		if (Coordinate(GetAt(i)) > Coordinate(GetAt(i + 1)))
+        if (Coordinate(at(i)) > Coordinate(at(i + 1)))
 		{
-			BRectItem* pItem = GetAt(i);
+            BRectItem* pItem = at(i);
 			SetPos(pItem, i + 1);
-			SetPos(GetAt(i+1), i);
+            SetPos(at(i+1), i);
 
-			SetAt(i, GetAt(i+1));
-			SetAt(i+1, pItem);
+            (*this)[i] = at(i+1);
+            (*this)[i+1] = pItem;
 
 			if (nNextStartIndex == -1)
 				nNextStartIndex = i - 1;
@@ -536,7 +537,7 @@ bool BRectArray::Sort(int nStartIndex /*=0*/, int nStopIndex /*=GetSize()*/)
 	if (nNextStartIndex != -1)
 		return Sort(nNextStartIndex, nNextStopIndex);
 
-	return (nStartIndex == 0 && nStopIndex == GetSize());
+    return (nStartIndex == 0 && nStopIndex == size());
 }
 
 
@@ -544,14 +545,14 @@ bool BRectArray::Sort(int nStartIndex /*=0*/, int nStopIndex /*=GetSize()*/)
 // a coordinate of 6 would return the first 6's position
 int BRectArray::GreaterPos(int nCoordinate)
 {
-	int nStop  = GetSize();
+    int nStop  = size();
 	int nStart = 0;
 	int nPos   = nStop / 2;
 
 	while (nStop != nStart)
 	{
 		// The coordinate is greater than or equal, move down the array
-		if (nCoordinate > Coordinate(GetAt(nPos)))
+        if (nCoordinate > Coordinate(at(nPos)))
 		{
 			nStart = nPos + 1;
 		}
@@ -568,14 +569,14 @@ int BRectArray::GreaterPos(int nCoordinate)
 // a coordinate of 6 would return 7's position
 int BRectArray::GreaterOrEqualPos(int nCoordinate)
 {
-	int nStop  = GetSize();
+    int nStop  = size();
 	int nStart = 0;
 	int nPos   = nStop / 2;
 
 	while (nStop != nStart)
 	{
 		// The coordinate is greater than or equal, move down the array
-		if (nCoordinate >= Coordinate(GetAt(nPos)))
+        if (nCoordinate >= Coordinate(at(nPos)))
 		{
 			nStart = nPos + 1;
 		}
@@ -591,19 +592,19 @@ int BRectArray::GreaterOrEqualPos(int nCoordinate)
 void BRectArray::InsertRect(BRectItem* pItem)
 {
 	int nPos = GreaterPos(Coordinate(pItem));
-	InsertAt(nPos, pItem);
+    this->insert(nPos, pItem);
 
 	// Update all our external references
-	for (int i = nPos; i < GetSize(); i++)
-		SetPos(GetAt(i), i);
+    for (int i = nPos; i < size(); i++)
+        SetPos(at(i), i);
 }
 
 // The rect said it moved - re-sort
 void BRectArray::MoveRect(BRectItem* pItem)
 {
-    assert(GetSize() != 0);
+    assert(size() != 0);
 
-	int nTopItem = GetSize() - 1;
+    int nTopItem = size() - 1;
 
 	// We need at least two items 
 	if (nTopItem < 1)
@@ -617,24 +618,24 @@ void BRectArray::MoveRect(BRectItem* pItem)
 //	BRectItem* pItem2 = GetAt(nPos);
 
 
-    assert(pItem == GetAt(nPos));
+    assert(pItem == at(nPos));
 	
-	while (nPos < nTopItem && Coordinate(pItem) > Coordinate(GetAt(nPos + 1)))
+    while (nPos < nTopItem && Coordinate(pItem) > Coordinate(at(nPos + 1)))
 	{
-		SetAt(nPos, GetAt(nPos + 1));
-		SetPos(GetAt(nPos), nPos);
+        (*this)[nPos] = at(nPos + 1);
+        SetPos(at(nPos), nPos);
 		nPos++;
 	}
 
-	while (nPos > 0 && Coordinate(pItem) < Coordinate(GetAt(nPos - 1)))
+    while (nPos > 0 && Coordinate(pItem) < Coordinate(at(nPos - 1)))
 	{
-		SetAt(nPos, GetAt(nPos - 1));
-		SetPos(GetAt(nPos), nPos);
+        (*this)[nPos] = at(nPos - 1);
+        SetPos(at(nPos), nPos);
 		nPos--;
 	}
 
-	SetAt(nPos, pItem);
-	SetPos(GetAt(nPos), nPos);
+    (*this)[nPos] = pItem;
+    SetPos(at(nPos), nPos);
 }
 
 
@@ -647,11 +648,11 @@ void BRectArray::RemoveRect(BRectItem* pItem)
 	SetPos(pItem, -1);
 
 	// Adjust the array
-	RemoveAt(nPos);
+    this->removeAt(nPos);
 
 	// Update all our external references
-	for (int i = nPos; i < GetSize(); i++)
-		SetPos(GetAt(i), i);
+    for (int i = nPos; i < size(); i++)
+        SetPos(at(i), i);
 }
 
 
@@ -660,7 +661,8 @@ void BRectArray::AddRect(BRectItem* pItem)
 {
 	// If it doesn't equal -1, the array may have been added before
     assert(GetPos(pItem) == -1);
-	SetPos(pItem, Add(pItem));
+    this->append(pItem);
+    SetPos(pItem, this->size()-1);
 }
 
 
@@ -668,7 +670,7 @@ void BRectArray::AddRect(BRectItem* pItem)
 // For catching bugs
 bool BRectArray::ValidateRect(int nPos, BRectItem* pItem)
 {
-	return (GetAt(nPos) == pItem && GetPos(pItem) == nPos);
+    return (at(nPos) == pItem && GetPos(pItem) == nPos);
 
 }
 

@@ -170,6 +170,7 @@ void Randomizer::Isaac()
 //
 // Takes or sets the state of the randmizer
 //
+/*
 void Randomizer::Serialize(QDataStream& ar)
 {
 	if (ar.IsStoring())
@@ -197,7 +198,7 @@ void Randomizer::Serialize(QDataStream& ar)
 		ar >> cc;
 	}
 }
-
+*/
 
 short Randomizer::Short(int max)
 {

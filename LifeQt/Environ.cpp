@@ -161,6 +161,7 @@ Biot* CBiotList::HitCheck(Biot *me, int* pStart)
 // Serialize
 //
 //
+/*
 void  CBiotList::Serialize(QDataStream& ar, Environment& env)
 {
 	if (ar.IsLoading())
@@ -195,15 +196,15 @@ void  CBiotList::Serialize(QDataStream& ar, Environment& env)
 	}
 }	
 
-
+*/
 //////////////////////////////////////////////////////////////////////
 // OnStop
 //
 //
 void CBiotList::RemoveBiot()
 {
-	delete GetAt(m_nBiot);
-	RemoveAt(m_nBiot);
+    delete this->at(m_nBiot);
+    this->removeAt(m_nBiot);
 	m_nBiot--;
 }
 
@@ -239,9 +240,8 @@ std::string CEnvStats::ToDays(uint32_t dwAge)
 
 	days = (days / GENERATIONS) * 0.05;
 
-    std::string sFormat;
-	sFormat.Format("%6.2f", days);
-	return sFormat;
+    QString sFormat = QString::asprintf("%6.2f", days);
+    return sFormat.toStdString();
 }
 
 uint32_t CEnvStats::ToGenerations(const std::string &szDays)
@@ -282,7 +282,7 @@ void CEnvStats::Sample(Environment& env)
 		}
 	}
 
-    m_ageRange = std::max(maxAge + 1, GENERATIONS * INTERVALS);
+    m_ageRange = std::max(maxAge + 1, (uint32_t)(GENERATIONS * INTERVALS));
 	m_ageIntervals = INTERVALS;
 
     for(int i = 0; i < INTERVALS; i++)
@@ -314,7 +314,7 @@ void CEnvStats::Sample(Environment& env)
 
 float CEnvStats::PercentUncoveredByBiots()
 {
-    TRACE("Area free %f\n", (float) m_freeEnvArea / (float) m_totalEnvArea);
+    //TRACE("Area free %f\n", (float) m_freeEnvArea / (float) m_totalEnvArea);
 	return (float) m_freeEnvArea / (float) m_totalEnvArea;
 }
 
@@ -335,9 +335,8 @@ void CEnvStats::NewSample()
 //
 std::string CEnvStats::GetDaysStr()
 {
-    std::string sString;
-	sString.Format("%6.2f", m_days);
-	return sString;
+    QString sString = QString::asprintf("%6.2f", m_days);
+    return sString.toStdString();
 }
 
 
@@ -347,9 +346,8 @@ std::string CEnvStats::GetDaysStr()
 //
 std::string CEnvStats::GetPopulationStr()
 {
-    std::string sString;
-	sString.Format(_T("%lu/%lu"), m_population, m_peakPopulation);
-	return sString;
+    QString sString = QString::asprintf("%lu/%lu", m_population, m_peakPopulation);
+    return sString.toStdString();
 }
 
 
@@ -359,9 +357,8 @@ std::string CEnvStats::GetPopulationStr()
 //
 std::string CEnvStats::GetExtinctionsStr()
 {
-    std::string sString;
-	sString.Format(_T("%lu"), m_extinctions);
-	return sString;
+    QString sString = QString::asprintf("%lu", m_extinctions);
+    return sString.toStdString();
 }
 
 
@@ -369,6 +366,7 @@ std::string CEnvStats::GetExtinctionsStr()
 // Serialize
 // 
 //
+/*
 void CEnvStats::Serialize(QDataStream& ar)
 {
 	const long archVersion = 2;
@@ -420,11 +418,12 @@ void CEnvStats::Serialize(QDataStream& ar)
 	}
 }
 
-
+*/
 //////////////////////////////////////////////////////////
 // Serialize
 // 
 //
+/*
 void CEnvStatsList::Serialize(QDataStream& ar)
 {
 	if (ar.IsLoading())
@@ -453,7 +452,7 @@ void CEnvStatsList::Serialize(QDataStream& ar)
 
 
 }
-
+*/
 //////////////////////////////////////////////////////////////////////
 // Environment Class
 //
@@ -492,9 +491,10 @@ Environment::Environment()
 //
 Environment::~Environment(void)
 {
-	for (int i = 0; i <= MAX_LEAF; i++)
+/*	for (int i = 0; i <= MAX_LEAF; i++)
 		if (options.hPen[i] != NULL)
 			DeleteObject(options.hPen[i]);
+*/
 }
 
 
@@ -683,7 +683,7 @@ void Environment::FreeBitPadDC()
 // PlayResource
 //
 //
-void Environment::PlayResource(const std::string &szSound, BOOL bSync)
+void Environment::PlayResource(const std::string &szSound, bool bSync)
 {
 /*	if (options.bSoundOn && !AfxGetPLife().IsSmall())
 	{
@@ -708,7 +708,7 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 	{
 		if ((pNew = new Biot(*this)) != NULL)
 		{
-			m_biotList.Add(pNew);
+            m_biotList.append(pNew);
 			pNew->RandomCreate(nArmsPerBiot, nTypesPerBiot, nSegmentsPerArm);
 			m_sort.Add(pNew);
 //			m_sort.TraceDebug();
@@ -1048,7 +1048,7 @@ void Environment::Skip(CScrollView* pView)
 //
 void Environment::OnStop()
 {
-	sock.Disconnect();
+    //sock.Disconnect();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1071,7 +1071,7 @@ void Environment::AddBiot(Biot* pNewBiot)
 	if (pNewBiot)
 	{
 		m_sort.Add(pNewBiot);
-		m_biotList.Add(pNewBiot);
+        m_biotList.append(pNewBiot);
 		m_sort.TraceDebug();
 	}
 }
@@ -1228,7 +1228,7 @@ void Environment::MagnifyBiot(CDC& dc, Biot* pBiot, CRect& rect)
 	SelectObject(hMemoryDC, hOld);
 }
 
-
+*/
 Biot* Environment::HitCheck(Biot *me, BRectSortPos& pos)
 {
 	Biot* pBiot;
@@ -1239,7 +1239,7 @@ Biot* Environment::HitCheck(Biot *me, BRectSortPos& pos)
 	while (me == pBiot && me != NULL);
 	return pBiot;
 }
-*/
+
 /////////////////////////////////////////////////////////////////////
 // BiotOperation
 //
@@ -1511,6 +1511,7 @@ void Environment::SetDefaultSettings()
 // Serialize
 //
 //Fox BEGIN
+/*
 void Environment::Serialize(QDataStream& ar)
 {
 	const BYTE archiveVersion = 13;
@@ -1607,7 +1608,7 @@ void Environment::Serialize(QDataStream& ar)
 	}
 }     
 //Fox END
-
+*/
 //////////////////////////////////////////////////////
 // SaveBiot
 //

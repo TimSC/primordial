@@ -82,7 +82,7 @@ class GeneSegment : Randomizer
     void Randomize(int segment, bool bIsVisible);
     void Debug(int segment, bool bIsVisible);
     void Mutate(int chance, int segment);
-    virtual void Serialize(QDataStream& ar);
+   // virtual void Serialize(QDataStream& ar);
 
 	double GetRadius() { return (double) m_radius; }
     double GetAdjustedRadius(int8_t radius) { return (double) (m_radius - radius); }
@@ -136,7 +136,7 @@ public:
     void Debug(int nSegmentsPerArm);
     void Mutate(int chance);
     void Crossover(GeneLimb&  gLine);
-    virtual void Serialize(QDataStream& ar);
+    //virtual void Serialize(QDataStream& ar);
 
 	GeneSegment& GetSegment(int segment) { return m_segment[segment]; }
 	int GetSegmentsVisible();
@@ -192,7 +192,7 @@ class GeneTrait : Randomizer
     void Debug(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
     void Mutate(int chance);
     void Crossover(GeneTrait&  gTrait);
-    virtual void Serialize(QDataStream& ar);
+    //virtual void Serialize(QDataStream& ar);
 	void CalculateAngles();
 	void PickSex()                  { m_sex = ((int) m_chanceMale > Integer(255));  }
     void SetChanceMale(int8_t chanceMale) { m_chanceMale = chanceMale; }

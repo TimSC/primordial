@@ -12,7 +12,7 @@
 const short GeneSegment::redrawAngle[MAX_SEGMENT_LENGTH + 1] = 
 { 180, 23, 12, 10, 9, 8, 7, 6, 5, 5, 4, 4, 3, 3, 3, 3, 2 };
 //{ 360, 45, 22, 15, 11, 9, 7, 6, 5, 5, 4, 4, 3, 3, 3, 3, 2 };
- 
+ /*
 void GeneSegment::Serialize(QDataStream& ar)
 {
 	if (ar.IsLoading())
@@ -44,7 +44,7 @@ void GeneSegment::Serialize(QDataStream& ar)
 		ar << m_color[1];
 	}
 }
-
+*/
 void GeneSegment::Randomize(int segment, bool bIsVisible)
 {
 	// Perhaps we just do 16 next time, or 32
@@ -212,7 +212,7 @@ void GeneLimb::Crossover(GeneLimb&  gLine)
 	ToggleSegments();
 }
 
-
+/*
 void GeneLimb::Serialize(QDataStream& ar)
 {
 	for (int i = 0; i < MAX_SEGMENTS; i++)
@@ -221,7 +221,7 @@ void GeneLimb::Serialize(QDataStream& ar)
 	if (ar.IsLoading())
 		ToggleSegments();
 }
-
+*/
 
 int GeneLimb::GetSegmentsVisible()
 {
@@ -261,7 +261,7 @@ void GeneLimb::ToggleSegments()
 const int GeneTrait::mirrorAngle[MAX_SYMMETRY] = { 0, 180,  0,  180,  90, 90, 270, 270 };
 const int GeneTrait::mirrorCoef[MAX_SYMMETRY]  = { 1,  -1, -1,    1,  -1,  1,  -1,   1 };
 const int GeneTrait::mirrorSix[MAX_SYMMETRY]   = { 0, 120,  0,  120, 240, 240,  0,   0 };
-
+/*
 void GeneTrait::Serialize(QDataStream& ar)
 {
 	for (int i = 0; i < MAX_LIMB_TYPES; i++)
@@ -335,12 +335,12 @@ void GeneTrait::Serialize(QDataStream& ar)
 		ar << m_maxAge;
 	}
 }
-
+*/
 
 int GeneTrait::GetCompressedToggle(int nAngle, int nLine, int nSegment)
 {
-	ASSERT(nLine < MAX_SYMMETRY);
-	ASSERT(nSegment < MAX_SEGMENTS);
+    assert(nLine < MAX_SYMMETRY);
+    assert(nSegment < MAX_SEGMENTS);
 
 	if (IsMirrored())
 	{

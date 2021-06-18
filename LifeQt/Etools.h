@@ -151,7 +151,7 @@ public:
 		return ((m_bottom + m_top) - (c.m_bottom + c.m_top)) >> 1;
 	}
 
-    virtual void Serialize(QDataStream& ar);
+    //virtual void Serialize(QDataStream& ar);
 
 	// Rounds a number up to the next size
 	int NextSize(int value);  
@@ -201,7 +201,9 @@ public:
 	BRectItem() : BRect(), m_indexLeft(-1),
 		m_indexRight(-1), m_indexTop(-1), m_indexBottom(-1) { };
 
-	bool IsSame(BRectItem* pItem) { return pItem == this; }
+    virtual ~BRectItem() {};
+
+    bool IsSame(BRectItem* pItem) { return pItem == this; }
 
 public:
 	// From a BRectItem, I need to be able to tell where that
@@ -242,9 +244,9 @@ public:
 
 	// Sorts the array - returns TRUE if the array actually
 	// required sorting.
-	bool Sort();
+    bool Sort();
 
-	// For adding rects to the array without sorting
+    // For adding rects to the array without sorting
 	// Call Sort after adding multiple members
 	void AddRect(BRectItem* pItem);
 
@@ -265,7 +267,7 @@ protected:
 // Simply call the recursive method
 inline bool BRectArray::Sort()
 {
-	return Sort(0, GetSize());
+    return Sort(0, size());
 }
 
 
