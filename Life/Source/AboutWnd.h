@@ -1,5 +1,5 @@
 // SplashWnd.h - Start-up "Splash Screen" Window
-// $Revision: 1.1 $
+// $Revision$
 //
 //
 

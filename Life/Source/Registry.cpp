@@ -3,7 +3,7 @@
 // Implementation of the our registry access.  Simplifies registry access for
 // the rest of the program.  
 //
-// $Revision: 1.1 $
+// $Revision$
 //
 /////////////////////////////////////////////////////////////////////////////
 

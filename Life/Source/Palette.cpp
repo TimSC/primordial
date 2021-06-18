@@ -1,5 +1,5 @@
 // UtilPalette.cpp: Utility functions for managing color palettes
-// $Revision: 1.1 $
+// $Revision$
 //
 // The CreateIdentityPalette() and ClearSystemPalette() functions are
 // based on sample code in the Microsoft WinG Programmer's Reference.

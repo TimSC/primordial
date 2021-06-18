@@ -1,5 +1,5 @@
 // LoadBmpFile.h
-// $Revision: 1.1 $
+// $Revision$
 
 #ifndef LoadBmpFile_h
 #define LoadBmpFile_h

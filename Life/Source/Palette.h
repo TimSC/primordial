@@ -1,5 +1,5 @@
 // UtilPalette.h: Utility functions for managing color palettes
-// $Revision: 1.1 $
+// $Revision$
 //
 
 #ifndef UtilPalette_h

@@ -1,5 +1,5 @@
 // AboutWnd.cpp - Start-up "Splash Screen" Window
-// $Revision: 1.1 $
+// $Revision$
 //
 
 #include "stdafx.h"
