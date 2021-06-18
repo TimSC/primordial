@@ -705,7 +705,8 @@ BOOL CSock::ShouldNag()
 //
 int  CSock::FindSide(int side)
 {
-	for (int i = 0; i < MAX_SOCKETS; i++)
+    int i = 0;
+	for (i = 0; i < MAX_SOCKETS; i++)
 	{
 		if (m_side[i].side == side)
 			return i;
@@ -764,7 +765,8 @@ BOOL  CSock::ConnectionActive()
 //
 int  CSock::FindMap()
 {
-	for (int i = 0; i < MAX_SOCKETS; i++)
+    int i = 0;
+	for (i = 0; i < MAX_SOCKETS; i++)
 	{
 		if (m_side[i].side == SIDE_AVAILABLE)
 			return i;

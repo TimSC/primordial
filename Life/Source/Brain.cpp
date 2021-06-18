@@ -64,7 +64,7 @@ void ProductArray::Mutate(int nChance)
 	for (int i = 0; i < GetTermCount(); i++)
 		m_productTerm[i].Mutate(nChance);
 
-	for (i = 0; i < GetSumCount(); i++)
+	for (int i = 0; i < GetSumCount(); i++)
 		m_productSum[i].Mutate(nChance);
 }
 
@@ -74,7 +74,7 @@ void ProductArray::Randomize()
 	for (int i = 0; i < GetTermCount(); i++)
 		m_productTerm[i].Randomize();
 
-	for (i = 0; i < GetSumCount(); i++)
+	for (int i = 0; i < GetSumCount(); i++)
 		m_productSum[i].Randomize();
 }
 
@@ -84,7 +84,7 @@ void ProductArray::Debug()
 	for (int i = 0; i < GetTermCount(); i++)
 		m_productTerm[i].Debug();
 
-	for (i = 0; i < GetSumCount(); i++)
+	for (int i = 0; i < GetSumCount(); i++)
 		m_productSum[i].Debug();
 }
 
@@ -94,7 +94,7 @@ void ProductArray::Serialize(CArchive& ar)
 	for (int i = 0; i < GetTermCount(); i++)
 		m_productTerm[i].Serialize(ar);
 
-	for (i = 0; i < GetSumCount(); i++)
+	for (int i = 0; i < GetSumCount(); i++)
 		m_productSum[i].Serialize(ar);
 }
 
@@ -107,7 +107,7 @@ void ProductArray::Crossover(ProductArray& productArray)
 			m_productTerm[i] = productArray.m_productTerm[i];
 
 	// Product sums are currently allowed to crossover at the term level.
-	for (i = 0; i < GetSumCount(); i++)
+	for (int i = 0; i < GetSumCount(); i++)
 		m_productSum[i].Crossover(productArray.m_productSum[i]);
 }
 
@@ -116,7 +116,7 @@ ProductArray& ProductArray::operator=(ProductArray& productArray)
 	for (int i = 0; i < GetTermCount(); i++)
 		m_productTerm[i] = productArray.m_productTerm[i];
 
-	for (i = 0; i < GetSumCount(); i++)
+	for (int i = 0; i < GetSumCount(); i++)
 		m_productSum[i] = productArray.m_productSum[i];
 
 	return *this;
@@ -300,7 +300,7 @@ void CommandArray::Mutate(int nChance)
 
 	m_productArray.Mutate(nChance);
 
-	for (i = 0; i < GetTypeCount(); i++)
+	for (int i = 0; i < GetTypeCount(); i++)
 		m_commandLimbType[i].Mutate(nChance);
 }
 
@@ -312,7 +312,7 @@ void CommandArray::Randomize()
 
 	m_productArray.Randomize();
 
-	for (i = 0; i < GetTypeCount(); i++)
+	for (int i = 0; i < GetTypeCount(); i++)
 		m_commandLimbType[i].Randomize();
 }
 
@@ -324,7 +324,7 @@ void CommandArray::Serialize(CArchive& ar)
 
 	m_productArray.Serialize(ar);
 
-	for (i = 0; i < GetTypeCount(); i++)
+	for (int i = 0; i < GetTypeCount(); i++)
 		m_commandLimbType[i].Serialize(ar);
 }
 
@@ -338,7 +338,7 @@ void CommandArray::Crossover(CommandArray& commandArray)
 
 	m_productArray.Crossover(commandArray.m_productArray);
 
-	for (i = 0; i < GetTypeCount(); i++)
+	for (int i = 0; i < GetTypeCount(); i++)
 		m_commandLimbType[i].Crossover(commandArray.m_commandLimbType[i]);
 }
 
@@ -349,7 +349,7 @@ CommandArray& CommandArray::operator=(CommandArray& commandArray)
 
 	m_productArray = commandArray.m_productArray;
 
-	for (i = 0; i < GetTypeCount(); i++)
+	for (int i = 0; i < GetTypeCount(); i++)
 		m_commandLimbType[i] = commandArray.m_commandLimbType[i];
 
 	return *this;
@@ -1065,7 +1065,8 @@ void CommandRetractLimb::Initialize(CommandLimbStore& store)
 	int nRealLimbType = store.m_pBiot->trait.GetLineTypeIndex(m_nLimb);
 
 	// Walk all the segments and determine the max segment 
-	for (int i = MAX_SEGMENTS - 1; i >= 0; i--)
+	int i = 0;
+	for (i = MAX_SEGMENTS - 1; i >= 0; i--)
 	{
 		GeneSegment& segment = store.m_pBiot->trait.GetSegmentType(nRealLimbType, i);
 
@@ -1133,7 +1134,8 @@ void CommandRetractLimbType::Initialize(CommandLimbStore& store)
 		return;
 
 	// Walk all the segments and determine the max segment 
-	for (int i = MAX_SEGMENTS - 1; i >= 0; i--)
+	int i = 0;
+	for (i = MAX_SEGMENTS - 1; i >= 0; i--)
 	{
 		GeneSegment& segment = store.m_pBiot->trait.GetSegmentType(m_nLimbType, i);
 

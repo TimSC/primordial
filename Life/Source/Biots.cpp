@@ -2456,7 +2456,7 @@ BYTE Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
 	if (!bOneLine)
 		return 0;
 
-	for (i = 0; i < trait.GetLines(); i++)
+	for (int i = 0; i < trait.GetLines(); i++)
 	{
 		if (nLimbType == trait.GetLineTypeIndex(i))
 		{
@@ -2494,7 +2494,7 @@ BYTE Biot::ExtendLimbType(int nSegment, int nLimbType)
 	if (!bOneLine)
 		return 0;
 
-	for (i = 0; i < trait.GetLines(); i++)
+	for (int i = 0; i < trait.GetLines(); i++)
 	{
 		if (nLimbType == trait.GetLineTypeIndex(i))
 		{

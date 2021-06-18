@@ -1071,7 +1071,7 @@ void CMainFrame::OnUpdateViewBar(CCmdUI* pCmdUI)
 }
 
 
-void CMainFrame::OnActivateApp(BOOL bActive, HTASK hTask) 
+void CMainFrame::OnActivateApp(BOOL bActive, DWORD hTask) 
 {
 	CFrameWnd::OnActivateApp(bActive, hTask);
 	

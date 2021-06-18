@@ -111,7 +111,7 @@ protected:
 	afx_msg void OnUpdateViewBar(CCmdUI* pCmdUI);
 	afx_msg void OnEnvironmentStats();
 	afx_msg void OnUpdateEnvironmentStats(CCmdUI* pCmdUI);
-	afx_msg void OnActivateApp(BOOL bActive, HTASK hTask);
+	afx_msg void OnActivateApp(BOOL bActive, DWORD hTask);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

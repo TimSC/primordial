@@ -124,7 +124,7 @@ BOOL CPLifeApp::InitInstance()
 		
 
 	// Start up our registries
-	if (!m_comRegistry.CreateKey("Software\\Ultravast\\Primordial Life\\4", HKEY_LOCAL_MACHINE))
+	if (!m_comRegistry.CreateKey("Software\\Ultravast\\Primordial Life\\4", HKEY_CURRENT_USER))
 		return FALSE;
 
 	SetRegistryKey(_T("Ultravast"));

@@ -226,7 +226,8 @@ void GeneLimb::Serialize(CArchive& ar)
 
 int GeneLimb::GetSegmentsVisible()
 {
-	for (int i = 0, j = 0; i < MAX_SEGMENTS; i++)
+	int j = 0;
+	for (int i = 0; i < MAX_SEGMENTS; i++)
 		if (m_segment[i].IsVisible())
 			j++;
 
@@ -308,7 +309,7 @@ void GeneTrait::Serialize(CArchive& ar)
 		if (m_asexual > 1)
 			m_asexual = 1;
 
-		for (i = 0; i < MAX_SYMMETRY; i++)
+		for (int i = 0; i < MAX_SYMMETRY; i++)
 			if (m_lineRef[i] >= MAX_LIMB_TYPES)
 				m_lineRef[i] = 0;
 

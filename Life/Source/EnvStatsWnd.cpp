@@ -306,7 +306,7 @@ void CEnvStatsWnd::SetEnergySpread(bool bDraw)
 
 	m_graph.SetAutoInc(1);
 	CString sString;
-	for (i = 0; i < CEnvStats::ENERGY_LEVELS; i++)
+	for (int i = 0; i < CEnvStats::ENERGY_LEVELS; i++)
 	{
 		sString.Format("%d%%", (i+1) * (100 / CEnvStats::ENERGY_LEVELS));
 		m_graph.SetLabelText( sString );
@@ -380,7 +380,7 @@ void CEnvStatsWnd::SetAgeSpread(bool bDraw)
 		m_graph.SetGraphData((float) stats.m_ages[i]);
 
 	m_graph.SetAutoInc(1);
-	for (i = 0; i < (int)stats.m_ageIntervals; i++)
+	for (int i = 0; i < (int)stats.m_ageIntervals; i++)
 		m_graph.SetLabelText( stats.ToDays( (stats.m_ageRange * (i + 1)) / stats.m_ageIntervals ) );
 
 	m_graph.SetDrawMode(3);

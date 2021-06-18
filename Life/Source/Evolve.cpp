@@ -1094,8 +1094,8 @@ return(0);
 void LoadComboBox(HWND hDlg, int id, int size, int choice, LISTENTRY* pEntry)
 {
 WPARAM select = 0;
-
-  for (int i = 0; i < size; i++)
+  int i = 0;
+  for (i = 0; i < size; i++)
   {
     SendDlgItemMessage(hDlg, id, CB_ADDSTRING, 0, (LPARAM) pEntry[i].listStr);
     if (choice == pEntry[i].listValue)

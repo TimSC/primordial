@@ -16,7 +16,6 @@
 #include "evolve.h"
 #include "environ.h"
 #include "biots.h"
-#include "ZipFile.h"
 
 // from evolve.cpp
 extern char szFile[];
@@ -282,7 +281,7 @@ void CEnvStats::Sample(Environment& env)
 
 	m_totalEnvArea = m_freeEnvArea = env.Area();
 
-	for (j = 0; j < m_population; j++)
+	for (int j = 0; j < m_population; j++)
 	{
 		Biot* pBiot = env.m_biotList[j];
 
@@ -1614,7 +1613,7 @@ void Environment::SaveBiot(Biot* pBiot)
 	if (dlg.DoModal() == IDOK)
 	{
 		try {
-			CCompressFile file(dlg.GetPathName(), CFile::modeCreate | CFile::shareExclusive | CFile::modeWrite);
+			CFile file(dlg.GetPathName(), CFile::modeCreate | CFile::shareExclusive | CFile::modeWrite);
 			CArchive ar(&file, CArchive::store);
 		    pBiot->Serialize(ar);
 			ar.Close();
@@ -1667,7 +1666,7 @@ void Environment::LoadBiot(int x, int y)
 	if(dlg.DoModal() == IDOK)
 	{
 		try {
-			CUncompressFile file(dlg.GetPathName(), CFile::modeRead | CFile::shareDenyWrite);
+			CFile file(dlg.GetPathName(), CFile::modeRead | CFile::shareDenyWrite);
 
 			CArchive ar(&file, CArchive::load);
 

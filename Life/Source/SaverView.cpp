@@ -106,7 +106,7 @@ void CSaverView::OnActivate(UINT nState, CWnd* pWndOther, BOOL bMinimized)
 }
 
 
-void CSaverView::OnActivateApp(BOOL bActive, HTASK hTask) 
+void CSaverView::OnActivateApp(BOOL bActive, DWORD hTask) 
 {
 	if (!bActive && !m_bDialogUp)
 		PostMessage(WM_CLOSE);

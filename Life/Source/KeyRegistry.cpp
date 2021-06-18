@@ -14,32 +14,7 @@
 //
 bool CKeyRegistry::IsGoodKey()
 {
-	CString sName = GetName();
-    int  length   = sName.GetLength();
-	WORD result   = (WORD) GetKey();
-
-	if (IsTemporaryKey())
-	{
-		time_t time = 0;
-		DWORD dwValue = GetValue("key", 0);
-
-		if (dwValue == 0)
-			return false;
-
-		CTime date((time_t)dwValue);
-
-		int days = abs((CTime::GetCurrentTime() - date).GetDays());
-
-		if (days > 15)
-			return false;
-	}
-
-	sName.MakeUpper();
-
-    for (int i = 0; i < length; i++)
-      result -= (((WORD)sName[i]) << ((i + 3) % 7));
-
-	return (result == 0xFADE && length > 2);
+	return true;
 }
 
 
@@ -48,9 +23,7 @@ bool CKeyRegistry::IsGoodKey()
 //
 bool CKeyRegistry::IsValid()
 {
-	GetKey();
-	return (((GetTickCount() % 14) != 7) || (((((m_lKey & 0x0007FFFF) * 3) / 5) << 19) & 0xFFF80000) ==
-		(0xFFF80000 & m_lKey));
+	return true;
 }
 
 
@@ -59,7 +32,7 @@ bool CKeyRegistry::IsValid()
 //
 bool CKeyRegistry::IsSiteKey()
 {
-	return ((m_lKey & 0x00040000) == 0x00040000);
+	return false;
 }
 
 
@@ -68,7 +41,7 @@ bool CKeyRegistry::IsSiteKey()
 //
 bool CKeyRegistry::IsWorkAndHomeKey()
 {
-	return ((m_lKey & 0x00020000) == 0x00020000);
+	return true;
 }
 
 
@@ -77,7 +50,7 @@ bool CKeyRegistry::IsWorkAndHomeKey()
 //
 bool CKeyRegistry::IsTemporaryKey()
 {
-	return ((m_lKey & 0x00010000) == 0x00010000);
+	return false;
 }
 
 
@@ -151,10 +124,7 @@ long CKeyRegistry::HexDigit(char c)
 //
 CString CKeyRegistry::GetName()
 {
-	GetString("name", m_sName);
-	m_sName.TrimRight();
-	m_sName.TrimLeft();
-	return m_sName;
+	return "GNU Affero General Public License";
 }
 
 void CKeyRegistry::SetKey(long lKey)
