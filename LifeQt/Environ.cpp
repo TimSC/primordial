@@ -299,7 +299,8 @@ void CEnvStats::Sample(Environment& env)
 
 		m_ages[(pBiot->m_age * m_ageIntervals) / m_ageRange]++;
         int level = pBiot->PercentEnergy() / (100.0 / ENERGY_LEVELS);
-        m_energy[level]++;
+        if (level >= 0 and level < ENERGY_LEVELS)
+            m_energy[level]++;
 
 		m_freeEnvArea -= pBiot->Area();
 	}
@@ -935,7 +936,7 @@ void Environment::Skip()
 	}
 */
 
-    uint32_t dwTicks = QDateTime::currentMSecsSinceEpoch();
+    int64_t dwTicks = QDateTime::currentMSecsSinceEpoch();
 	// Process all the biots now
     while ((QDateTime::currentMSecsSinceEpoch() - dwTicks) < 200)
 	{

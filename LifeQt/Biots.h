@@ -35,9 +35,9 @@ const int MAX_ENERGY_HISTORY = 21;
 class Motion
 {
   public:
-    int8_t period;
-    int8_t nPeno;
-    int8_t frequency;
+    uint8_t period;
+    uint8_t nPeno;
+    uint8_t frequency;
 
     double dx;
     double dy;
@@ -234,10 +234,10 @@ class Biot: public BRectItem
 	short   m_retractSegment[MAX_SYMMETRY];
 
 	// Retract or extend the tip of a limb
-    int8_t    RetractLine(int nSegment, int nLimb, int maxRadius);
-    int8_t    ExtendLine(int nSegment, int nLimb);
-    int8_t    RetractLimbType(int nSegment, int nLimbType, int maxRadius);
-    int8_t    ExtendLimbType(int nSegment, int nLimbType);
+    uint8_t    RetractLine(int nSegment, int nLimb, int maxRadius);
+    uint8_t    ExtendLine(int nSegment, int nLimb);
+    uint8_t    RetractLimbType(int nSegment, int nLimbType, int maxRadius);
+    uint8_t    ExtendLimbType(int nSegment, int nLimbType);
 
 
 	CommandLimbStore m_store[MAX_SYMMETRY];
@@ -246,8 +246,8 @@ class Biot: public BRectItem
 	CommandArray m_commandArray2;
 	int          m_internalState;
 
-    int8_t     geneNo[MAX_GENES];
-    int8_t     lineNo[MAX_GENES];
+    uint8_t     geneNo[MAX_GENES];
+    uint8_t     lineNo[MAX_GENES];
 
     bool     bTerminateEvent;
 
@@ -317,8 +317,8 @@ public:
     QPoint    origin;
     short    nType[MAX_GENES];
     short    state[MAX_GENES];
-//    int8_t     typeState[MAX_GENES];
-    int8_t     color[MAX_GENES];
+//    uint8_t     typeState[MAX_GENES];
+    uint8_t     color[MAX_GENES];
 
     bool     bInjured;
     int      genes2;

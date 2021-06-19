@@ -153,7 +153,7 @@ void ProductSum::Randomize()
 void ProductSum::Debug()
 {
 	for (int i = 0; i < GetCount(); i++)
-        m_reference[i] = (int8_t) i;
+        m_reference[i] = (uint8_t) i;
 
     m_bTrue = true;
 }

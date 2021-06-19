@@ -203,8 +203,8 @@ void Biot::ClearSettings(void)
 	for (int nGene = 0; nGene < MAX_SEGMENTS; nGene++)
 		for (int nLine = 0; nLine < MAX_SYMMETRY; nLine++)
 		{
-            geneNo[nPeno]   = (int8_t) nGene;
-            lineNo[nPeno++] = (int8_t) nLine;
+            geneNo[nPeno]   = (uint8_t) nGene;
+            lineNo[nPeno++] = (uint8_t) nLine;
 		}
 }  
 
@@ -1246,7 +1246,7 @@ CLine cLine;
 						// This step calculates the X and Y vector from this biot
 						// at that point taking into consideration the
 						// biots rotation and translational vectors
-						double eDX, eDY;
+                        double eDX = 0.0, eDY = 0.0;
 						enemy->vector.RotatedDelta(eDX, eDY, edeltaX, edeltaY, eradius);
                         assert(eDX < 1000 && eDX > -1000);
                         assert(eDY < 1000 && eDY > -1000);
@@ -2051,12 +2051,12 @@ void Biot::CopyGenes(Biot& enemy)
 /*
 void Biot::Serialize(QDataStream& ar)
 {
-    const int8_t archiveVersion = 11;
+    const uint8_t archiveVersion = 11;
     int64_t i;
 	
 	if (ar.IsLoading())
 	{
-        int8_t version;
+        uint8_t version;
 		// Check version
 		ar >> version;
 		if (version != archiveVersion)
@@ -2405,7 +2405,7 @@ void Biot::IncreaseAngle(int nPeno, short rate)
 //
 // Retracts the tip segment on a particular limb.  
 //
-int8_t Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
+uint8_t Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
 {
    if (m_retractDrawn[nLimb] == m_retractRadius[nLimb] &&
 	   m_retractDrawn[nLimb] < maxRadius)
@@ -2413,9 +2413,9 @@ int8_t Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
 	   m_retractSegment[nLimb] = nSegment;
 	   m_retractRadius[nLimb] += 1;
        redraw.SetRedraw(true);
-       return (int8_t) 1;
+       return (uint8_t) 1;
    }
-   return (int8_t) 0;
+   return (uint8_t) 0;
 }
 
 
@@ -2424,7 +2424,7 @@ int8_t Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
 //
 // Extends the tip segment on a particular limb.  
 //
-int8_t Biot::ExtendLine(int nSegment, int nLimb)
+uint8_t Biot::ExtendLine(int nSegment, int nLimb)
 {
    if (m_retractDrawn[nLimb] == m_retractRadius[nLimb] &&
 	   m_retractDrawn[nLimb] > 0)
@@ -2432,9 +2432,9 @@ int8_t Biot::ExtendLine(int nSegment, int nLimb)
 	   m_retractSegment[nLimb] = nSegment;
 	   m_retractRadius[nLimb] -= 1;
        redraw.SetRedraw(true);
-       return (int8_t) 1;
+       return (uint8_t) 1;
    }
-   return (int8_t) 0;
+   return (uint8_t) 0;
 }
 
 
@@ -2449,7 +2449,7 @@ int8_t Biot::ExtendLine(int nSegment, int nLimb)
 //
 // Returns 1 or 0 for the distance retracted.
 //
-int8_t Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
+uint8_t Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
 {
     bool bOneLine = false;
 	for (int i = 0; i < trait.GetLines(); i++)
@@ -2476,7 +2476,7 @@ int8_t Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
 		}
 	}
     redraw.SetRedraw(true);
-    return (int8_t) 1;
+    return (uint8_t) 1;
 }
 
 
@@ -2487,7 +2487,7 @@ int8_t Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
 //
 // Returns 1 or 0 for the distance extended.
 //
-int8_t Biot::ExtendLimbType(int nSegment, int nLimbType)
+uint8_t Biot::ExtendLimbType(int nSegment, int nLimbType)
 {
     bool bOneLine = false;
 	for (int i = 0; i < trait.GetLines(); i++)
@@ -2514,7 +2514,7 @@ int8_t Biot::ExtendLimbType(int nSegment, int nLimbType)
 		}
 	}
     redraw.SetRedraw(true);
-    return (int8_t) 1;
+    return (uint8_t) 1;
 }
 
 

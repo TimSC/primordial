@@ -11,7 +11,7 @@ rand.h: definitions for a random number generator
 #include <stdint.h>
 #include <QDataStream>
 
-typedef uint32_t  ub4;   /* unsigned 4-int8_t quantities */
+typedef uint32_t  ub4;   /* unsigned 4-uint8_t quantities */
 #define RANDSIZL   (8)
 #define RANDSIZ    (1<<RANDSIZL)
 
@@ -56,14 +56,14 @@ public:
 
 	short Short(int max);
 
-    int8_t Byte(int max)
+    uint8_t Byte(int max)
 	{
-        return (int8_t) (rand() % max);
+        return (uint8_t) (rand() % max);
 	}
 
-    int8_t Byte()
+    uint8_t Byte()
 	{
-        return (int8_t) rand();
+        return (uint8_t) rand();
 	}
 
 	int Sign(void)

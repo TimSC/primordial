@@ -64,11 +64,11 @@ enum {
 class GeneSegment : Randomizer
 {
   private:
-    int8_t   m_color[2];
-    int8_t   m_visible;
-    int8_t   m_radius;
+    uint8_t   m_color[2];
+    uint8_t   m_visible;
+    uint8_t   m_radius;
 	short  m_angle;
-    int8_t   m_startSegment;
+    uint8_t   m_startSegment;
 
 	enum {
 		MAX_SEGMENT_LENGTH = 16
@@ -85,8 +85,8 @@ class GeneSegment : Randomizer
    // virtual void Serialize(QDataStream& ar);
 
 	double GetRadius() { return (double) m_radius; }
-    double GetAdjustedRadius(int8_t radius) { return (double) (m_radius - radius); }
-    int8_t   GetRawRadius() { return m_radius; }
+    double GetAdjustedRadius(uint8_t radius) { return (double) (m_radius - radius); }
+    uint8_t   GetRawRadius() { return m_radius; }
 	short  GetColor(int sex)  { return m_color[sex]; }
 	int    GetAngle()  { return m_angle;           }
     bool   IsVisible() { return m_visible;         }
@@ -167,18 +167,18 @@ class GeneTrait : Randomizer
     virtual ~GeneTrait();
 
   private:
-    int8_t  m_disperse;        // Do the children disperse when born?
-    int8_t  m_children;        // How many babies?
-    int8_t  m_attackChildren;  // Does the parent attack children
-    int8_t  m_attackSiblings;  // Do sibling attack each other
-    int8_t  m_species;         // What species is this (0 - 15)
-    int8_t  m_adultRatio[2];   // How large does this adult get
-    int8_t  m_lineCount;      // How many lines
-    int8_t  m_lineRef[MAX_SYMMETRY];
-    int8_t  m_mirrored;        // Are the lines mirrored
-    int8_t  m_sex;             // male(1) or female(0)
-    int8_t  m_asexual;         // yes or no
-    int8_t  m_chanceMale;      // Determines the chance a biot is a male
+    uint8_t  m_disperse;        // Do the children disperse when born?
+    uint8_t  m_children;        // How many babies?
+    uint8_t  m_attackChildren;  // Does the parent attack children
+    uint8_t  m_attackSiblings;  // Do sibling attack each other
+    uint8_t  m_species;         // What species is this (0 - 15)
+    uint8_t  m_adultRatio[2];   // How large does this adult get
+    uint8_t  m_lineCount;      // How many lines
+    uint8_t  m_lineRef[MAX_SYMMETRY];
+    uint8_t  m_mirrored;        // Are the lines mirrored
+    uint8_t  m_sex;             // male(1) or female(0)
+    uint8_t  m_asexual;         // yes or no
+    uint8_t  m_chanceMale;      // Determines the chance a biot is a male
     short m_offset;          // Born with an initial orientation
 	short m_maxAge;          // Max age gene (1440 * (m_maxAge + 1))
 	GeneLimb m_geneLine[MAX_LIMB_TYPES]; 
@@ -199,7 +199,7 @@ class GeneTrait : Randomizer
     //virtual void Serialize(QDataStream& ar);
 	void CalculateAngles();
 	void PickSex()                  { m_sex = ((int) m_chanceMale > Integer(255));  }
-    void SetChanceMale(int8_t chanceMale) { m_chanceMale = chanceMale; }
+    void SetChanceMale(uint8_t chanceMale) { m_chanceMale = chanceMale; }
 	int  GetChanceMale() { return (int) m_chanceMale; }
 
 	int  GetLineMirror(int nLine)   { return mirrorCoef[nLine];   }
@@ -207,7 +207,7 @@ class GeneTrait : Randomizer
     int  GetAttackChildren(void)    { return m_attackChildren;    }
     int  GetAttackSiblings(void)    { return m_attackSiblings;    }
     int  GetSpecies(void)           { return m_species;           }
-    void SetSpecies(int nSpecies)   { m_species = (int8_t) nSpecies;}
+    void SetSpecies(int nSpecies)   { m_species = (uint8_t) nSpecies;}
     int  GetAdultRatio()            { return m_adultRatio[m_sex]; }
     int  GetLines(void) const       { return m_lineCount;         }
 	int  GetLineTypeIndex(int line) { return m_lineRef[line];     }

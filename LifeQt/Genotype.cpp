@@ -48,35 +48,35 @@ void GeneSegment::Serialize(QDataStream& ar)
 void GeneSegment::Randomize(int segment, bool bIsVisible)
 {
 	// Perhaps we just do 16 next time, or 32
-    m_radius = (int8_t)  (Integer(MAX_SEGMENT_LENGTH - 1) + 2);
+    m_radius = (uint8_t)  (Integer(MAX_SEGMENT_LENGTH - 1) + 2);
 
 	if (segment == 0)
 		m_angle  = (short) (Integer(45) + 1);
 	else
 		m_angle  = (short) (Integer(350) - 175);
   
-    m_visible = (int8_t) bIsVisible;
+    m_visible = (uint8_t) bIsVisible;
 
-    m_startSegment = int8_t(MAX_SEGMENTS);
+    m_startSegment = uint8_t(MAX_SEGMENTS);
 
-    m_color[0]   = int8_t(DIM_COLOR - 1);
+    m_color[0]   = uint8_t(DIM_COLOR - 1);
 //	if (m_color[0] != GREEN_LEAF)
-//		m_color[0]  = int8_t(DIM_COLOR);
+//		m_color[0]  = uint8_t(DIM_COLOR);
 
-    m_color[1]   = int8_t(DIM_COLOR);
+    m_color[1]   = uint8_t(DIM_COLOR);
 	if (m_color[1] != WHITE_LEAF && m_color[1] != GREEN_LEAF)
-        m_color[1]  = int8_t(DIM_COLOR);
+        m_color[1]  = uint8_t(DIM_COLOR);
 }
 
 
 // Settings to help debug a biot
 void GeneSegment::Debug(int segment, bool bIsVisible)
 {
-    m_radius = (int8_t) MAX_SEGMENT_LENGTH;
+    m_radius = (uint8_t) MAX_SEGMENT_LENGTH;
 	m_angle = 0;//5;
 	// 0 and 45 put the legs right on top of each other for 8 legs
 
-    m_visible = (int8_t) bIsVisible;
+    m_visible = (uint8_t) bIsVisible;
 	m_startSegment = segment - 1;
 	if (segment != 2)
 	{
@@ -94,7 +94,7 @@ void GeneSegment::Debug(int segment, bool bIsVisible)
 void GeneSegment::Mutate(int chance, int segment)
 {
 	if (Int1024() < chance)
-        m_radius = (int8_t) (Integer(MAX_SEGMENT_LENGTH - 1) + 2);
+        m_radius = (uint8_t) (Integer(MAX_SEGMENT_LENGTH - 1) + 2);
 
 	if (Int1024() < chance)
 	{
@@ -105,16 +105,16 @@ void GeneSegment::Mutate(int chance, int segment)
 	}
 
 	if (Int1024() < chance)
-        m_startSegment = int8_t(MAX_SEGMENTS);
+        m_startSegment = uint8_t(MAX_SEGMENTS);
 
 	if (Int1024() < chance)
 		m_visible = !m_visible;
   
 	if (Int1024() < chance)
-        m_color[0]   = int8_t(DIM_COLOR - 1);
+        m_color[0]   = uint8_t(DIM_COLOR - 1);
 
 	if (Int1024() < chance)
-        m_color[1]   = int8_t(DIM_COLOR);
+        m_color[1]   = uint8_t(DIM_COLOR);
 
 }
 
@@ -401,36 +401,36 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
 {
 	int i;
 
-    m_disperse       = (int8_t) Bool();
-    m_children       = (int8_t) (Integer(8) + 1);
-    m_attackChildren = (int8_t) Bool();
-    m_attackSiblings = (int8_t) Bool();
-    m_species        = (int8_t) Integer(2);  // Make fewer species to begin with
-    m_adultRatio[0]  = (int8_t) (Integer(6) + 1);
-    m_adultRatio[1]  = (int8_t) (Integer(6) + 1);
-    m_mirrored       = (int8_t) Bool();
+    m_disperse       = (uint8_t) Bool();
+    m_children       = (uint8_t) (Integer(8) + 1);
+    m_attackChildren = (uint8_t) Bool();
+    m_attackSiblings = (uint8_t) Bool();
+    m_species        = (uint8_t) Integer(2);  // Make fewer species to begin with
+    m_adultRatio[0]  = (uint8_t) (Integer(6) + 1);
+    m_adultRatio[1]  = (uint8_t) (Integer(6) + 1);
+    m_mirrored       = (uint8_t) Bool();
 
 	switch(nArmsPerBiot)
 	{
 	default:
 	case 0:
-        m_lineCount  = (int8_t) (Integer(MAX_SYMMETRY) + 1);
+        m_lineCount  = (uint8_t) (Integer(MAX_SYMMETRY) + 1);
 		break;
 
 	case 1:
-        m_lineCount  = (int8_t) (Integer(2) + 1);
+        m_lineCount  = (uint8_t) (Integer(2) + 1);
 		break;
 
 	case 2:
-        m_lineCount  = (int8_t) (Integer(2) + 3);
+        m_lineCount  = (uint8_t) (Integer(2) + 3);
 		break;
 
 	case 3:
-        m_lineCount  = (int8_t) (Integer(2) + 5);
+        m_lineCount  = (uint8_t) (Integer(2) + 5);
 		break;
 
 	case 4:
-        m_lineCount  = (int8_t) (Integer(2) + 7);
+        m_lineCount  = (uint8_t) (Integer(2) + 7);
 		break;
 	}
 
@@ -443,15 +443,15 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
 	for (i = 0; i < MAX_LIMB_TYPES; i++)
 		m_geneLine[i].Randomize(nSegmentsPerArm);
 
-    m_sex        = (int8_t) Bool();
-    m_asexual    = (int8_t) Bool();
-    m_chanceMale = (int8_t) (Int256() / 2 + 64);
+    m_sex        = (uint8_t) Bool();
+    m_asexual    = (uint8_t) Bool();
+    m_chanceMale = (uint8_t) (Int256() / 2 + 64);
 	m_maxAge     = (short) Int256();
 
 	// We start out with uniform appearance
 	for (i = 0; i < MAX_SYMMETRY; i++)
 	{
-        m_lineRef[i] = int8_t(nTypesPerBiot + 1);
+        m_lineRef[i] = uint8_t(nTypesPerBiot + 1);
 	}
 
 	CalculateAngles();
@@ -462,37 +462,37 @@ void GeneTrait::Debug(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 {
 	int i;
 
-    m_disperse       = (int8_t) true;
-    m_children       = (int8_t) 1;
-    m_attackChildren = (int8_t) false;
-    m_attackSiblings = (int8_t) false;
-    m_species        = (int8_t) 0;  // Make fewer species to begin with
-    m_adultRatio[0]  = (int8_t) 1;
-    m_adultRatio[1]  = (int8_t) 1;
-    m_mirrored       = (int8_t) true;
+    m_disperse       = (uint8_t) true;
+    m_children       = (uint8_t) 1;
+    m_attackChildren = (uint8_t) false;
+    m_attackSiblings = (uint8_t) false;
+    m_species        = (uint8_t) 0;  // Make fewer species to begin with
+    m_adultRatio[0]  = (uint8_t) 1;
+    m_adultRatio[1]  = (uint8_t) 1;
+    m_mirrored       = (uint8_t) true;
 
-    m_lineCount  = 1;//(int8_t) MAX_SYMMETRY;
+    m_lineCount  = 1;//(uint8_t) MAX_SYMMETRY;
 /*	switch(nArmsPerBiot)
 	{
 	default:
 	case 0:
-        m_lineCount  = (int8_t) MAX_SYMMETRY;
+        m_lineCount  = (uint8_t) MAX_SYMMETRY;
 		break;
 
 	case 1:
-        m_lineCount  = (int8_t) 2;
+        m_lineCount  = (uint8_t) 2;
 		break;
 
 	case 2:
-        m_lineCount  = (int8_t) 4;
+        m_lineCount  = (uint8_t) 4;
 		break;
 
 	case 3:
-        m_lineCount  = (int8_t) 6;
+        m_lineCount  = (uint8_t) 6;
 		break;
 
 	case 4:
-        m_lineCount  = (int8_t) 8;
+        m_lineCount  = (uint8_t) 8;
 		break;
 	}
 */
@@ -505,9 +505,9 @@ void GeneTrait::Debug(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 	for (i = 0; i < MAX_LIMB_TYPES; i++)
 		m_geneLine[i].Debug(nSegmentsPerArm);
 
-    m_sex        = (int8_t) false;
-    m_asexual    = (int8_t) true;
-    m_chanceMale = (int8_t) 0;
+    m_sex        = (uint8_t) false;
+    m_asexual    = (uint8_t) true;
+    m_chanceMale = (uint8_t) 0;
 	m_maxAge     = (short) 255;
 
 	// We start out with uniform appearance
@@ -525,16 +525,16 @@ void GeneTrait::Mutate(int chance)
 	int i;
 
 	if (Int1024() < chance)
-        m_disperse       = (int8_t) Bool();
+        m_disperse       = (uint8_t) Bool();
 
 	if (Int1024() < chance)
-        m_children       = (int8_t) (Integer(8) + 1);
+        m_children       = (uint8_t) (Integer(8) + 1);
 
 	if (Int1024() < chance)
-        m_attackChildren = (int8_t) Bool();
+        m_attackChildren = (uint8_t) Bool();
 
 	if (Int1024() < chance)
-        m_attackSiblings = (int8_t) Bool();
+        m_attackSiblings = (uint8_t) Bool();
 
 	if (Int1024() < chance)
 	{
@@ -545,16 +545,16 @@ void GeneTrait::Mutate(int chance)
 	}
 
 	if (Int1024() < chance)
-        m_adultRatio[0]     = (int8_t) (Integer(6) + 1);
+        m_adultRatio[0]     = (uint8_t) (Integer(6) + 1);
 
 	if (Int1024() < chance)
-        m_adultRatio[1]     = (int8_t) (Integer(6) + 1);
+        m_adultRatio[1]     = (uint8_t) (Integer(6) + 1);
 
 	if (Int1024() < chance)
-        m_lineCount         = (int8_t) (Integer(8) + 1);
+        m_lineCount         = (uint8_t) (Integer(8) + 1);
 
 	if (Int1024() < chance)
-        m_mirrored       = (int8_t) Bool();
+        m_mirrored       = (uint8_t) Bool();
 
 	if (Int1024() < chance)
 		m_offset         = (short) Integer(360);
@@ -563,20 +563,20 @@ void GeneTrait::Mutate(int chance)
 		m_geneLine[i].Mutate(chance);
 
 	if (Int1024() < chance)
-        m_sex = (int8_t) Bool();
+        m_sex = (uint8_t) Bool();
 
 	if (Int1024() < chance)
-        m_asexual = (int8_t) Bool();
+        m_asexual = (uint8_t) Bool();
 
 	if (Int1024() < chance)
-        m_chanceMale = int8_t();
+        m_chanceMale = uint8_t();
 
 	if (Int1024() < chance)
 		m_maxAge = (short) Int256();
 
 	for (i = 0; i < MAX_SYMMETRY; i++)
 		if (Int1024() < chance)
-            m_lineRef[i] = int8_t(MAX_LIMB_TYPES);
+            m_lineRef[i] = uint8_t(MAX_LIMB_TYPES);
 
 	CalculateAngles();
 }

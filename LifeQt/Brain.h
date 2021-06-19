@@ -91,7 +91,7 @@ public:
     bool IsTrue(ProductArray& productArray, uint32_t dwSensor);
 
 protected:
-    int8_t m_reference[MAX_PRODUCT_SUM_TERMS];
+    uint8_t m_reference[MAX_PRODUCT_SUM_TERMS];
     bool m_bTrue;
 };
 
@@ -195,16 +195,16 @@ public:
 	int   m_command;
 
 	// What relative limb or which limb type
-    int8_t  m_limb;
+    uint8_t  m_limb;
 
 	// What segment of a limb? (limited to MAX_SEGMENTS)
-    int8_t  m_segment;
+    uint8_t  m_segment;
 
 	// How fast to move it  (each command interpretes this differently)
-    int8_t  m_rate;
+    uint8_t  m_rate;
 
 	// How many degrees to move (each command looks at this differently)
-    int8_t  m_degrees;
+    uint8_t  m_degrees;
 
 	int GetLimb(int actualLimb);
 	short GetSegment()  { return m_segment; }
@@ -256,8 +256,8 @@ public:
 	CommandLimbType& operator=(CommandLimbType& commandLimbType);
 
 protected:
-    int8_t  m_comref[MAX_COMMANDS_PER_LIMB];
-    int8_t  m_sumref[MAX_COMMANDS_PER_LIMB];
+    uint8_t  m_comref[MAX_COMMANDS_PER_LIMB];
+    uint8_t  m_sumref[MAX_COMMANDS_PER_LIMB];
 };
 
 inline int CommandLimbType::GetCount()
