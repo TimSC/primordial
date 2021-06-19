@@ -20,10 +20,18 @@ Biot::Biot(Environment& environment) : env(environment)
 {
   max_genes = 1;
   ClearSettings();
+  graphics = new QGraphicsItemGroup();
+  if(env.m_scene != nullptr)
+      env.m_scene->addItem(graphics);
+
+  QGraphicsEllipseItem *body = new QGraphicsEllipseItem(0, 0, 10, 10);
+  graphics->addToGroup(body);
 }
 
 Biot::~Biot(void)
 {
+    if(env.m_scene != nullptr)
+        env.m_scene->removeItem(graphics);
 //	FreeBitmaps();
 }
 
@@ -582,9 +590,6 @@ int  nLastGene = -1;
 
 	for (i = GREEN_LEAF; i <= WHITE_LEAF; i++)
         vector.addMass(colorDistance[i] * env.options.leafMass[i]);
-
-    if(vector.mass == 0.0)
-        vector.setMass(1.0); //Prevent div by zero in acceleration calcs
 
 	return dist;
 }
@@ -1444,6 +1449,8 @@ CLine cLine;
 			}
 		}
 	}
+
+    this->graphics->setPos(this->origin);
 
     return true;
 }

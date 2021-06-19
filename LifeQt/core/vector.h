@@ -114,20 +114,29 @@ public:
     void adjustDeltaY(double DY)      { dy += DY; }
     void adjustDeltaRotate(double DR) { dr += DR; }
 
+    inline double nonZeroMass() const
+    {
+        //Protect from divide by zero errors
+        double m = this->mass;
+        if (m < 1e-6)
+            m = 1e-6;
+        return m;
+    }
+
     void accelerateX(double ddx)
 	{
-		dx = CheckLimit(dx + ddx / mass);
-		/*(((double)ddx) / mass);*/
+        dx = CheckLimit(dx + ddx / nonZeroMass());
+        /*(((double)ddx) / nonZeroMass());*/
 	}
 
     void accelerateY(double ddy)
 	{
-		/*(((double)ddy) / mass);*/ 
-		dy = CheckLimit(dy + ddy / mass);
+        /*(((double)ddy) / nonZeroMass());*/
+        dy = CheckLimit(dy + ddy / nonZeroMass());
 	}
     void accelerateRotation(double ddr)
 	{ 
-		dr = CheckRLimit(dr + ddr / mass);
+        dr = CheckRLimit(dr + ddr / nonZeroMass());
 	}
 
     void friction(double fric) { dx -= (fric * dx); dy -= (fric * dy); dr -= (fric * dr);}
@@ -143,19 +152,19 @@ public:
 
     double collisionX(Vector &enemy)
     {
-      return ((mass - enemy.mass) * dx + 2 * enemy.mass * enemy.dx) / (mass + enemy.mass);
+      return ((mass - enemy.mass) * dx + 2 * enemy.mass * enemy.dx) / (nonZeroMass() + enemy.mass);
     }
 
 	// Mass Impact equation from page 290 of J.P. Den Hartog "Mechanics"
 	// Returns the resultant velocity vector
 	double collisionResult(const double emass, const double DX, const double eDX) const
 	{
-		return ((mass - emass) * DX + 2 * emass * eDX) / (mass + emass);
+        return ((mass - emass) * DX + 2 * emass * eDX) / (nonZeroMass() + emass);
 	}
 
     double collisionY(Vector &enemy)
     {
-      return ((mass - enemy.mass) * dy + 2 * enemy.mass * enemy.dy) / (mass + enemy.mass);
+      return ((mass - enemy.mass) * dy + 2 * enemy.mass * enemy.dy) / (nonZeroMass() + enemy.mass);
     }
 
     double distance(const int x1, const int y1) const { return sqrt((double)((x1*x1) + (y1*y1))); }

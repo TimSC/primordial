@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QGraphicsScene>
 #include "core/Environ.h"
 
 QT_BEGIN_NAMESPACE
@@ -22,5 +23,7 @@ private:
     Ui::MainWindow *ui;
 
     class Environment env;
+
+    QGraphicsScene scene;
 };
 #endif // MAINWINDOW_H

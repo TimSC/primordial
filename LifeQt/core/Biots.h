@@ -4,6 +4,7 @@
 
 #include <string>
 #include <QDataStream>
+#include <QGraphicsItemGroup>
 #include "Etools.h"
 #include "vector.h"
 #include "Genotype.h"
@@ -283,6 +284,7 @@ class Biot: public BRectItem
 
 private:
     Environment& env;
+    QGraphicsItemGroup *graphics;
 
 public:
 	// Do not save these variables

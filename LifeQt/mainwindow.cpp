@@ -16,8 +16,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->env.options.Reset(640, 480);
 
-    this->env.OnNew(rect, 20, QDateTime::currentMSecsSinceEpoch(),
+    this->env.OnNew(this->scene, rect, 20, QDateTime::currentMSecsSinceEpoch(),
                 0, 1, 10);
+
+    this->ui->graphicsView->setScene(&this->scene);
 
     startTimer(50);     // 50-millisecond timer
 }

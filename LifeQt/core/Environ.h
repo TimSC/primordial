@@ -11,6 +11,7 @@
 
 #include <string>
 #include <QDataStream>
+#include <QGraphicsScene>
 #include "Etools.h"
 #include "Connect.h"
 #include "Genotype.h"
@@ -190,7 +191,7 @@ public:
 
 //	void GetDefaultSettings();
 //	void SetDefaultSettings();
-    void OnNew(QRect worldRect, int population, int seed,
+    void OnNew(QGraphicsScene &scene, QRect worldRect, int population, int seed,
                int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
 	void OnRestart();
 //	void OnOpen(CScrollView* pView);
@@ -206,6 +207,7 @@ public:
 	CBitmap           m_bottomBitmap;
 	BITMAP            m_bottomBm;
 */
+    QGraphicsScene *  m_scene;
 	BRectSort         m_sort;
 
 	CEnvStats         m_stats;

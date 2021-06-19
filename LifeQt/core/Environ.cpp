@@ -462,6 +462,7 @@ void CEnvStatsList::Serialize(QDataStream& ar)
 //Fox BEGIN
 Environment::Environment()
 {
+    m_scene = nullptr;
     /*
 	for (int i = 0; i <= MAX_LEAF; i++)
 		options.hPen[i] = NULL;
@@ -704,7 +705,7 @@ void Environment::PlayResource(const std::string &szSound, bool bSync)
 //
 void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 {
-	Biot* pNew;
+    Biot* pNew = nullptr;
 
 //	m_sort.SetIncrementalSort(false);
 	for (long lIndex = 0; lIndex < options.m_initialPopulation; lIndex++)
@@ -781,9 +782,11 @@ void Environment::OnOpen(CScrollView* pView)
 //
 
 
-void Environment::OnNew(QRect worldRect, int population, int seed,
+void Environment::OnNew(QGraphicsScene &scene,
+                        QRect worldRect, int population, int seed,
 						int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
-{ 
+{
+    m_scene = &scene;
 	Clear();
 
 	options.startNew = 1;
