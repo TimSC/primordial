@@ -52,6 +52,7 @@ public:
 
     int GetX() { return (int) x; }
     int GetY() { return (int) y; }
+    double GetR() { return r; }
     void backStepX(void) { x -= dx; }
     void backStepY(void) { y -= dy; }
     void backRotate(void){ r -= dr; }

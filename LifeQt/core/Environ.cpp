@@ -463,24 +463,25 @@ void CEnvStatsList::Serialize(QDataStream& ar)
 Environment::Environment()
 {
     m_scene = nullptr;
-    /*
-	for (int i = 0; i <= MAX_LEAF; i++)
-		options.hPen[i] = NULL;
 
-	options.hPen[GREEN_LEAF]      = CreatePen(PS_SOLID, 1, RGB(0,255,0));
-	options.hPen[BLUE_LEAF]       = CreatePen(PS_SOLID, 1, RGB(0,0,255));
-	options.hPen[RED_LEAF]        = CreatePen(PS_SOLID, 1, RGB(255,0,0));
-	options.hPen[LBLUE_LEAF]      = CreatePen(PS_SOLID, 1, RGB(0,255,255));
-	options.hPen[WHITE_LEAF]      = CreatePen(PS_SOLID, 1, RGB(255,255,255));
-	options.hPen[DARK_GREEN_LEAF] = CreatePen(PS_SOLID, 1, RGB(0, 128, 0));
-	options.hPen[DARK_BLUE_LEAF]  = CreatePen(PS_SOLID, 1, RGB(0, 0, 128));
-	options.hPen[DARK_RED_LEAF]   = CreatePen(PS_SOLID, 1, RGB(128, 0, 0));
-	options.hPen[DARK_LBLUE_LEAF] = CreatePen(PS_SOLID, 1, RGB(0, 128, 128));
-	options.hPen[GREY_LEAF]       = CreatePen(PS_SOLID, 1, RGB(128,128,128));
-	options.hPen[YELLOW_LEAF]     = CreatePen(PS_SOLID, 1, RGB(255,255,0));
-	options.hPen[BLACK_LEAF]      = CreatePen(PS_SOLID, 1, RGB(0,0,0));
-	options.hPen[PURPLE_LEAF]     = CreatePen(PS_SOLID, 1, RGB(255,0,255));
-*/
+    options.pens.clear();
+	for (int i = 0; i <= MAX_LEAF; i++)
+        options.pens.append(QPen());
+
+    options.pens[GREEN_LEAF]      = QPen(QColor(0,255,0));
+    options.pens[BLUE_LEAF]       = QPen(QColor(0,0,255));
+    options.pens[RED_LEAF]        = QPen(QColor(255,0,0));
+    options.pens[LBLUE_LEAF]      = QPen(QColor(0,255,255));
+    options.pens[WHITE_LEAF]      = QPen(QColor(255,255,255));
+    options.pens[DARK_GREEN_LEAF] = QPen(QColor(0, 128, 0));
+    options.pens[DARK_BLUE_LEAF]  = QPen(QColor(0, 0, 128));
+    options.pens[DARK_RED_LEAF]   = QPen(QColor(128, 0, 0));
+    options.pens[DARK_LBLUE_LEAF] = QPen(QColor(0, 128, 128));
+    options.pens[GREY_LEAF]       = QPen(QColor(128,128,128));
+    options.pens[YELLOW_LEAF]     = QPen(QColor(255,255,0));
+    options.pens[BLACK_LEAF]      = QPen(QColor(0,0,0));
+    options.pens[PURPLE_LEAF]     = QPen(QColor(255,0,255));
+
 	Clear();
 
 //	m_pMagnifyWnd  = NULL;
@@ -787,6 +788,7 @@ void Environment::OnNew(QGraphicsScene &scene,
 						int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 {
     m_scene = &scene;
+    m_scene->setBackgroundBrush(QBrush(QColor(0,0,0)));
 	Clear();
 
 	options.startNew = 1;

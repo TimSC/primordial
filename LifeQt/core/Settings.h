@@ -5,6 +5,7 @@
 
 #include <string>
 #include <QDataStream>
+#include <QPen>
 #include "Genotype.h"
 #include "Etools.h"
 #include "SoundRegistry.h"
@@ -45,7 +46,7 @@ public: //Fox BEGIN
 	int m_initialPopulation;		//Population used on restart/new
 	int     m_leafEnergy;
 	CSoundRegistry m_sound;
-    //HPEN hPen[MAX_LEAF];
+    QList<QPen> pens;
     int     startNew;    // Should we use the old population, or the new?
     int     chance;
     int     nSexual;

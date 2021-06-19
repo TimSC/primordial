@@ -21,11 +21,10 @@ Biot::Biot(Environment& environment) : env(environment)
   max_genes = 1;
   ClearSettings();
   graphics = new QGraphicsItemGroup();
+  boundingRect = nullptr;
   if(env.m_scene != nullptr)
       env.m_scene->addItem(graphics);
 
-  QGraphicsEllipseItem *body = new QGraphicsEllipseItem(0, 0, 10, 10);
-  graphics->addToGroup(body);
 }
 
 Biot::~Biot(void)
@@ -329,10 +328,6 @@ void Biot::SetRatio(void)
 //
 int Biot::Initialize(bool bRandom)
 {
-    GeneTrait &t = trait;
-    int ma = t.GetMaxAge();
-    int ar = t.GetAdultRatio();
-
 	adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
 	if (bRandom || energy <= 0)
 		energy = adultBaseEnergy;
@@ -396,7 +391,7 @@ int Biot::PlaceRandom(void)
   vector.setX(origin.x());
   vector.setY(origin.y());
 
-  //FormBitmap();
+  UpdateGraphics();
   SetErasePosition();
   return i;
 }
@@ -853,101 +848,115 @@ void Biot::SetErasePosition(void)
 
 
 //////////////////////////////////////////////////////////////////////
-// FormBitmap
+// UpdateGraphics
 //
 //
-/*
-void Biot::FormBitmap(int pen)
+
+void Biot::UpdateGraphics()
 {
-	RECT    rc;
-	int i;
-
-	rc.left   = 0;
-	rc.top    = 0;
-	rc.right  = Width();
-	rc.bottom = Height();
-
-	CheckBitmapSize(rc.right, rc.bottom);
-
-	lastType   = pen;
-
-	HBITMAP hOldBitmap = (HBITMAP) ::SelectObject(env.m_hMemoryDC, m_hBitmap);
-	::FillRect(env.m_hMemoryDC, &rc, (HBRUSH) GetStockObject( BLACK_BRUSH ));
-
-    assert(env.m_hMemoryDC);
-    assert(pen < MAX_LEAF);
-	HPEN hOldPen;
+    QRect rc(0, 0, Width(), Height());
 
 	if (env.BiotShouldBox(m_Id))
 	{
-		hOldPen = (HPEN) ::SelectObject(env.m_hMemoryDC, env.options.hPen[GREY_LEAF]);
-		::MoveToEx(env.m_hMemoryDC, rc.left, rc.top, NULL);
-		::LineTo(env.m_hMemoryDC, rc.right - 1, rc.top);
-		::LineTo(env.m_hMemoryDC, rc.right - 1, rc.bottom - 1);
-		::LineTo(env.m_hMemoryDC, rc.left, rc.bottom - 1);
-		::LineTo(env.m_hMemoryDC, rc.left, rc.top);
-		SelectObject(env.m_hMemoryDC, hOldPen);
-	}
+        if (boundingRect == nullptr)
+            boundingRect = new QGraphicsRectItem(rc, graphics);
+        else
+            boundingRect->setRect(rc);
+    }
+    else if (boundingRect != nullptr)
+    {
+        graphics->removeFromGroup(boundingRect);
+        boundingRect = nullptr;
+    }
 
-	if (pen > -1 || m_nSick)
+    size_t lineCount = 0;
+
+    if (m_nSick and false)
 	{
+        /*
 		if (pen > -1)
 			hOldPen = (HPEN) ::SelectObject(env.m_hMemoryDC, env.options.hPen[pen]);
 		else
 			hOldPen = (HPEN) ::SelectObject(env.m_hMemoryDC, env.options.hPen[PURPLE_LEAF]);
-
-		for (i = 0; i < genes; i++)
+*/
+        for (int i = 0; i < genes; i++)
 		{
 			if (state[i] > 0)
 			{
 				//State should be zero if distance is
                 assert(distance[i] > 0);
 
+
+/*
 				VERIFY(::MoveToEx(env.m_hMemoryDC, startPt[i].x - leftX, startPt[i].y - topY, NULL));
 				VERIFY(::LineTo(env.m_hMemoryDC, stopPt[i].x - leftX, stopPt[i].y - topY));
+                */
 			}
 		}
-		::SelectObject(env.m_hMemoryDC, hOldPen);
+//		::SelectObject(env.m_hMemoryDC, hOldPen);
 	}
 	else
 	{
-		int aPen = -1;
-		register int lastX = -999999;
-		register int lastY = -999999;
-		int startX;
-		int startY;
+//		int aPen = -1;
+        int lastX = -999999;
+        int lastY = -999999;
+        int startX = 0;
+        int startY = 0;
 
-		hOldPen = (HPEN) SelectObject(env.m_hMemoryDC, env.options.hPen[0]);
-		for (i = 0; i < genes; i++)
+//		hOldPen = (HPEN) SelectObject(env.m_hMemoryDC, env.options.hPen[0]);
+        for (int i = 0; i < genes; i++)
 		{
 			if (state[i] > 0)
 			{
-				aPen = nType[i];
+                short aPen = nType[i];
 
 				if (state[i] != distance[i])
 					aPen += DIM_COLOR;
-
+/*
 				if (aPen != pen)
 				{
 					pen = aPen;
 					SelectObject(env.m_hMemoryDC, env.options.hPen[pen]);
-				}
+                }*/
 
-				startX = startPt[i].x - leftX;
-				startY = startPt[i].y - topY;
+                if (m_nSick)
+                    aPen = PURPLE_LEAF;
 
-				if (lastX != startX || lastY != startY)
-					VERIFY(::MoveToEx(env.m_hMemoryDC, startX, startY, NULL));
+                //startX = startPt[i].x() - leftX;
+                //startY = startPt[i].y() - topY;
 
-				lastX = stopPt[i].x - leftX; lastY = stopPt[i].y - topY;
-				VERIFY(::LineTo(env.m_hMemoryDC, lastX, lastY));
+                //if (lastX != startX || lastY != startY)
+                //	VERIFY(::MoveToEx(env.m_hMemoryDC, startX, startY, NULL));
+
+                //lastX = stopPt[i].x() - leftX; lastY = stopPt[i].y() - topY;
+                //VERIFY(::LineTo(env.m_hMemoryDC, lastX, lastY));
+
+                if(lineCount >= lines.size())
+                {
+                    QGraphicsLineItem *line = new QGraphicsLineItem(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y(), graphics);
+                    line->setPen(env.options.pens[aPen]);
+                    lines.append(line);
+                }
+                else
+                {
+                    QGraphicsLineItem *line = lines[i];
+                    line->setLine(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y());
+                    line->setPen(env.options.pens[aPen]);
+                }
+                lineCount += 1;
 			}
 		}
-		::SelectObject(env.m_hMemoryDC, hOldPen);
+//		::SelectObject(env.m_hMemoryDC, hOldPen);
 	}
-	::SelectObject(env.m_hMemoryDC, hOldBitmap);
+
+    for(size_t i = lineCount; i < lines.size(); i ++)
+    {
+        //Remove unneeded line
+        graphics->removeFromGroup(lines[i]);
+    }
+
 }
-*/
+
 
 /////////////////////////////////////////////////////////
 // Reject
@@ -1450,7 +1459,8 @@ CLine cLine;
 		}
 	}
 
-    this->graphics->setPos(this->origin);
+    this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
+    this->graphics->setRotation(-this->vector.GetR());
 
     return true;
 }
@@ -2182,8 +2192,8 @@ bool Biot::OnOpen()
 
 //	if (env.WithinBorders(*this))
 //	{
-        //FormBitmap();
-		SetErasePosition();
+    UpdateGraphics();
+    SetErasePosition();
 //		return true;
 //	}
     return false;

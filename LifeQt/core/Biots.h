@@ -141,7 +141,7 @@ class Biot: public BRectItem
     void Draw(void);
     void SetErasePosition(void);
     void Erase(void);
-    void FormBitmap(int pen = -1);
+    void UpdateGraphics();
     void FormMask(void);
     void FreeBitmaps();
 	enum {
@@ -285,6 +285,8 @@ class Biot: public BRectItem
 private:
     Environment& env;
     QGraphicsItemGroup *graphics;
+    QGraphicsRectItem *boundingRect;
+    QList<QGraphicsLineItem *> lines;
 
 public:
 	// Do not save these variables
@@ -427,7 +429,7 @@ inline void Biot::MoveBiot(int x, int y)
 inline void Biot::PrepareDraw(int operation)
 {
 	if (operation != NORMAL)
-		FormBitmap(newType);
+        UpdateGraphics();
 }
 
 #endif
