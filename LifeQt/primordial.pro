@@ -1,7 +1,8 @@
-QT -= gui
+QT       += core gui
 
-CONFIG += c++11 console
-CONFIG -= app_bundle
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+CONFIG += c++11
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -15,31 +16,36 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-        Biots.cpp \
-        Brain.cpp \
-        Connect.cpp \
-        Environ.cpp \
-        Etools.cpp \
-        Genotype.cpp \
-        Rand.cpp \
-        Settings.cpp \
-        SoundRegistry.cpp \
-        main.cpp \
-        vector.cpp
+    core/Biots.cpp \
+    core/Brain.cpp \
+    core/Connect.cpp \
+    core/Environ.cpp \
+    core/Etools.cpp \
+    core/Genotype.cpp \
+    core/Rand.cpp \
+    core/Settings.cpp \
+    core/SoundRegistry.cpp \
+    core/vector.cpp \
+    main.cpp \
+    mainwindow.cpp
+
+HEADERS += \
+    core/Biots.h \
+    core/Brain.h \
+    core/Connect.h \
+    core/Environ.h \
+    core/Etools.h \
+    core/Genotype.h \
+    core/Rand.h \
+    core/Settings.h \
+    core/SoundRegistry.h \
+    core/vector.h \
+    mainwindow.h
+
+FORMS += \
+    mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-HEADERS += \
-    Biots.h \
-    Brain.h \
-    Connect.h \
-    Environ.h \
-    Etools.h \
-    Genotype.h \
-    Rand.h \
-    Settings.h \
-    SoundRegistry.h \
-    vector.h
