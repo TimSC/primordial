@@ -169,7 +169,7 @@ public:
     int  GetPopulation() { return m_biotList.size(); }
     //void Serialize(QDataStream& ar);
 	void DeleteContents();
-//	void Skip(CScrollView* pView);
+    void Skip();
 //    void BiotOperation(CScrollView* pView, int x, int y, int operation);
 
     bool  BiotShouldBox(uint32_t biotId) { return (biotId == m_selectedId && m_bIsSelected); }
@@ -190,8 +190,8 @@ public:
 
 //	void GetDefaultSettings();
 //	void SetDefaultSettings();
-//	void OnNew(CScrollView* pView, RECT worldRect, int population, int seed,
-//				int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
+    void OnNew(QRect worldRect, int population, int seed,
+               int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
 	void OnRestart();
 //	void OnOpen(CScrollView* pView);
 	void OnStop();

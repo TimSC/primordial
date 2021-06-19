@@ -321,7 +321,9 @@ void Biot::SetRatio(void)
 //
 int Biot::Initialize(bool bRandom)
 {
-	int i;
+    GeneTrait &t = trait;
+    int ma = t.GetMaxAge();
+    int ar = t.GetAdultRatio();
 
 	adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
 	if (bRandom || energy <= 0)
@@ -337,10 +339,10 @@ int Biot::Initialize(bool bRandom)
 	m_maxAge = trait.GetMaxAge();
 
 	// Set a fully charged initial state
-	for (i = 0; i < MAX_GENES; i++)
+    for (int i = 0; i < MAX_GENES; i++)
 		state[i] = distance[i];
 
-	for (i = 0; i < MAX_SYMMETRY; i++)
+    for (int i = 0; i < MAX_SYMMETRY; i++)
 		m_store[i].Initialize(trait.GetLineTypeIndex(i), i, *this);
 
 	return 0;
@@ -452,7 +454,6 @@ int64_t Biot::Symmetric(int aRatio)
 {
 int64_t  dist    = 0;
 double X,Y;
-int nGene;
 int i, nPeno;
 //int nSet = 0;
 //bool bFirstLine = true;
@@ -490,7 +491,7 @@ int  nLastGene = -1;
 		X = 0.0;
 		Y = 0.0;
 
-		for (nGene = 0; nGene < MAX_SEGMENTS; nGene++)
+        for (int nGene = 0; nGene < MAX_SEGMENTS; nGene++)
 		{
 			m_angleLimbTypeSegmentDrawn[lineType][nGene] = m_angleLimbTypeSegment[lineType][nGene];
 

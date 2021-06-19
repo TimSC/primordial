@@ -162,6 +162,10 @@ private:
 
 class GeneTrait : Randomizer
 {
+  public:
+    GeneTrait();
+    virtual ~GeneTrait();
+
   private:
     int8_t  m_disperse;        // Do the children disperse when born?
     int8_t  m_children;        // How many babies?

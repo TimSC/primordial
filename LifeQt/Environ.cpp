@@ -12,6 +12,7 @@
 #include <math.h>
 #include <algorithm>
 #include <QDateTime>
+#include <QThread>
 //#include "LoadBitmap.h"
 //#include "MainFrm.h"
 //#include "evolve.h"
@@ -48,9 +49,9 @@ char szFriction[]       = "friction";
 
 CBiotList::CBiotList() : m_nBiot(-1), m_bLooped(false)
 {
-    Biot* nullBiot = nullptr;
-    for(size_t i=0; i<200; i++)
-        this->append(nullBiot);
+//    Biot* nullBiot = nullptr;
+//    for(size_t i=0; i<200; i++)
+ //       this->append(nullBiot);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -297,7 +298,8 @@ void CEnvStats::Sample(Environment& env)
 		Biot* pBiot = env.m_biotList[j];
 
 		m_ages[(pBiot->m_age * m_ageIntervals) / m_ageRange]++;
-		m_energy[(int) (pBiot->PercentEnergy() / (100.0 / ENERGY_LEVELS))]++;
+        int level = pBiot->PercentEnergy() / (100.0 / ENERGY_LEVELS);
+        m_energy[level]++;
 
 		m_freeEnvArea -= pBiot->Area();
 	}
@@ -777,8 +779,8 @@ void Environment::OnOpen(CScrollView* pView)
 //
 //
 
-/*
-void Environment::OnNew(CScrollView* pView, RECT worldRect, int population, int seed,
+
+void Environment::OnNew(QRect worldRect, int population, int seed,
 						int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 { 
 	Clear();
@@ -798,7 +800,7 @@ void Environment::OnNew(CScrollView* pView, RECT worldRect, int population, int 
 	rightSide.SetSide(this);
 	topSide.SetSide(this);
 	bottomSide.SetSide(this);
-
+/*
 	// Are we being displayed in the small window?
 	if (AfxGetPLife().IsSmall())
 	{
@@ -810,7 +812,7 @@ void Environment::OnNew(CScrollView* pView, RECT worldRect, int population, int 
 	{
 		sock.StartSession(pView->GetSafeHwnd(), this);
 		sock.Listen();
-	}
+    }
 
 	// Create our display context
 	CDC* pScreenDC = pView->GetDC();
@@ -839,33 +841,33 @@ void Environment::OnNew(CScrollView* pView, RECT worldRect, int population, int 
 
 	m_hScreenDC = pScreenDC->GetSafeHdc();
 	m_hMemoryDC = ::CreateCompatibleDC(m_hScreenDC);
-
+*/
 	// Create our biots
 	CreateBiots(nArmsPerBiot, nTypesPerBiot, nSegmentsPerArm);
-
+/*
 	FreeBitPadDC();
 	VERIFY(::DeleteDC(m_hMemoryDC));
 	VERIFY(pView->ReleaseDC(pScreenDC));
 	m_hScreenDC = NULL;	
-
+*/
 	options.m_generation = 0;
 
 	m_stats.Sample(*this);
-	m_statsList.AddTail(m_stats);
+    m_statsList.append(&m_stats);
 	m_stats.NewSample();
 }
-    */
+
 
 //////////////////////////////////////////////////////////////////////
 // Skip
 //
 //
-#if 0
-void Environment::Skip(CScrollView* pView)
+
+void Environment::Skip()
 {
 //	ASSERT(0);
-	int i;
-	Biot* pBiot;
+    int i = 0;
+    Biot* pBiot = nullptr;
 
 	if (m_bBlocked)
 		return;
@@ -893,12 +895,12 @@ void Environment::Skip(CScrollView* pView)
 	}
 */
 	// Create our display context
-	CDC* pScreenDC = pView->GetDC();
+/*	CDC* pScreenDC = pView->GetDC();
 	pView->OnPrepareDC(pScreenDC);
 
 	m_hScreenDC = pScreenDC->GetSafeHdc();
 	m_hMemoryDC = ::CreateCompatibleDC(m_hScreenDC);
-
+*/
 
 	// Write a biot out if required
 /*	if (sock.WriteAll())
@@ -945,26 +947,26 @@ void Environment::Skip(CScrollView* pView)
 			// and if it was under a certain threshold, it would add a sleep
 			// statement.
             if ((QDateTime::currentMSecsSinceEpoch() - m_dwTicks) < 25)
-				Sleep(8);
+                QThread::msleep(8);
 
             m_dwTicks = QDateTime::currentMSecsSinceEpoch();
 
 			if ((options.m_generation & CEnvStats::SAMPLE_TIME) == CEnvStats::SAMPLE_TIME)
 			{
 				m_stats.Sample(*this);
-				m_statsList.AddTail(m_stats);
+                m_statsList.append(&m_stats);
 				m_stats.NewSample();
-				if (m_statsList.GetCount() > 100)
-					m_statsList.RemoveHead();
-
-				AfxMainFrame().UpdateStatusBar();
+                if (m_statsList.size() > 100)
+                    m_statsList.removeFirst();
+/*
+                AfxMainFrame().UpdateStatusBar();
 
 				if (m_pEnvStatsWnd)
 					m_pEnvStatsWnd->PaintNow();
-
+*/
 				if (m_stats.PercentUncoveredByBiots() < 0.50)
 				{
-					m_biotList[Integer(m_biotList.GetSize())]->m_nSick = options.m_nSick;
+                    m_biotList[Integer(m_biotList.size())]->m_nSick = options.m_nSick;
 				}
 
 			}
@@ -973,11 +975,12 @@ void Environment::Skip(CScrollView* pView)
 
 			if (m_bIsSelected)
 			{
-				Biot* pBiot = GetSelectedBiot();
+                /*Biot* pBiot = GetSelectedBiot();
 				if (m_pMagnifyWnd)
 					m_pMagnifyWnd->PaintNow(pBiot);
 				m_editor.UpdateBiot(pBiot);
-				m_bIsSelected = (pBiot != NULL);
+*/
+                m_bIsSelected = (pBiot != NULL);
 			}
 		}
 
@@ -997,9 +1000,9 @@ void Environment::Skip(CScrollView* pView)
 				m_sort.Move(pBiot, &origPos);
 				for (i = 0; i < 4; i++)
 				{
-					if (pBiot->IsContainedBy(*side[i]))
+                    /*if (pBiot->IsContainedBy(*side[i]))
 					{
-						sock.LockAll();
+                        sock.LockAll();
 						if (side[i]->Export(pBiot))
 						{
 							pBiot->Erase();
@@ -1012,12 +1015,12 @@ void Environment::Skip(CScrollView* pView)
 						}
 						sock.UnlockAll();
 						i = 4;
-					}
+                    }*/
 				}
 			}
 		}
 	}
-
+/*
 	if (m_biotList.GetSize() < 4)
 	{
 		if (m_biotList.GetSize() == 0 &&
@@ -1029,7 +1032,7 @@ void Environment::Skip(CScrollView* pView)
 			PlayResource("PL.Start");
 			CreateBiots(0, 0, 0);
 		}
-	}
+    }
 
 	// Let the window paint now
 	FreeBitPadDC();
@@ -1037,10 +1040,10 @@ void Environment::Skip(CScrollView* pView)
 	VERIFY(::DeleteDC(m_hMemoryDC));
 	VERIFY(pView->ReleaseDC(pScreenDC));
 	m_hScreenDC = NULL;
-
+*/
     m_bBlocked = false;
 }
-#endif
+
  
 //////////////////////////////////////////////////////////////////////
 // OnStop

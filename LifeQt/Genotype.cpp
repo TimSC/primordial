@@ -132,25 +132,25 @@ void GeneLimb::Randomize(int nSegmentsPerArm)
 		{
 		default:
 		case 0:
-            m_segment[i].Randomize(i, bool());
+            m_segment[i].Randomize(i, Bool());
 			break;
 
 		case 1:
-            m_segment[i].Randomize(i, (i < 3)?bool():false);
+            m_segment[i].Randomize(i, (i < 3)?Bool():false);
 			break;
 
 		case 2:
 			if (i < 4)
                 m_segment[i].Randomize(i, true);
 			else
-                m_segment[i].Randomize(i, (i < 7)?bool():false);
+                m_segment[i].Randomize(i, (i < 7)?Bool():false);
 			break;
 
 		case 3:
 			if (i < 7)
                 m_segment[i].Randomize(i, true);
 			else
-                m_segment[i].Randomize(i, (i < 10)?bool():false);
+                m_segment[i].Randomize(i, (i < 10)?Bool():false);
 			break;
 		}
 	}
@@ -206,7 +206,7 @@ void GeneLimb::Mutate(int chance)
 void GeneLimb::Crossover(GeneLimb&  gLine)
 {
   for (int i = 0; i < MAX_SEGMENTS; i++)
-    if (bool())
+    if (Bool())
       m_segment[i] = gLine.m_segment[i];
 
 	ToggleSegments();
@@ -261,6 +261,19 @@ void GeneLimb::ToggleSegments()
 const int GeneTrait::mirrorAngle[MAX_SYMMETRY] = { 0, 180,  0,  180,  90, 90, 270, 270 };
 const int GeneTrait::mirrorCoef[MAX_SYMMETRY]  = { 1,  -1, -1,    1,  -1,  1,  -1,   1 };
 const int GeneTrait::mirrorSix[MAX_SYMMETRY]   = { 0, 120,  0,  120, 240, 240,  0,   0 };
+
+GeneTrait::GeneTrait()
+{
+
+
+}
+
+GeneTrait::~GeneTrait()
+{
+
+
+}
+
 /*
 void GeneTrait::Serialize(QDataStream& ar)
 {
@@ -388,14 +401,14 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
 {
 	int i;
 
-    m_disperse       = (int8_t) bool();
+    m_disperse       = (int8_t) Bool();
     m_children       = (int8_t) (Integer(8) + 1);
-    m_attackChildren = (int8_t) bool();
-    m_attackSiblings = (int8_t) bool();
+    m_attackChildren = (int8_t) Bool();
+    m_attackSiblings = (int8_t) Bool();
     m_species        = (int8_t) Integer(2);  // Make fewer species to begin with
     m_adultRatio[0]  = (int8_t) (Integer(6) + 1);
     m_adultRatio[1]  = (int8_t) (Integer(6) + 1);
-    m_mirrored       = (int8_t) bool();
+    m_mirrored       = (int8_t) Bool();
 
 	switch(nArmsPerBiot)
 	{
@@ -430,8 +443,8 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
 	for (i = 0; i < MAX_LIMB_TYPES; i++)
 		m_geneLine[i].Randomize(nSegmentsPerArm);
 
-    m_sex        = (int8_t) bool();
-    m_asexual    = (int8_t) bool();
+    m_sex        = (int8_t) Bool();
+    m_asexual    = (int8_t) Bool();
     m_chanceMale = (int8_t) (Int256() / 2 + 64);
 	m_maxAge     = (short) Int256();
 
@@ -512,16 +525,16 @@ void GeneTrait::Mutate(int chance)
 	int i;
 
 	if (Int1024() < chance)
-        m_disperse       = (int8_t) bool();
+        m_disperse       = (int8_t) Bool();
 
 	if (Int1024() < chance)
         m_children       = (int8_t) (Integer(8) + 1);
 
 	if (Int1024() < chance)
-        m_attackChildren = (int8_t) bool();
+        m_attackChildren = (int8_t) Bool();
 
 	if (Int1024() < chance)
-        m_attackSiblings = (int8_t) bool();
+        m_attackSiblings = (int8_t) Bool();
 
 	if (Int1024() < chance)
 	{
@@ -541,7 +554,7 @@ void GeneTrait::Mutate(int chance)
         m_lineCount         = (int8_t) (Integer(8) + 1);
 
 	if (Int1024() < chance)
-        m_mirrored       = (int8_t) bool();
+        m_mirrored       = (int8_t) Bool();
 
 	if (Int1024() < chance)
 		m_offset         = (short) Integer(360);
@@ -550,10 +563,10 @@ void GeneTrait::Mutate(int chance)
 		m_geneLine[i].Mutate(chance);
 
 	if (Int1024() < chance)
-        m_sex = (int8_t) bool();
+        m_sex = (int8_t) Bool();
 
 	if (Int1024() < chance)
-        m_asexual = (int8_t) bool();
+        m_asexual = (int8_t) Bool();
 
 	if (Int1024() < chance)
         m_chanceMale = int8_t();
@@ -577,43 +590,43 @@ void GeneTrait::Crossover(GeneTrait&  gTrait)
 		m_geneLine[i].Crossover(gTrait.m_geneLine[i]);
 
 	for (i = 0; i < MAX_SYMMETRY; i++)
-        if (bool())
+        if (Bool())
 			m_lineRef[i] = gTrait.m_lineRef[i];
 
-    if (bool())
+    if (Bool())
 		m_offset = gTrait.m_offset;
 	
-    if (bool())
+    if (Bool())
 		m_disperse       = gTrait.m_disperse;
 
-    if (bool())
+    if (Bool())
 	    m_children       = gTrait.m_children;
 
-    if (bool())
+    if (Bool())
 		m_attackChildren = gTrait.m_attackChildren;
 
-    if (bool())
+    if (Bool())
 		m_attackSiblings = gTrait.m_attackSiblings;
 
-    if (bool())
+    if (Bool())
 		m_species        = gTrait.m_species;
 
-    if (bool())
+    if (Bool())
 		m_adultRatio[0]  = gTrait.m_adultRatio[0];
 
-    if (bool())
+    if (Bool())
 		m_adultRatio[1]  = gTrait.m_adultRatio[1];
 
-    if (bool())
+    if (Bool())
 		m_lineCount      = gTrait.m_lineCount;
 
-    if (bool())
+    if (Bool())
 		m_mirrored       = gTrait.m_mirrored;
 
-    if (bool())
+    if (Bool())
 		m_asexual        = gTrait.m_asexual;
 
-    if (bool())
+    if (Bool())
 		m_chanceMale     = gTrait.m_chanceMale;
 
 	CalculateAngles();
