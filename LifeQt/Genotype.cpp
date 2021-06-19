@@ -57,15 +57,15 @@ void GeneSegment::Randomize(int segment, bool bIsVisible)
   
     m_visible = (uint8_t) bIsVisible;
 
-    m_startSegment = uint8_t(MAX_SEGMENTS);
+    m_startSegment = Byte(MAX_SEGMENTS);
 
-    m_color[0]   = uint8_t(DIM_COLOR - 1);
+    m_color[0]   = Byte(DIM_COLOR - 1);
 //	if (m_color[0] != GREEN_LEAF)
-//		m_color[0]  = uint8_t(DIM_COLOR);
+//		m_color[0]  = Byte(DIM_COLOR);
 
-    m_color[1]   = uint8_t(DIM_COLOR);
+    m_color[1]   = Byte(DIM_COLOR);
 	if (m_color[1] != WHITE_LEAF && m_color[1] != GREEN_LEAF)
-        m_color[1]  = uint8_t(DIM_COLOR);
+        m_color[1]  = Byte(DIM_COLOR);
 }
 
 
@@ -105,16 +105,16 @@ void GeneSegment::Mutate(int chance, int segment)
 	}
 
 	if (Int1024() < chance)
-        m_startSegment = uint8_t(MAX_SEGMENTS);
+        m_startSegment = Byte(MAX_SEGMENTS);
 
 	if (Int1024() < chance)
 		m_visible = !m_visible;
   
 	if (Int1024() < chance)
-        m_color[0]   = uint8_t(DIM_COLOR - 1);
+        m_color[0]   = Byte(DIM_COLOR - 1);
 
 	if (Int1024() < chance)
-        m_color[1]   = uint8_t(DIM_COLOR);
+        m_color[1]   = Byte(DIM_COLOR);
 
 }
 
@@ -450,8 +450,9 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
 
 	// We start out with uniform appearance
 	for (i = 0; i < MAX_SYMMETRY; i++)
-	{
-        m_lineRef[i] = uint8_t(nTypesPerBiot + 1);
+    {
+        m_lineRef[i] = Byte(nTypesPerBiot + 1);
+        assert(m_lineRef[i] < MAX_LIMB_TYPES && m_lineRef[i] >= 0);
 	}
 
 	CalculateAngles();
@@ -569,14 +570,14 @@ void GeneTrait::Mutate(int chance)
         m_asexual = (uint8_t) Bool();
 
 	if (Int1024() < chance)
-        m_chanceMale = uint8_t();
+        m_chanceMale = Byte();
 
 	if (Int1024() < chance)
 		m_maxAge = (short) Int256();
 
 	for (i = 0; i < MAX_SYMMETRY; i++)
 		if (Int1024() < chance)
-            m_lineRef[i] = uint8_t(MAX_LIMB_TYPES);
+            m_lineRef[i] = Byte(MAX_LIMB_TYPES);
 
 	CalculateAngles();
 }
@@ -591,7 +592,10 @@ void GeneTrait::Crossover(GeneTrait&  gTrait)
 
 	for (i = 0; i < MAX_SYMMETRY; i++)
         if (Bool())
+        {
 			m_lineRef[i] = gTrait.m_lineRef[i];
+            assert(m_lineRef[i] < MAX_LIMB_TYPES && m_lineRef[i] >= 0);
+        }
 
     if (Bool())
 		m_offset = gTrait.m_offset;

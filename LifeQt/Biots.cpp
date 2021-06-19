@@ -343,7 +343,11 @@ int Biot::Initialize(bool bRandom)
 		state[i] = distance[i];
 
     for (int i = 0; i < MAX_SYMMETRY; i++)
-		m_store[i].Initialize(trait.GetLineTypeIndex(i), i, *this);
+    {
+        int nLimbType = trait.GetLineTypeIndex(i);
+        assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
+        m_store[i].Initialize(nLimbType, i, *this);
+    }
 
 	return 0;
 }
@@ -574,10 +578,13 @@ int  nLastGene = -1;
 		}
 	}
 
-	vector.setMass(0.0f);
+    vector.setMass(0.0);
 
 	for (i = GREEN_LEAF; i <= WHITE_LEAF; i++)
-		vector.addMass((float)(colorDistance[i] * env.options.leafMass[i]));
+        vector.addMass(colorDistance[i] * env.options.leafMass[i]);
+
+    if(vector.mass == 0.0)
+        vector.setMass(1.0); //Prevent div by zero in acceleration calcs
 
 	return dist;
 }

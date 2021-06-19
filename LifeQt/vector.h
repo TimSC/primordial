@@ -61,6 +61,8 @@ public:
 
 	double CheckLimit(const double value) const
 	{
+        assert(!isnan(value));
+        assert(!isinf(value));
 		if (value > limit)
 			return limit;
 		else

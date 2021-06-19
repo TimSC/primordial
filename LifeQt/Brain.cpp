@@ -471,6 +471,7 @@ void CommandLimbStore::Serialize(QDataStream& ar)
 }*/
 void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
 {
+    assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
 	m_nLimbType = nLimbType;
 	m_nLimb     = nLimb;
 	m_pBiot     = &biot;
