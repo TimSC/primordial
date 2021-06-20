@@ -9,6 +9,8 @@
 //#include <limits.h>
 #include "vector.h"
 
+using namespace rapidjson;
+
 Vector::Vector()
 {
   dr = r = mass =  dy = x = y = dx = drx = dry = 0.0;
@@ -43,4 +45,16 @@ void Vector::Serialize(QDataStream& ar)
 	}
 }
 */
+
+void Vector::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("dx", dx, allocator);
+    v.AddMember("dy", dy, allocator);
+    v.AddMember("x", x, allocator);
+    v.AddMember("y", y, allocator);
+    v.AddMember("dr", dr, allocator);
+    v.AddMember("r", r, allocator);
+}
 

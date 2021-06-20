@@ -37,6 +37,7 @@ public:
 	void Randomize();
 	void Debug();
 //    void Serialize(QDataStream &ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     bool IsTrue(uint32_t m_sensor);
 	ProductTerm& operator=(ProductTerm& term);
 
@@ -84,6 +85,7 @@ public:
 	void Randomize();
 	void Debug();
 //    void Serialize(QDataStream& ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 	void Crossover(ProductSum& productSum);
 
 	ProductSum& operator=(ProductSum& productSum);
@@ -123,6 +125,7 @@ public:
 	void Randomize();
 	void Debug();
 //    void Serialize(QDataStream& ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 	void Crossover(ProductArray& productArray);
 	ProductArray& operator=(ProductArray& productArray);
 
@@ -176,6 +179,7 @@ public:
     void Randomize();
     void Mutate(int chance);
 //    void Serialize(QDataStream& ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 	enum {
 		COMMAND_FLAP_LIMB_SEGMENT = 0, 
@@ -248,6 +252,7 @@ public:
 	void Mutate(int nChance);
 	void Randomize();
 //    void Serialize(QDataStream& ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 	void Crossover(CommandLimbType& commandLimbType);
 
 	int GetCommand(int index);
@@ -298,6 +303,7 @@ public:
 	void Mutate(int nChance);
 	void Randomize();
 //    void Serialize(QDataStream& ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 	void Crossover(CommandArray& commandArray);
 	CommandArray& operator=(CommandArray& commandArray);
 	CommandArgument& GetCommandArgument(int nLimbType, int nCommand);
@@ -345,6 +351,7 @@ public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 	void Flap(Biot& biot);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 protected:
 	int   m_nLimb;
@@ -366,6 +373,7 @@ public:
 	void Execute(CommandLimbStore& store);
 	void Flap(Biot& biot, int nPeno);
 	void FlapLimbTypeSegments(Biot& biot);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 protected:
 	int   m_nLimbType;
@@ -382,6 +390,7 @@ class CommandMoveLimbSegment
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 protected:
 	int   m_nLimb;
@@ -398,6 +407,7 @@ class CommandMoveLimbSegments
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 protected:
 	int   m_nLimb;
@@ -412,6 +422,7 @@ class CommandMoveLimbTypeSegment
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 protected:
 	int   m_nLimbType;
@@ -428,6 +439,7 @@ class CommandMoveLimbTypeSegments
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 protected:
 	int   m_nLimbType;
@@ -442,6 +454,7 @@ class CommandRetractLimbType
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 protected:
 	int   m_nSegment;
@@ -457,6 +470,7 @@ class CommandRetractLimb
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 protected:
 	int   m_nSegment;
@@ -471,6 +485,7 @@ class CommandNOP
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 protected:
 };
@@ -482,6 +497,7 @@ class CommandMemory
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 	enum {
 		WAIT_FOR_TRUE_SET = 0,
@@ -521,6 +537,7 @@ class CommandLimbStore
 {
 public:
 //    void Serialize(QDataStream& ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v, Biot& biot);
 	void Initialize(int nLimbType, int nLimb, Biot& biot);
     void Execute(Biot& biot, uint32_t dwSensor);
 

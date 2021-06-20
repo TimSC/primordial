@@ -1,6 +1,8 @@
 #include "Environ.h"
 #include "Biots.h"
 
+using namespace rapidjson;
+
 ////////////////////////////////////////////////////////
 // GeneSegment
 //
@@ -45,6 +47,20 @@ void GeneSegment::Serialize(QDataStream& ar)
 	}
 }
 */
+
+void GeneSegment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("m_angle", m_angle, allocator);
+    v.AddMember("m_radius", m_radius, allocator);
+    v.AddMember("m_visible", m_visible, allocator);
+    v.AddMember("m_startSegment", m_startSegment, allocator);
+    v.AddMember("m_color0", m_color[0], allocator);
+    v.AddMember("m_color1", m_color[1], allocator);
+
+}
+
 void GeneSegment::Randomize(int segment, bool bIsVisible)
 {
 	// Perhaps we just do 16 next time, or 32
@@ -223,6 +239,21 @@ void GeneLimb::Serialize(QDataStream& ar)
 }
 */
 
+void GeneLimb::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    Value segsJson(kArrayType);
+    for (int i = 0; i < MAX_SEGMENTS; i++)
+    {
+        Value segJson(kObjectType);
+        m_segment[i].SerializeJson(d, segJson);
+        segsJson.PushBack(segJson, allocator);
+    }
+    v.AddMember("m_segment", segsJson, allocator);
+}
+
+
 int GeneLimb::GetSegmentsVisible()
 {
 	int j = 0;
@@ -329,26 +360,45 @@ void GeneTrait::Serialize(QDataStream& ar)
 	}
 	else
 	{
-		ar << m_disperse;
-		ar << m_children;
-		ar << m_attackChildren;
-		ar << m_attackSiblings;
-		ar << m_species;
-		ar << m_adultRatio[0];
-		ar << m_adultRatio[1];
-		ar << m_lineCount;
-		ar << m_offset;
 
-		ar.Write(m_lineRef, sizeof(m_lineRef));
-  
-		ar << m_mirrored;
-		ar << m_sex;
-		ar << m_asexual;
-		ar << m_chanceMale;
-		ar << m_maxAge;
 	}
 }
 */
+
+void GeneTrait::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    Value lineJson1(kArrayType);
+    for (int i = 0; i < MAX_LIMB_TYPES; i++)
+    {
+        Value lineJson2(kObjectType);
+        m_geneLine[i].SerializeJson(d, lineJson2);
+        lineJson1.PushBack(lineJson2, allocator);
+    }
+    v.AddMember("m_geneLine", lineJson1, allocator);
+
+    v.AddMember("m_disperse", m_disperse, allocator);
+    v.AddMember("m_children", m_children, allocator);
+    v.AddMember("m_attackChildren", m_attackChildren, allocator);
+    v.AddMember("m_attackSiblings", m_attackSiblings, allocator);
+    v.AddMember("m_species", m_species, allocator);
+    v.AddMember("m_adultRatio0", m_adultRatio[0], allocator);
+    v.AddMember("m_adultRatio1", m_adultRatio[1], allocator);
+    v.AddMember("m_lineCount", m_lineCount, allocator);
+    v.AddMember("m_offset", m_offset, allocator);
+
+    Value linesJson(kArrayType);
+    for(int i=0; i<MAX_SYMMETRY; i++)
+        linesJson.PushBack(m_lineRef[i], allocator);
+    v.AddMember("m_lineRef", linesJson, allocator);
+
+    v.AddMember("m_mirrored", m_mirrored, allocator);
+    v.AddMember("m_sex", m_sex, allocator);
+    v.AddMember("m_asexual", m_asexual, allocator);
+    v.AddMember("m_chanceMale", m_chanceMale, allocator);
+    v.AddMember("m_maxAge", m_maxAge, allocator);
+}
 
 int GeneTrait::GetCompressedToggle(int nAngle, int nLine, int nSegment)
 {

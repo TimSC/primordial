@@ -9,6 +9,8 @@
 #include "Biots.h"
 #include <iostream>
 
+using namespace rapidjson;
+
 //////////////////////////////////////////////////////////////////////
 // Biot Class
 //
@@ -2167,30 +2169,85 @@ void Biot::Serialize(QDataStream& ar)
 	}
 	else
 	{
-		ar.Write((LPBYTE)state, sizeof(state));
 
-		ar.Write((LPBYTE) m_retractDrawn, sizeof(m_retractDrawn));
-		ar.Write((LPBYTE) m_retractRadius, sizeof(m_retractRadius));
-		ar.Write((LPBYTE) m_retractSegment, sizeof(m_retractSegment));
-
-		ar << max_genes;
-		ar << genes;
-		ar << origin;
-		ar << energy;
-		ar << bDie;
-		ar << m_Id;
-		ar << m_motherId;
-		ar << genes2;
-		ar << stepEnergy;
-		ar << ratio;
-		ar << m_age;
-		ar << m_sName;
-		ar << m_sWorldName;
-		ar << m_sFatherName;
-		ar << m_sFatherWorldName;
 	}
 }
 */
+
+void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    const uint8_t archiveVersion = 11;
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("archiveVersion", Value(archiveVersion), allocator);
+
+    // Store or load other objects
+    Value traitJson(kObjectType);
+    trait.SerializeJson(d, traitJson);
+    v.AddMember("trait", traitJson, allocator);
+
+    Value commJson(kObjectType);
+    m_commandArray.SerializeJson(d, commJson);
+    v.AddMember("m_commandArray", commJson, allocator);
+
+    Value storeArrJson(kArrayType);
+    for (int i = 0; i < MAX_SYMMETRY; i++)
+    {
+        Value storeJson(kObjectType);
+        m_store[i].SerializeJson(d, storeJson, *this);
+        storeArrJson.PushBack(storeJson, allocator);
+    }
+    v.AddMember("m_store", storeArrJson, allocator);
+
+    Value trait2Json(kObjectType);
+    trait2.SerializeJson(d, trait2Json);
+    v.AddMember("trait2", trait2Json, allocator);
+
+    Value comm2Json(kObjectType);
+    m_commandArray2.SerializeJson(d, comm2Json);
+    v.AddMember("m_commandArray2", comm2Json, allocator);
+
+    Value vectorJson(kObjectType);
+    vector.SerializeJson(d, vectorJson);
+    v.AddMember("vector", vectorJson, allocator);
+
+    //short    state[MAX_GENES];
+    Value stateArray(kArrayType);
+    for(int i=0; i<MAX_GENES; i++)
+        stateArray.PushBack(state[i], allocator);
+    v.AddMember("state", stateArray, allocator);
+
+    Value m_retractDrawnArray(kArrayType);
+    Value m_retractRadiusArray(kArrayType);
+    Value m_retractSegmentArray(kArrayType);
+    for(int i=0; i<MAX_SYMMETRY; i++)
+    {
+        m_retractDrawnArray.PushBack(m_retractDrawn[i], allocator);
+        m_retractRadiusArray.PushBack(m_retractRadius[i], allocator);
+        m_retractSegmentArray.PushBack(m_retractSegment[i], allocator);
+    }
+    v.AddMember("m_retractDrawn", m_retractDrawnArray, allocator);
+    v.AddMember("m_retractRadius", m_retractRadiusArray, allocator);
+    v.AddMember("m_retractSegment", m_retractSegmentArray, allocator);
+
+    v.AddMember("max_genes", max_genes, allocator);
+    v.AddMember("genes", genes, allocator);
+    v.AddMember("origin_x", origin.x(), allocator);
+    v.AddMember("origin_y", origin.y(), allocator);
+    v.AddMember("energy", energy, allocator);
+    v.AddMember("bDie", bDie, allocator);
+    v.AddMember("m_Id", m_Id, allocator);
+    v.AddMember("m_motherId", m_motherId, allocator);
+    v.AddMember("genes2", genes2, allocator);
+    v.AddMember("stepEnergy", stepEnergy, allocator);
+    v.AddMember("ratio", ratio, allocator);
+    v.AddMember("m_age", m_age, allocator);
+    v.AddMember("m_sName", Value(m_sName.c_str(), allocator), allocator);
+    v.AddMember("m_sWorldName", Value(m_sWorldName.c_str(), allocator), allocator);
+    v.AddMember("m_sFatherName", Value(m_sFatherName.c_str(), allocator), allocator);
+    v.AddMember("m_sFatherWorldName", Value(m_sFatherWorldName.c_str(), allocator), allocator);
+
+}
 
 bool Biot::OnOpen()
 {

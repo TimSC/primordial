@@ -8,6 +8,8 @@
 #include "Environ.h"
 #include "Biots.h"
 
+using namespace rapidjson;
+
 //
 // ProductTerm (Picks a subset sensor bits that must be true or false)
 //
@@ -54,6 +56,14 @@ void ProductTerm::Serialize(QDataStream& ar)
 }
 */
 
+void ProductTerm::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("m_dwMask", m_dwMask, allocator);
+    v.AddMember("m_dwInvert", m_dwInvert, allocator);
+}
+
 //
 // ProductArray (Contains an array of product definitions)
 //
@@ -97,6 +107,29 @@ void ProductArray::Serialize(QDataStream& ar)
 		m_productSum[i].Serialize(ar);
 }
 */
+
+void ProductArray::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    Value prodTermArr(kArrayType);
+    for (int i = 0; i < GetTermCount(); i++)
+    {
+        Value obj(kObjectType);
+        m_productTerm[i].SerializeJson(d, obj);
+        prodTermArr.PushBack(obj, allocator);
+    }
+    v.AddMember("m_productTerm", prodTermArr, allocator);
+
+    Value prodSumArr(kArrayType);
+    for (int i = 0; i < GetSumCount(); i++)
+    {
+        Value obj(kObjectType);
+        m_productSum[i].SerializeJson(d, obj);
+        prodSumArr.PushBack(obj, allocator);
+    }
+    v.AddMember("m_productSum", prodSumArr, allocator);
+}
 
 void ProductArray::Crossover(ProductArray& productArray)
 {
@@ -183,6 +216,18 @@ void ProductSum::Serialize(QDataStream& ar)
 }
 */
 
+void ProductSum::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    Value refArrayJson(kArrayType);
+    for (int i = 0; i < GetCount(); i++)
+        refArrayJson.PushBack(m_reference[i], allocator);
+    v.AddMember("m_reference", refArrayJson, allocator);
+
+    v.AddMember("m_bTrue", m_bTrue, allocator);
+}
+
 void ProductSum::Crossover(ProductSum& productSum)
 {
 	Randomizer rand;
@@ -247,6 +292,17 @@ void CommandArgument::Serialize(QDataStream& ar)
 	}
 }
 */
+
+void CommandArgument::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("m_command", Value(m_command), allocator);
+    v.AddMember("m_limb", Value(m_limb), allocator);
+    v.AddMember("m_segment", Value(m_segment), allocator);
+    v.AddMember("m_rate", Value(m_rate), allocator);
+    v.AddMember("m_degrees", Value(m_degrees), allocator);
+}
 
 void CommandArgument::Randomize(void)
 {
@@ -329,6 +385,33 @@ void CommandArray::Serialize(QDataStream& ar)
 		m_commandLimbType[i].Serialize(ar);
 }
 */
+
+void CommandArray::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    Value commArrJson(kArrayType);
+    for (int i = 0; i < GetCommandCount(); i++)
+    {
+        Value commJson(kObjectType);
+        m_command[i].SerializeJson(d, commJson);
+        commArrJson.PushBack(commJson, allocator);
+    }
+    v.AddMember("m_command", commArrJson, allocator);
+
+    Value prodArrJson(kObjectType);
+    m_productArray.SerializeJson(d, prodArrJson);
+    v.AddMember("m_productArray", prodArrJson, allocator);
+
+    Value commLimbArrJson(kArrayType);
+    for (int i = 0; i < GetTypeCount(); i++)
+    {
+        Value commJson(kObjectType);
+        m_commandLimbType[i].SerializeJson(d, v);
+        commLimbArrJson.PushBack(commJson, allocator);
+    }
+    v.AddMember("m_commandLimbType", commLimbArrJson, allocator);
+}
 
 void CommandArray::Crossover(CommandArray& commandArray)
 {
@@ -421,6 +504,21 @@ void CommandLimbType::Serialize(QDataStream& ar)
 }
 */
 
+void CommandLimbType::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    Value comJson(kArrayType);
+    Value sumJson(kArrayType);
+    for (int i = 0; i < GetCount(); i++)
+    {
+        comJson.PushBack(m_comref[i], allocator);
+        sumJson.PushBack(m_sumref[i], allocator);
+    }
+    v.AddMember("m_comref", comJson, allocator);
+    v.AddMember("m_sumref", sumJson, allocator);
+}
+
 void CommandLimbType::Crossover(CommandLimbType& commandLimbType)
 {
 	Randomizer rand;
@@ -469,6 +567,71 @@ void CommandLimbStore::Serialize(QDataStream& ar)
 		ar.Read(&command, sizeof(command));
 	}
 }*/
+
+void CommandLimbStore::SerializeJson(rapidjson::Document &d, rapidjson::Value &v, Biot& biot)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("m_nLimbType", m_nLimbType, allocator);
+    v.AddMember("m_nLimb", m_nLimb, allocator);
+
+    Value commandArr(kArrayType);
+    for(int m_index=0; m_index<CommandLimbType::MAX_COMMANDS_PER_LIMB; m_index++)
+    {
+        m_pArg = &biot.m_commandArray.GetCommandArgument(m_nLimbType, m_index);
+        Value commandJson(kObjectType);
+
+        switch (m_pArg->GetCommand())
+        {
+            case CommandArgument::COMMAND_FLAP_LIMB_SEGMENT:
+                command[m_index].flapLimbSegment.SerializeJson(d, commandJson);
+                break;
+
+            case CommandArgument::COMMAND_FLAP_LIMB_TYPE_SEGMENT:
+                command[m_index].flapLimbTypeSegment.SerializeJson(d, commandJson);
+                break;
+
+            case CommandArgument::COMMAND_MOVE_LIMB_SEGMENT:
+                command[m_index].moveLimbSegment.SerializeJson(d, commandJson);
+                break;
+
+            case CommandArgument::COMMAND_MOVE_LIMB_SEGMENTS:
+                command[m_index].moveLimbSegments.SerializeJson(d, commandJson);
+                break;
+
+            case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENT:
+                command[m_index].moveLimbTypeSegment.SerializeJson(d, commandJson);
+                break;
+
+            case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENTS:
+                command[m_index].moveLimbTypeSegments.SerializeJson(d, commandJson);
+                break;
+
+            case CommandArgument::COMMAND_RETRACT_LIMB_TYPE:
+                command[m_index].retractLimbType.SerializeJson(d, commandJson);
+                break;
+
+            case CommandArgument::COMMAND_RETRACT_LIMB:
+                command[m_index].retractLimb.SerializeJson(d, commandJson);
+                break;
+
+            case CommandArgument::COMMAND_NOP:
+                command[m_index].nop.SerializeJson(d, commandJson);
+                break;
+
+            case CommandArgument::COMMAND_MEMORY:
+                command[m_index].memory.SerializeJson(d, commandJson);
+                break;
+
+            default:
+                assert(0);
+                break;
+        }
+        commandArr.PushBack(commandJson, allocator);
+    }
+    v.AddMember("command", commandArr, allocator);
+}
+
 void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
 {
     assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
@@ -729,6 +892,21 @@ void CommandFlapLimbTypeSegment::Flap(Biot& biot, int nPeno)
 	}
 }
 
+void CommandFlapLimbTypeSegment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("type", "CommandFlapLimbTypeSegment", allocator);
+
+    v.AddMember("m_nLimbType", m_nLimbType, allocator);
+    v.AddMember("m_nSegment", m_nSegment, allocator);
+    v.AddMember("m_nRate", m_nRate, allocator);
+    v.AddMember("m_nMaxDegrees", m_nMaxDegrees, allocator);
+    v.AddMember("m_nAppliedDegrees", m_nAppliedDegrees, allocator);
+    v.AddMember("m_bGoingUp", m_bGoingUp, allocator);
+
+}
+
 ///////////////////////////////////////////////////////////////
 //Don't give me no flap!
 //
@@ -856,6 +1034,21 @@ void CommandFlapLimbSegment::Flap(Biot& biot)
 	}
 }
 
+void CommandFlapLimbSegment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("type", "CommandFlapLimbSegment", allocator);
+
+    v.AddMember("m_nLimb", m_nLimb, allocator);
+    v.AddMember("m_nSegment", m_nSegment, allocator);
+    v.AddMember("m_nRate", m_nRate, allocator);
+    v.AddMember("m_nMaxDegrees", m_nMaxDegrees, allocator);
+    v.AddMember("m_nAppliedDegrees", m_nAppliedDegrees, allocator);
+    v.AddMember("m_bGoingUp", m_bGoingUp, allocator);
+
+}
+
 ///////////////////////////////////////////////////////////////
 void CommandMoveLimbSegment::Initialize(CommandLimbStore& store)
 {
@@ -903,6 +1096,19 @@ void CommandMoveLimbSegment::Execute(CommandLimbStore& store)
             m_nAppliedDegrees += store.m_pBiot->MoveLimbSegment(m_nSegment, m_nLimb, -std::min(m_nRate, m_nAppliedDegrees));
 		}
 	}
+}
+
+void CommandMoveLimbSegment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("type", "CommandMoveLimbSegment", allocator);
+
+    v.AddMember("m_nLimb", m_nLimb, allocator);
+    v.AddMember("m_nSegment", m_nSegment, allocator);
+    v.AddMember("m_nRate", m_nRate, allocator);
+    v.AddMember("m_nMaxDegrees", m_nMaxDegrees, allocator);
+    v.AddMember("m_nAppliedDegrees", m_nAppliedDegrees, allocator);
 }
 
 ///////////////////////////////////////////////////////////////
@@ -955,6 +1161,19 @@ void CommandMoveLimbTypeSegment::Execute(CommandLimbStore& store)
 	}
 }
 
+void CommandMoveLimbTypeSegment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("type", "CommandMoveLimbTypeSegment", allocator);
+
+    v.AddMember("m_nLimbType", m_nLimbType, allocator);
+    v.AddMember("m_nSegment", m_nSegment, allocator);
+    v.AddMember("m_nRate", m_nRate, allocator);
+    v.AddMember("m_nMaxDegrees", m_nMaxDegrees, allocator);
+    v.AddMember("m_nAppliedDegrees", m_nAppliedDegrees, allocator);
+}
+
 ///////////////////////////////////////////////////////////////
 void CommandMoveLimbSegments::Initialize(CommandLimbStore& store)
 {
@@ -1003,6 +1222,19 @@ void CommandMoveLimbSegments::Execute(CommandLimbStore& store)
 	}
 }
 
+void CommandMoveLimbSegments::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("type", "CommandMoveLimbSegments", allocator);
+
+    v.AddMember("m_nLimb", m_nLimb, allocator);
+    v.AddMember("m_nRate", m_nRate, allocator);
+    v.AddMember("m_nMaxDegrees", m_nMaxDegrees, allocator);
+    v.AddMember("m_nAppliedDegrees", m_nAppliedDegrees, allocator);
+
+}
+
 ///////////////////////////////////////////////////////////////
 void CommandMoveLimbTypeSegments::Initialize(CommandLimbStore& store)
 {
@@ -1049,6 +1281,18 @@ void CommandMoveLimbTypeSegments::Execute(CommandLimbStore& store)
             m_nAppliedDegrees += store.m_pBiot->MoveLimbTypeSegments(m_nLimbType, -std::min(m_nRate, m_nAppliedDegrees));
 		}
 	}
+}
+
+void CommandMoveLimbTypeSegments::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("type", "CommandMoveLimbTypeSegments", allocator);
+
+    v.AddMember("m_nLimbType", m_nLimbType, allocator);
+    v.AddMember("m_nRate", m_nRate, allocator);
+    v.AddMember("m_nMaxDegrees", m_nMaxDegrees, allocator);
+    v.AddMember("m_nAppliedDegrees", m_nAppliedDegrees, allocator);
 }
 
 ///////////////////////////////////////////////////////////////
@@ -1120,6 +1364,18 @@ void CommandRetractLimb::Execute(CommandLimbStore& store)
 	}
 }
 
+void CommandRetractLimb::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("type", "CommandRetractLimb", allocator);
+
+    v.AddMember("m_nSegment", m_nSegment, allocator);
+    v.AddMember("m_nLimbType", m_nLimb, allocator);
+    v.AddMember("m_nMaxRadius", m_nMaxRadius, allocator);
+    v.AddMember("m_nAppliedRadius", m_nAppliedRadius, allocator);
+}
+
 
 ///////////////////////////////////////////////////////////////
 //
@@ -1189,12 +1445,32 @@ void CommandRetractLimbType::Execute(CommandLimbStore& store)
 	}
 }
 
+void CommandRetractLimbType::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("type", "CommandRetractLimbType", allocator);
+
+    v.AddMember("m_nSegment", m_nSegment, allocator);
+    v.AddMember("m_nLimbType", m_nLimbType, allocator);
+    v.AddMember("m_nMaxRadius", m_nMaxRadius, allocator);
+    v.AddMember("m_nAppliedRadius", m_nAppliedRadius, allocator);
+}
+
 
 ///////////////////////////////////////////////////////////////
 void CommandNOP::Initialize(CommandLimbStore& /*store*/)
 {
  // Nothing to do!
 }
+
+void CommandNOP::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("type", "CommandNOP", allocator);
+}
+
 
 void CommandNOP::Execute(CommandLimbStore& /*store*/)
 {
@@ -1299,6 +1575,17 @@ void CommandMemory::Execute(CommandLimbStore& store)
 				m_type = WAIT_AND_CLEAR;
 		}
 	}
+}
+
+void CommandMemory::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("type", "CommandMemory", allocator);
+
+    v.AddMember("m_time", m_time, allocator);
+    v.AddMember("m_type", m_type, allocator);
+    v.AddMember("m_bSet", m_bSet, allocator);
 }
 
 

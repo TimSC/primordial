@@ -9,6 +9,7 @@
 #include <QDataStream>
 #include "Rand.h"
 //#include "PostData.h"
+#include "rapidjson/document.h"
 
 class Biot;
 
@@ -83,6 +84,7 @@ class GeneSegment : Randomizer
     void Debug(int segment, bool bIsVisible);
     void Mutate(int chance, int segment);
    // virtual void Serialize(QDataStream& ar);
+    virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 	double GetRadius() { return (double) m_radius; }
     double GetAdjustedRadius(uint8_t radius) { return (double) (m_radius - radius); }
@@ -137,6 +139,7 @@ public:
     void Mutate(int chance);
     void Crossover(GeneLimb&  gLine);
     //virtual void Serialize(QDataStream& ar);
+    virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
 	GeneSegment& GetSegment(int segment) { return m_segment[segment]; }
 	int GetSegmentsVisible();
@@ -197,6 +200,7 @@ class GeneTrait : Randomizer
     void Mutate(int chance);
     void Crossover(GeneTrait&  gTrait);
     //virtual void Serialize(QDataStream& ar);
+    virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 	void CalculateAngles();
 	void PickSex()                  { m_sex = ((int) m_chanceMale > Integer(255));  }
     void SetChanceMale(uint8_t chanceMale) { m_chanceMale = chanceMale; }

@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include "core/Environ.h"
+#include "rapidjson/document.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

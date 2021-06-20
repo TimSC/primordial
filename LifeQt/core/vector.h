@@ -7,6 +7,7 @@
 
 #pragma once
 #include "Etools.h"
+#include "rapidjson/document.h"
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Class Vector
@@ -40,6 +41,7 @@ public:
     Vector(void);
 
     //virtual void Serialize(QDataStream& ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
 
     // Proposes movement in rotation, and translation
 	// Always call tryRotate first!!
