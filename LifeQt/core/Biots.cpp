@@ -7,7 +7,7 @@
 #include "Genotype.h"
 #include "Environ.h"
 #include "Biots.h"
-
+#include <iostream>
 
 //////////////////////////////////////////////////////////////////////
 // Biot Class
@@ -22,15 +22,23 @@ Biot::Biot(Environment& environment) : env(environment)
   ClearSettings();
   graphics = new QGraphicsItemGroup();
   boundingRect = nullptr;
-  if(env.m_scene != nullptr)
-      env.m_scene->addItem(graphics);
+  assert(env.m_scene != nullptr);
+  env.m_scene->addItem(graphics);
 
 }
 
 Biot::~Biot(void)
 {
-    if(env.m_scene != nullptr)
-        env.m_scene->removeItem(graphics);
+    for(size_t i = 0; i < lines.size(); i ++)
+    {
+        //Remove unneeded line
+        env.m_scene->removeItem(lines[i]);
+        lines[i] = nullptr;
+    }
+    lines.clear();
+
+    env.m_scene->removeItem(graphics);
+
 //	FreeBitmaps();
 }
 
@@ -247,6 +255,9 @@ int Biot::RandomCreate(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 	SetBonus();
 
 	GetName();
+
+    this->graphics->setPos(this->origin);
+    this->graphics->setRotation(this->vector.GetR()-90.0);
 
 	return i;
 }
@@ -865,7 +876,7 @@ void Biot::UpdateGraphics()
     }
     else if (boundingRect != nullptr)
     {
-        graphics->removeFromGroup(boundingRect);
+        env.m_scene->removeItem(boundingRect);
         boundingRect = nullptr;
     }
 
@@ -897,13 +908,13 @@ void Biot::UpdateGraphics()
 	}
 	else
 	{
-//		int aPen = -1;
+/*		int aPen = -1;
         int lastX = -999999;
         int lastY = -999999;
         int startX = 0;
         int startY = 0;
 
-//		hOldPen = (HPEN) SelectObject(env.m_hMemoryDC, env.options.hPen[0]);
+//		hOldPen = (HPEN) SelectObject(env.m_hMemoryDC, env.options.hPen[0]);*/
         for (int i = 0; i < genes; i++)
 		{
 			if (state[i] > 0)
@@ -931,18 +942,18 @@ void Biot::UpdateGraphics()
                 //lastX = stopPt[i].x() - leftX; lastY = stopPt[i].y() - topY;
                 //VERIFY(::LineTo(env.m_hMemoryDC, lastX, lastY));
 
+                QGraphicsLineItem *line = nullptr;
                 if(lineCount >= lines.size())
                 {
-                    QGraphicsLineItem *line = new QGraphicsLineItem(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y(), graphics);
-                    line->setPen(env.options.pens[aPen]);
+                    line = new QGraphicsLineItem(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y(), graphics);
                     lines.append(line);
                 }
                 else
                 {
-                    QGraphicsLineItem *line = lines[i];
+                    line = lines[lineCount];
                     line->setLine(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y());
-                    line->setPen(env.options.pens[aPen]);
                 }
+                line->setPen(env.options.pens[aPen]);
                 lineCount += 1;
 			}
 		}
@@ -952,7 +963,13 @@ void Biot::UpdateGraphics()
     for(size_t i = lineCount; i < lines.size(); i ++)
     {
         //Remove unneeded line
-        graphics->removeFromGroup(lines[i]);
+        env.m_scene->removeItem(lines[i]);
+        lines[i] = nullptr;
+    }
+    size_t originalNumLines = lines.size();
+    for(size_t i = lineCount; i < originalNumLines; i ++)
+    {
+        lines.removeLast();
     }
 
 }
@@ -1190,7 +1207,7 @@ CLine cLine;
 		if (Contacter(enemy, dx, dy, x, y))
 		{
 			int him = FindCollision(enemy->m_Id);
-			int me;
+            int me = 0;
 
 			// Take a step back
 			MoveBiot(-dx, -dy);
@@ -1459,8 +1476,9 @@ CLine cLine;
 		}
 	}
 
-    this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
-    this->graphics->setRotation(-this->vector.GetR());
+    UpdateGraphics();
+    this->graphics->setPos(this->origin);
+    this->graphics->setRotation(this->vector.GetR()-90.0);
 
     return true;
 }
@@ -1937,7 +1955,7 @@ int64_t Energy;
   return Energy;
 } */
 
-
+#if 0 //Unused?
 //////////////////////////////////////////////////////////////////////
 // LineContact
 //
@@ -2048,7 +2066,7 @@ double translation      = fabs(vector.getDeltaX()) + fabs(vector.getDeltaY());
   }
   return energyTransfer;
 }
-
+#endif
 
 //////////////////////////////////////////////////////////////////////
 // CopyGenes

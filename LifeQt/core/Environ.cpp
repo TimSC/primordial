@@ -943,7 +943,7 @@ void Environment::Skip()
 
     int64_t dwTicks = QDateTime::currentMSecsSinceEpoch();
 	// Process all the biots now
-    while ((QDateTime::currentMSecsSinceEpoch() - dwTicks) < 200)
+    if ((QDateTime::currentMSecsSinceEpoch() - dwTicks) < 200)
 	{
 		pBiot = m_biotList.NextBiot();
 
