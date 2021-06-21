@@ -40,21 +40,6 @@ void ProductTerm::Debug()
 	m_dwMask = 0xFFFFFFFF;
 	m_dwInvert = 0x00000000;
 }
-/*
-void ProductTerm::Serialize(QDataStream& ar)
-{
-	if (ar.IsStoring())
-	{
-		ar << m_dwMask;
-		ar << m_dwInvert;
-	}
-	else
-	{
-		ar >> m_dwMask;
-		ar >> m_dwInvert;
-	}
-}
-*/
 
 void ProductTerm::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
@@ -102,17 +87,6 @@ void ProductArray::Debug()
 	for (int i = 0; i < GetSumCount(); i++)
 		m_productSum[i].Debug();
 }
-
-/*
-void ProductArray::Serialize(QDataStream& ar)
-{
-	for (int i = 0; i < GetTermCount(); i++)
-		m_productTerm[i].Serialize(ar);
-
-	for (int i = 0; i < GetSumCount(); i++)
-		m_productSum[i].Serialize(ar);
-}
-*/
 
 void ProductArray::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
@@ -207,31 +181,6 @@ void ProductSum::Debug()
 
     m_bTrue = true;
 }
-
-/*
-void ProductSum::Serialize(QDataStream& ar)
-{
-	Randomizer rand;
-
-	if (ar.IsStoring())
-	{
-		for (int i = 0; i < GetCount(); i++)
-			ar << m_reference[i];
-
-		ar << m_bTrue;
-	}
-	else
-	{
-		for (int i = 0; i < GetCount(); i++)
-		{
-			ar >> m_reference[i];
-			if (m_reference[i] >= ProductArray::MAX_PRODUCT_TERMS)
-				m_reference[i] = rand.Byte(ProductArray::MAX_PRODUCT_TERMS);
-		}
-		ar >> m_bTrue;
-	}
-}
-*/
 
 void ProductSum::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
@@ -388,19 +337,6 @@ void CommandArray::Randomize()
 		m_commandLimbType[i].Randomize();
 }
 
-/*
-void CommandArray::Serialize(QDataStream& ar)
-{
-	for (int i = 0; i < GetCommandCount(); i++)
-		m_command[i].Serialize(ar);
-
-	m_productArray.Serialize(ar);
-
-	for (int i = 0; i < GetTypeCount(); i++)
-		m_commandLimbType[i].Serialize(ar);
-}
-*/
-
 void CommandArray::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
     Document::AllocatorType& allocator = d.GetAllocator();
@@ -470,7 +406,7 @@ CommandArray& CommandArray::operator=(CommandArray& commandArray)
 }
 
 
-//////////////////////////////////////////////////
+// ////////////////////////////////////////////////
 // CommandLimbType contains an array of referenes
 // to commands in the command array.  This level
 // of indirection allows a limb type to pick any
@@ -505,33 +441,6 @@ void CommandLimbType::Randomize()
 		m_sumref[i]    = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
 	}
 }
-/*
-void CommandLimbType::Serialize(QDataStream& ar)
-{
-	Randomizer rand;
-
-	if (ar.IsStoring())
-	{
-		for (int i = 0; i < GetCount(); i++)
-		{
-			ar << m_comref[i];
-			ar << m_sumref[i];
-		}
-	}
-	else
-	{
-		for (int i = 0; i < GetCount(); i++)
-		{
-			ar >> m_comref[i];
-			if (m_comref[i] >= CommandArray::MAX_COMMANDS)
-				m_comref[i] = rand.Byte(CommandArray::MAX_COMMANDS);
-			ar >> m_sumref[i];
-			if (m_sumref[i] >= ProductArray::MAX_PRODUCT_SUMS)
-				m_sumref[i] = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
-		}
-	}
-}
-*/
 
 void CommandLimbType::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
@@ -586,28 +495,12 @@ CommandLimbType& CommandLimbType::operator=(CommandLimbType& commandLimbType)
 }
 
 
-/////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////////////////
 // CommandLimbStore
 //
 // Each limb, regardless of type, has associated state information
 // to store.
 //
-/*
-void CommandLimbStore::Serialize(QDataStream& ar)
-{
-	if (ar.IsStoring())
-	{
-		ar << m_nLimbType;
-		ar << m_nLimb;
-		ar.Write(&command, sizeof(command));
-	}
-	else
-	{
-		ar >> m_nLimbType;
-		ar >> m_nLimb;
-		ar.Read(&command, sizeof(command));
-	}
-}*/
 
 void CommandLimbStore::SerializeJson(rapidjson::Document &d, rapidjson::Value &v, Biot& biot)
 {
@@ -858,7 +751,7 @@ inline bool CommandLimbStore::IsSensorTrue()
 }
 
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 //CommandFlapLine
 //
 // Don't give me no flap!  Flaps an individual line.
@@ -1019,7 +912,7 @@ void CommandFlapLimbTypeSegment::SerializeJsonLoad(const rapidjson::Value& v)
     m_bGoingUp = v["m_bGoingUp"].GetBool();
 }
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 //Don't give me no flap!
 //
 void CommandFlapLimbSegment::Initialize(CommandLimbStore& store)
@@ -1171,7 +1064,7 @@ void CommandFlapLimbSegment::SerializeJsonLoad(const rapidjson::Value& v)
     m_bGoingUp = v["m_bGoingUp"].GetBool();
 }
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 void CommandMoveLimbSegment::Initialize(CommandLimbStore& store)
 {
 		// Determine limb type to move
@@ -1242,7 +1135,7 @@ void CommandMoveLimbSegment::SerializeJsonLoad(const rapidjson::Value& v)
     m_nAppliedDegrees = v["m_nAppliedDegrees"].GetInt();
 }
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 void CommandMoveLimbTypeSegment::Initialize(CommandLimbStore& store)
 {
 	// Determine limb type to move
@@ -1314,7 +1207,7 @@ void CommandMoveLimbTypeSegment::SerializeJsonLoad(const rapidjson::Value& v)
     m_nAppliedDegrees = v["m_nAppliedDegrees"].GetInt();
 }
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 void CommandMoveLimbSegments::Initialize(CommandLimbStore& store)
 {
 	// Determine limb type to move
@@ -1383,7 +1276,7 @@ void CommandMoveLimbSegments::SerializeJsonLoad(const rapidjson::Value& v)
     m_nAppliedDegrees = v["m_nAppliedDegrees"].GetInt();
 }
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 void CommandMoveLimbTypeSegments::Initialize(CommandLimbStore& store)
 {
 	// Determine limb type to move
@@ -1451,7 +1344,7 @@ void CommandMoveLimbTypeSegments::SerializeJsonLoad(const rapidjson::Value& v)
     m_nAppliedDegrees = v["m_nAppliedDegrees"].GetInt();
 }
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 void CommandRetractLimb::Initialize(CommandLimbStore& store)
 {
 	// Lets indicate there is nothing yet to do
@@ -1541,7 +1434,7 @@ void CommandRetractLimb::SerializeJsonLoad(const rapidjson::Value& v)
 }
 
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 //
 // Tell all the limbs of a particular type to retract
 void CommandRetractLimbType::Initialize(CommandLimbStore& store)
@@ -1629,7 +1522,7 @@ void CommandRetractLimbType::SerializeJsonLoad(const rapidjson::Value& v)
     m_nAppliedRadius = v["m_nAppliedRadius"].GetInt();
 }
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 void CommandNOP::Initialize(CommandLimbStore& /*store*/)
 {
  // Nothing to do!
@@ -1655,7 +1548,7 @@ void CommandNOP::Execute(CommandLimbStore& /*store*/)
 }
 
 
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 void CommandMemory::Initialize(CommandLimbStore& store)
 {
 	CommandArgument& arg = *store.m_pArg;

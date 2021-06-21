@@ -54,8 +54,8 @@ MainWindow::MainWindow(QWidget *parent)
         {
             Biot *biot = env.m_biotList[i];
             biot->SerializeJsonLoad((*parsedBiots)[i]);
-            biot->OnOpen();
         }
+        this->env.OnOpen();
     }
     else
     {

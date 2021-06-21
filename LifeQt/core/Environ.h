@@ -15,20 +15,14 @@
 #include "Etools.h"
 #include "Connect.h"
 #include "Genotype.h"
-//#include "sock.h"
-//#include "KeyRegistry.h"
-//#include "MagnifyWnd.h"
-//#include "EnvStatsWnd.h"
-//#include "BiotEditor.h"
 #include "Settings.h"
-
 
 // Predefine Biot to the Environment
 class Biot;
 class Environment;
 class CSettings;
 
-///////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////
 // CEnvironmentStats
 //
 // Holds statistics related to the environment.  I just broke this off
@@ -90,7 +84,7 @@ public:
 };
 
 
-///////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////
 // CEnvironmentStatsList
 //
 // Holds statistics related to the environment.  I just broke this off
@@ -105,9 +99,7 @@ public:
 };
 
 
-
-
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // CBiotList
 //
 // Holds a list of biots!  Initial size is for 250 biots
@@ -133,7 +125,7 @@ private:
     bool m_bLooped;
 };
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 //
 // Environment
 //
@@ -153,14 +145,11 @@ public:
 	void Clear();
 
     void PlayResource(const std::string & sound, bool bSync = false);
-//	void Paint(HDC hDC, RECT* pRect);
-//	void Paint(CDC* pDC, CRect& rect);
 
     void lights(bool bOn);
 	void NoRoomToGiveBirth(){/*m_stats.m_collisionCount += 4;*/};
 	void FreeBitPadDC();
 
-//	HDC  GetBitPadDC(int width, int height);
     uint32_t	GetID(void){return ++m_uniqueID; }
 
 	int  FindBiot(int x, int y);
@@ -168,16 +157,11 @@ public:
 	void MoveBiot(Biot* pBiot, BRect* pOrigRect) { m_sort.Move((BRectItem*) pBiot, pOrigRect); }
 		
     int  GetPopulation() { return m_biotList.size(); }
-    //void Serialize(QDataStream& ar);
 	void DeleteContents();
     void Skip();
-//    void BiotOperation(CScrollView* pView, int x, int y, int operation);
 
     bool  BiotShouldBox(uint32_t biotId) { return (biotId == m_selectedId && m_bIsSelected); }
 	Biot* GetSelectedBiot()           { return m_biotList.FindBiotByID(m_selectedId); }
-
-//	void MagnifyBiot(CDC& dc, Biot* pBiot, CRect& rect);
-//	void OpenEnvironmentStatistics(CWnd* pWnd);
 
     bool IsIntersect(CLine& bLine, int& x, int& y)
     {
@@ -189,24 +173,14 @@ public:
 
     bool WithinBorders(BRect& rect);
 
-//	void GetDefaultSettings();
-//	void SetDefaultSettings();
     void OnNew(QGraphicsScene &scene, QRect worldRect, int population, int seed,
                int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
 	void OnRestart();
-//	void OnOpen(CScrollView* pView);
+    void OnOpen();
 	void OnStop();
 
-//	void SaveBiot(Biot* pBiot);
-//	void LoadBiot(int x, int y);
-
 public:
-/*	CBitmap           m_topBitmap;
-	BITMAP            m_topBm;
 
-	CBitmap           m_bottomBitmap;
-	BITMAP            m_bottomBm;
-*/
     QGraphicsScene *  m_scene;
 	BRectSort         m_sort;
 
@@ -215,12 +189,7 @@ public:
 
     bool m_bBlocked;
 	CSettings options; //The optins: Fox
-/*
-	CEnvStatsWnd* m_pEnvStatsWnd;
-	CMagnifyWnd*  m_pMagnifyWnd;
 
-	CBiotEditor m_editor;
-*/
     LeftSide   leftSide;
     RightSide  rightSide;
     TopSide    topSide;
@@ -235,8 +204,6 @@ public:
 	int   m_operation;
 
     Side*   side[4];
-//    HDC     m_hMemoryDC;
-//    HDC     m_hScreenDC;
     bool    bNetworkSettingsChange;
 
 	// Save the state of these variables	
@@ -253,9 +220,6 @@ public:
 	// Global scratch pad for flicker free drawing
     int     m_maxBitPadWidth;
     int     m_maxBitPadHeight;
-//    HDC     m_hMemPadDC;
-//    HBITMAP m_hBitPad;
-//    HBITMAP m_hOldPad;
 
 	// Should we sleep between loops to slow things down?
     uint64_t   m_dwTicks;

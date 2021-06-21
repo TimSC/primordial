@@ -485,8 +485,6 @@ Environment::Environment()
 
 	Clear();
 
-//	m_pMagnifyWnd  = NULL;
-//	m_pEnvStatsWnd = NULL;
 }
 //Fox END
 
@@ -497,10 +495,7 @@ Environment::Environment()
 //
 Environment::~Environment(void)
 {
-/*	for (int i = 0; i <= MAX_LEAF; i++)
-		if (options.hPen[i] != NULL)
-			DeleteObject(options.hPen[i]);
-*/
+
 }
 
 
@@ -588,17 +583,8 @@ void Environment::Clear()
     options.bMouse              = true;
     bNetworkSettingsChange = false;
 
-	// Don't save the state of these
-	// They maintain a global scratch pad for drawing
-/*	m_hScreenDC       = NULL;
-	m_hMemPadDC       = NULL;
-	m_hMemoryDC       = NULL;
-	m_hBitPad         = NULL;
-	m_hOldPad         = NULL;
-*/
     m_maxBitPadWidth  = 0;
 	m_maxBitPadHeight = 0;
-
 
 	// We are not blocked to start with
     m_bBlocked = false;
@@ -617,74 +603,7 @@ void Environment::Clear()
 }
 //Fox END
 
-//////////////////////////////////////////////////////////////////////
-// GetBitPad - allocates a bitmap, compatible with hScreenDC.
-// Note: Ensures the scratch pad area is no larger than needed.
-//
-//
-/*
-HDC Environment::GetBitPadDC(int width, int height)
-{
-	if (width  > m_maxBitPadWidth ||
-		height > m_maxBitPadHeight ||
-		m_hBitPad == NULL)
-	{
-		if (width > m_maxBitPadWidth)
-			m_maxBitPadWidth = NextSize(width);
 
-	    if (height > m_maxBitPadHeight)
-			m_maxBitPadHeight = NextSize(height);
-
-		m_hBitPad = CreateCompatibleBitmap(m_hScreenDC, m_maxBitPadWidth, m_maxBitPadHeight);
-
-		ASSERT(m_hBitPad);
-
-		if (m_hMemPadDC == NULL)
-		{
-			if (m_hBitPad)
-			{
-				m_hMemPadDC = CreateCompatibleDC(m_hScreenDC);
-				ASSERT(m_hMemPadDC);
-			}
-		}
-		else
-		{
-			// Disassociate and free old bitmap
-			// SelectObject will return the previous m_hBitPad
-			VERIFY(DeleteObject(SelectObject(m_hMemPadDC, (HGDIOBJ) m_hOldPad)));
-	    }
-
-		// Select new one
-		m_hOldPad = (HBITMAP) SelectObject(m_hMemPadDC, m_hBitPad);
-	}
-	return m_hMemPadDC;
-}
-*/
-
-//////////////////////////////////////////////////////////////////////
-// FreeBitPadDC
-//
-//
-/*
-void Environment::FreeBitPadDC()
-{
-	if (m_hMemPadDC)
-	{
-		SelectObject(m_hMemPadDC, m_hOldPad);
-		VERIFY(DeleteObject(m_hBitPad));
-
-		VERIFY(DeleteDC(m_hMemPadDC));
-
-		m_hBitPad         = NULL;
-		m_hMemPadDC       = NULL;
-		m_hOldPad         = NULL;
-
-		// We preserve the size of m_maxBitPadWidth and m_maxBitPadHeight
-		// to help reduce the number of re-allocations
-    }
-}
-
-*/
 //////////////////////////////////////////////////////////////////////
 // PlayResource
 //
@@ -744,8 +663,8 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 // Loads up biots, or creates them
 //
 //
-/*
-void Environment::OnOpen(CScrollView* pView)
+
+void Environment::OnOpen()
 { 
 	// Establish our boundaries
 	leftSide.SetSide(this);
@@ -755,26 +674,14 @@ void Environment::OnOpen(CScrollView* pView)
 
 	options.maxLineSegments      = (MAX_GENES / MAX_SYMMETRY);
 
-	sock.StartSession(pView->GetSafeHwnd(), this);
-	sock.Listen();
-
-	// Create our display context
-	CDC* pScreenDC = pView->GetDC();
-
-	m_hScreenDC = pScreenDC->GetSafeHdc();
-	m_hMemoryDC = ::CreateCompatibleDC(m_hScreenDC);
+//	sock.StartSession(pView->GetSafeHwnd(), this);
+//	sock.Listen();
 
 	// Create our biots
-	for (int i = 0; i < m_biotList.GetSize(); i++)
+    for (int i = 0; i < m_biotList.size(); i++)
 		m_biotList[i]->OnOpen();
-
-	VERIFY(::DeleteDC(m_hMemoryDC));
-	VERIFY(pView->ReleaseDC(pScreenDC));
-	m_hScreenDC = NULL;
-	
-	pView->Invalidate();
 }
-*/
+
 
 //////////////////////////////////////////////////
 // OnNew
@@ -820,43 +727,10 @@ void Environment::OnNew(QGraphicsScene &scene,
 		sock.StartSession(pView->GetSafeHwnd(), this);
 		sock.Listen();
     }
-
-	// Create our display context
-	CDC* pScreenDC = pView->GetDC();
-
-	if (m_topBitmap == (HBITMAP) NULL)
-	{
-		HBITMAP bitmap_handle = ::LoadBmpResource(pScreenDC, MAKEINTRESOURCE(IDB_TOP));
-
-		// Attach this bitmap to our CBitmap object.
-		// This call fails if bitmap_handle is NULL.
-		// Note that the CBitmap destructor will destroy the bitmap.
-		m_topBitmap.Attach(bitmap_handle);
-		m_topBitmap.GetBitmap(&m_topBm);
-	}
-
-	if (m_bottomBitmap == (HBITMAP) NULL)
-	{
-		HBITMAP bitmap_handle = ::LoadBmpResource(pScreenDC, MAKEINTRESOURCE(IDB_BOTTOM));
-
-		// Attach this bitmap to our CBitmap object.
-		// This call fails if bitmap_handle is NULL.
-		// Note that the CBitmap destructor will destroy the bitmap.
-		m_bottomBitmap.Attach(bitmap_handle);
-		m_bottomBitmap.GetBitmap(&m_bottomBm);
-	}
-
-	m_hScreenDC = pScreenDC->GetSafeHdc();
-	m_hMemoryDC = ::CreateCompatibleDC(m_hScreenDC);
 */
 	// Create our biots
 	CreateBiots(nArmsPerBiot, nTypesPerBiot, nSegmentsPerArm);
-/*
-	FreeBitPadDC();
-	VERIFY(::DeleteDC(m_hMemoryDC));
-	VERIFY(pView->ReleaseDC(pScreenDC));
-	m_hScreenDC = NULL;	
-*/
+
 	options.m_generation = 0;
 
 	m_stats.Sample(*this);
@@ -901,13 +775,7 @@ void Environment::Skip()
 		}
 	}
 */
-	// Create our display context
-/*	CDC* pScreenDC = pView->GetDC();
-	pView->OnPrepareDC(pScreenDC);
 
-	m_hScreenDC = pScreenDC->GetSafeHdc();
-	m_hMemoryDC = ::CreateCompatibleDC(m_hScreenDC);
-*/
 
 	// Write a biot out if required
 /*	if (sock.WriteAll())
@@ -1041,12 +909,6 @@ void Environment::Skip()
 		}
     }
 
-	// Let the window paint now
-	FreeBitPadDC();
-
-	VERIFY(::DeleteDC(m_hMemoryDC));
-	VERIFY(pView->ReleaseDC(pScreenDC));
-	m_hScreenDC = NULL;
 */
     m_bBlocked = false;
 }
@@ -1086,102 +948,7 @@ void Environment::AddBiot(Biot* pNewBiot)
 	}
 }
 
-
-//////////////////////////////////////////////////////////////////////
-// Paint
-//
-// How do we know if the biot has an bitmap filled in?
-//
-/*void Environment::Paint(HDC hDC, RECT* pRect)
-{
-	BRect c(pRect);
-
-	m_hScreenDC = hDC;
-	m_hMemoryDC = CreateCompatibleDC(m_hScreenDC);
-	for (int i = 0; i < m_biotList.GetSize(); i++)
-		if (c.Touches(*m_biotList[i]) && 
-			m_biotList[i]->m_bitmapWidth > 0 && 
-			m_biotList[i]->m_bitmapHeight > 0)
-			m_biotList[i]->Draw();
-
-	FreeBitPadDC();
-	VERIFY(DeleteDC(m_hMemoryDC));
-}*/
-//////////////////////////////////////////////////////////////////////
-// Paint
-//
-// How do we know if the biot has an bitmap filled in?
-//
 /*
-void Environment::Paint(CDC* pDC, CRect& rect)
-{
-	BRect c((RECT*)&rect);
-
-	m_hScreenDC = pDC->m_hDC;
-	m_hMemoryDC = CreateCompatibleDC(m_hScreenDC);
-
-	CDC dcImage;
-
-	dcImage.Attach(m_hMemoryDC);
-
-	// Paint the image.
-	CBitmap* pOldBitmap = dcImage.SelectObject(&m_topBitmap);
-	int width = 0;
-	while (width < rect.Width())
-	{
-		pDC->BitBlt(width, 0, m_topBm.bmWidth, m_topBm.bmHeight, &dcImage, 0, 0, SRCCOPY);
-		width += m_topBm.bmWidth;
-	}
-	dcImage.SelectObject(pOldBitmap);
-
-	int height = m_topBm.bmHeight;
-	float scale =  (100.0f * 10.0f) / (float)(rect.Height() - (m_topBm.bmHeight + m_bottomBm.bmHeight));
-	float d = 0;
-	while(height < m_bottom)
-	{
-		CRect rect(0, height, rect.Width(), height + 20);
-//		TRACE("COLOR = %d at height %d\n", 100 - d, height);
-		pDC->FillSolidRect(rect, RGB(10, 10, 100 - (int) d));
-		height += 10;
-		d += scale;
-	}
-
-	pOldBitmap = dcImage.SelectObject(&m_bottomBitmap);
-	width = 0;
-	int bottom = rect.Height() - m_bottomBm.bmHeight;
-	while (width < rect.Width())
-	{
-		pDC->BitBlt(width, bottom, m_bottomBm.bmWidth, m_bottomBm.bmHeight, &dcImage, 0, 0, SRCCOPY);
-		width += m_bottomBm.bmWidth;
-	}
-	dcImage.SelectObject(pOldBitmap);
-
-
-	dcImage.Detach();
-
-	for (int i = 0; i < m_biotList.GetSize(); i++)
-		if (c.Touches(*m_biotList[i]) && 
-			m_biotList[i]->m_bitmapWidth > 0 && 
-			m_biotList[i]->m_bitmapHeight > 0)
-			m_biotList[i]->Draw();
-
-	FreeBitPadDC();
-	VERIFY(DeleteDC(m_hMemoryDC));
-}
-
-
-//////////////////////////////////////////////////////////////////////
-// OpenEnvironmentStatistics
-//
-//
-void Environment::OpenEnvironmentStatistics(CWnd* pWnd)
-{
-	if (!m_pEnvStatsWnd)
-		CEnvStatsWnd::CreateWnd(this, pWnd, &m_pEnvStatsWnd);
-
-	if (m_pEnvStatsWnd)
-		m_pEnvStatsWnd->PaintNow();
-}
 
 
 /////////////////////////////////////////////////////////////////////
@@ -1206,36 +973,6 @@ void Environment::MagnifyBiot(CDC& dc, Biot* pBiot, CRect& rect)
 		height = (int)(fWidth * pBiot->Height());
 	}
 
-		
-	HDC hMemoryDC = ::CreateCompatibleDC(dc);
-
-	CDC mem;
-
-	mem.Attach(hMemoryDC);
-	HBITMAP hOld = (HBITMAP) SelectObject(hMemoryDC, pBiot->m_hBitmap);
-
-	CRect biot;
-	biot.left   = (rect.Width() - width) / 2;
-	biot.top    = (rect.Height() - height) / 2;
-	biot.right  = biot.left + width;
-	biot.bottom = biot.top + height;
-
-	dc.StretchBlt(biot.left, biot.top, biot.Width(), biot.Height(),
-		&mem, 0, 0, pBiot->Width(), pBiot->Height(), SRCCOPY);
-
-	CRect black(0, 0, biot.left, rect.bottom);
-		dc.FillSolidRect(black, RGB(0, 0, 0));
-
-	black.SetRect(biot.right, 0, rect.right, rect.bottom);
-	dc.FillSolidRect(black, RGB(0, 0, 0));
-	
-	black.SetRect(biot.left, 0, biot.right, biot.top);
-	dc.FillSolidRect(black, RGB(0, 0, 0));
-
-	black.SetRect(biot.left, biot.bottom, biot.right, rect.bottom);
-	dc.FillSolidRect(black, RGB(0, 0, 0));
-
-	SelectObject(hMemoryDC, hOld);
 }
 
 */
@@ -1250,274 +987,8 @@ Biot* Environment::HitCheck(Biot *me, BRectSortPos& pos)
 	return pBiot;
 }
 
-/////////////////////////////////////////////////////////////////////
-// BiotOperation
-//
-//
-/*
-void Environment::BiotOperation(CScrollView* pView, int x, int y, int operation)
-{
-	Biot* pBiot = NULL;
 
-    m_bBlocked = true;
-
-	// Create our display context
-	CDC* pScreenDC = pView->GetDC();
-	pView->OnPrepareDC(pScreenDC);
-
-	m_hScreenDC = pScreenDC->GetSafeHdc();
-	m_hMemoryDC = ::CreateCompatibleDC(m_hScreenDC);
-
-
-	if (m_bIsSelected)
-	{
-		pBiot = m_biotList.FindBiotByID(m_selectedId);
-
-        m_bIsSelected = false;
-		m_selectedId  = 0;
-
-		if (pBiot)
-		{
-			pBiot->Erase();
-			pBiot->PrepareDraw(Biot::REDRAW);
-			pBiot->Draw();
-		}
-	}
-
-	BRectSortPos pos;
-	pos.FindRectsInPoint(x, y);
-	Biot* pNewBiot = dynamic_cast<Biot*>(m_sort.IterateRects(pos));
-
-	if (pNewBiot == NULL)
-	{
-		if (operation == IDC_RELOCATE && pBiot)
-		{
-			pBiot->Erase();
-			pBiot->origin.x = x;
-			pBiot->origin.y = y;
-			pBiot->SetScreenRect();
-
-			pBiot->vector.setX(x);
-			pBiot->vector.setY(y);
-
-			pBiot->SetErasePosition();
-			pBiot->Draw();
-		}
-
-		if (operation == IDC_LOAD)
-		{
-			LoadBiot(x, y);
-		}
-
-		VERIFY(::DeleteDC(m_hMemoryDC));
-		VERIFY(pView->ReleaseDC(pScreenDC));
-		m_hScreenDC = NULL;
-
-		if (m_pMagnifyWnd)
-			m_pMagnifyWnd->PostMessage(WM_CLOSE);
-
-        m_bBlocked = false;
-		return;
-	}
-
-	pBiot         = pNewBiot;//m_biotList[nBiot];
-	m_operation   = operation;
-	m_selectedId  = pBiot->m_Id;
-    m_bIsSelected = true;
-
-	if (pBiot)
-	{
-		pBiot->Erase();
-		pBiot->PrepareDraw(Biot::REDRAW);
-		pBiot->Draw();
-	}
-
-	switch(operation)
-	{
-		case IDC_TERMINATE:
-		{
-			PlayResource("PL.Terminate");
-			pBiot->newType = YELLOW_LEAF;
-			pBiot->m_age = pBiot->m_maxAge;
-		}
-		break;
-
-		case IDC_EDIT:
-			PlayResource("PL.Edit");
-
-			pBiot->Mutate(100);
-			pBiot->newType = WHITE_LEAF;
-			m_sort.Move(pBiot);
-
-//			if (!m_editor.GetSafeHwnd())
-//				m_editor.Create(IDD_EDITOR, pView);
-//			m_editor.UpdateBiot(pBiot);
-//			m_editor.ShowWindow(SW_SHOWNORMAL);
-//			m_editor.SetActiveWindow();
-			break;
-
-		case IDC_FEED:
-			PlayResource("PL.Feed");
-			pBiot->energy += pBiot->childBaseEnergy;
-			pBiot->newType = GREEN_LEAF;
-			break;
-
-		case IDC_MAGNIFY:
-			if (!m_pMagnifyWnd)
-				CMagnifyWnd::CreateWnd(this, pView, &m_pMagnifyWnd);
-
-			if (m_pMagnifyWnd)
-				m_pMagnifyWnd->PaintNow(pBiot);
-
-			break;
-
-		case IDC_SAVE:
-			SaveBiot(pBiot);
-			break;
-
-		case IDC_LOAD:
-			break;
-
-		case IDC_CURE:
-			if (pBiot->m_nSick == 0)
-			{
-				PlayResource("PL.TooOld");
-				pBiot->newType = PURPLE_LEAF;
-				pBiot->m_nSick = 200;
-			}
-			else
-			{
-				pBiot->newType = -1;
-				pBiot->m_nSick = 0;
-			}
-			break;
-	}
-
-	if (operation == IDC_TERMINATE ||
-		operation == IDC_FEED ||
-		operation == IDC_EDIT ||
-		operation == IDC_CURE)
-	{
-		pBiot->Erase();
-		if (operation == IDC_EDIT)
-			pBiot->SetScreenRect();
-
-//		pBiot->newType = WHITE_LEAF;
-		pBiot->PrepareDraw(Biot::REDRAW);
-
-		for (int i = 0; i < 2; i++)
-		{
-			pBiot->Draw();
-			Sleep(150);
-			pBiot->Erase();
-			Sleep(150);
-		}
-		pBiot->newType = -1;
-		pBiot->PrepareDraw(Biot::REDRAW);
-		pBiot->Draw();
-	}
-
-	VERIFY(::DeleteDC(m_hMemoryDC));
-	VERIFY(pView->ReleaseDC(pScreenDC));
-	m_hScreenDC = NULL;
-
-    m_bBlocked = false;
-}
-*/
-/*
-///////////////////////////////////////////////////////////////
-// GetDefaultSettings
-//
-// Reads the registry to retrieve default settings
-//
-void Environment::GetDefaultSettings()
-{
-	CKeyRegistry& registry = AfxUserRegistry();
-
-	options.bSoundOn = registry.GetValue(szSound, options.bSoundOn);
-    if (options.bSoundOn != false)
-        options.bSoundOn = true;
-
-	if (!AfxIsNT() || AfxGetPLife().GetView() != CPrimCmdLine::SHOW_SAVER_WINDOW)
-	{
-		options.bMouse = registry.GetValue(szMouse, options.bMouse);
-        if (options.bMouse != false)
-            options.bMouse = true;
-	}
-	else
-        options.bMouse = false;
-
-	options.nSexual = registry.GetValue(szAsexual, options.nSexual);
-	if (options.nSexual < 1 ||
-		options.nSexual > 3)
-		options.nSexual = 3;	
-
-	options.bSiblingsAttack = registry.GetValue(szSiblingsAttack, options.bSiblingsAttack);
-    if (options.bSiblingsAttack != false)
-        options.bSiblingsAttack = true;
-
-	options.bParentAttack = registry.GetValue(szParentAttack, options.bParentAttack);
-    if (options.bParentAttack != false)
-        options.bParentAttack = true;
-		
-
-	options.chance = registry.GetValue(szChance, options.chance);
-	if (options.chance < 0)
-		options.chance = 41;
-
-	options.m_initialPopulation    = registry.GetValue(szPopulation, options.m_initialPopulation);
-	if (options.m_initialPopulation <= 0)
-		options.m_initialPopulation = 1;
-	options.regenCost            = registry.GetValue(szRegenCost,  options.regenCost);
-	options.regenTime            = registry.GetValue(szRegenTime,  options.regenTime);
-	options.m_leafEnergy         = registry.GetValue(szGreenValue, options.m_leafEnergy);
-
-	options.SetFriction(registry.GetValue(szFriction, options.GetFriction()));
-
-	options.startNew             = registry.GetValue(szStartNew, options.startNew);
-	if (options.startNew < 0 || 
-		options.startNew > 1)
-		options.startNew = 1;
-
-	sock.GetDefaultSettings();
-}     
-
-
-///////////////////////////////////////////////////////////////
-// SetDefaultSettings
-//
-// Writes the registry to retrieve default settings
-//
-
-void Environment::SetDefaultSettings()
-{
-	CRegistry& registry = AfxUserRegistry();
-	
-	registry.SetValue(szSound, options.bSoundOn);
-	registry.SetValue(szAsexual, options.nSexual);
-	registry.SetValue(szMouse, options.bMouse);	
-
-	registry.SetValue(szSiblingsAttack, options.bSiblingsAttack);
-	registry.SetValue(szParentAttack, options.bParentAttack);
-  
-	registry.SetValue(szChance, options.chance);
-	registry.SetValue(szPopulation, options.m_initialPopulation);
-
-	registry.SetValue(szRegenCost, options.regenCost);
-	registry.SetValue(szRegenTime, options.regenTime);
-
-	registry.SetValue(szGreenValue, options.m_leafEnergy);
-  
-	registry.SetValue(szStartNew, options.startNew);
-
-	registry.SetValue(szFriction, options.GetFriction());
-
-	sock.SetDefaultSettings();
-}
-
-*/
-
-///////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////
 // Serialize
 //
 //Fox BEGIN
@@ -1619,134 +1090,5 @@ void Environment::Serialize(QDataStream& ar)
 }     
 //Fox END
 */
-//////////////////////////////////////////////////////
-// SaveBiot
-//
-//
-/*
-void Environment::SaveBiot(Biot* pBiot)
-{
-	static char BASED_CODE szFilter[] = _T("Biot Files (*.bot)|*.bot|");
 
-    CFileDialog dlg(false, _T("bot"), pBiot->GetFullName(),
-		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST,
-		szFilter);
-
-    std::string sDir;
-	AfxCommonRegistry().GetString(_T("biot.path.save"), sDir);
-
-	if (sDir.IsEmpty())
-	{
-		AfxCommonRegistry().GetString(_T("path"), sDir);
-		sDir += _T("\\Biots");
-	}
-
-	dlg.m_ofn.lpstrInitialDir = sDir;
-	dlg.m_ofn.lpstrTitle = _T("Capture biot to a file:");
-
-	if (dlg.DoModal() == IDOK)
-	{
-		try {
-			CFile file(dlg.GetPathName(), CFile::modeCreate | CFile::shareExclusive | CFile::modeWrite);
-            QDataStream ar(&file, QDataStream::store);
-		    pBiot->Serialize(ar);
-			ar.Close();
-			file.Flush();
-			file.Close();
-
-            std::string sPath = dlg.GetPathName();
-			int nPosition = sPath.ReverseFind('\\');
-			if (nPosition != -1)
-				AfxCommonRegistry().SetString(_T("biot.path.save"), sPath.Left(nPosition));
-		}
-		catch (CException* pEx)
-		{
-	        TCHAR    szCause[255];
-	        pEx->GetErrorMessage(szCause, 255);
-		
-            std::string sError = _T("Unable to save file:\n");
-			sError += szCause;
-			AfxMessageBox(sError);
-			pEx->Delete();
-		}
-	}
-}
-*/
-
-//////////////////////////////////////////////////////
-// LoadBiot
-//
-//
-/*
-void Environment::LoadBiot(int x, int y)
-{
-	static char BASED_CODE szFilter[] = _T("Biot Files (*.bot)|*.bot|");
-
-    CFileDialog dlg(true, _T("bot"), NULL,
-		OFN_HIDEREADONLY | OFN_PATHMUSTEXIST,
-		szFilter);
-
-    std::string sDir;
-	AfxCommonRegistry().GetString(_T("biot.path.load"), sDir);
-
-	if (sDir.IsEmpty())
-	{
-		AfxCommonRegistry().GetString(_T("path"), sDir);
-		sDir += _T("\\Biots");
-	}
-
-	dlg.m_ofn.lpstrInitialDir = sDir;
-	dlg.m_ofn.lpstrTitle = _T("Release biot from a file:");
-
-	if(dlg.DoModal() == IDOK)
-	{
-		try {
-			CFile file(dlg.GetPathName(), CFile::modeRead | CFile::shareDenyWrite);
-
-            QDataStream ar(&file, QDataStream::load);
-
-			Biot* pBiot = new Biot(*this);
-
-			if (!pBiot)
-				return;
-
-			pBiot->Serialize(ar);
-
-			AddBiot(pBiot);
-
-			pBiot->origin.x = x;
-			pBiot->origin.y = y;
-			pBiot->SetScreenRect();
-
-			pBiot->vector.setX(x);
-			pBiot->vector.setY(y);
-
-			pBiot->SetErasePosition();
-			pBiot->OnOpen();
-
-			pBiot->Draw();
-
-			m_stats.m_arrivals++;
-
-			ar.Close();
-			file.Close();
-
-            std::string sPath = dlg.GetPathName();
-			int nPosition = sPath.ReverseFind('\\');
-			if (nPosition != -1)
-				AfxCommonRegistry().SetString(_T("biot.path.load"), sPath.Left(nPosition));
-		}
-		catch (CException* pEx)
-		{
-	        TCHAR    szCause[255];
-	        pEx->GetErrorMessage(szCause, 255);
-		
-            std::string sError = _T("Unable to load file:\n");
-			sError += szCause;
-			AfxMessageBox(sError);
-			pEx->Delete();
-		}
-	}
-}
-*/
 
