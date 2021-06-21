@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "environ.h"
 #include "biots.h"
-
+using namespace rapidjson;
 ////////////////////////////////////////////////////////
 // GeneSegment
 //

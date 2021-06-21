@@ -2198,20 +2198,20 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
     v.AddMember("max_genes", max_genes, allocator);
     v.AddMember("genes", genes, allocator);
-    v.AddMember("origin_x", origin.x(), allocator);
-    v.AddMember("origin_y", origin.y(), allocator);
+    v.AddMember("origin_x", origin.x, allocator);
+    v.AddMember("origin_y", origin.y, allocator);
     v.AddMember("energy", energy, allocator);
     v.AddMember("bDie", bDie, allocator);
-    v.AddMember("m_Id", m_Id, allocator);
-    v.AddMember("m_motherId", m_motherId, allocator);
+    v.AddMember("m_Id", (uint32_t)m_Id, allocator);
+    v.AddMember("m_motherId", (uint32_t)m_motherId, allocator);
     v.AddMember("genes2", genes2, allocator);
     v.AddMember("stepEnergy", stepEnergy, allocator);
     v.AddMember("ratio", ratio, allocator);
-    v.AddMember("m_age", m_age, allocator);
-    v.AddMember("m_sName", Value(m_sName.c_str(), allocator), allocator);
-    v.AddMember("m_sWorldName", Value(m_sWorldName.c_str(), allocator), allocator);
-    v.AddMember("m_sFatherName", Value(m_sFatherName.c_str(), allocator), allocator);
-    v.AddMember("m_sFatherWorldName", Value(m_sFatherWorldName.c_str(), allocator), allocator);
+    v.AddMember("m_age", (uint32_t)m_age, allocator);
+    v.AddMember("m_sName", Value(m_sName, allocator), allocator);
+    v.AddMember("m_sWorldName", Value(m_sWorldName, allocator), allocator);
+    v.AddMember("m_sFatherName", Value(m_sFatherName, allocator), allocator);
+    v.AddMember("m_sFatherWorldName", Value(m_sFatherWorldName, allocator), allocator);
 }
 
 void Biot::SerializeJsonLoad(const rapidjson::Value& v)
@@ -2253,8 +2253,8 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
 
     max_genes = v["max_genes"].GetInt();
     genes = v["genes"].GetInt();
-    origin.setX(v["origin_x"].GetInt());
-    origin.setY(v["origin_y"].GetInt());
+    origin.x = v["origin_x"].GetInt();
+    origin.y = v["origin_y"].GetInt();
     energy = v["energy"].GetInt();
     bDie = v["bDie"].GetBool();
     m_Id = v["m_Id"].GetInt();

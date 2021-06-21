@@ -145,7 +145,7 @@
       <MinimalRebuild>true</MinimalRebuild>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalIncludeDirectories>..\..\GraphicsServer\Include;..\source;.;C:\dev\lib\GnuWin32\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\GraphicsServer\Include;..\source;.;C:\dev\lib\GnuWin32\include;C:\dev\lib\rapidjson-1.1.0\rapidjson-1.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_DEBUG_BRAIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerListingLocation>.\..\..\Build\Debug\</AssemblerListingLocation>
       <BrowseInformation>true</BrowseInformation>
@@ -175,7 +175,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OutputFile>..\..\Build\Debug/Primordial Life.exe</OutputFile>
-      <AdditionalLibraryDirectories>C:\dev\lib\GnuWin32\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\dev\GnuWin32\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>zlib.lib;Winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

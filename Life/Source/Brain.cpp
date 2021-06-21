@@ -60,8 +60,8 @@ void ProductTerm::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
     Document::AllocatorType& allocator = d.GetAllocator();
 
-    v.AddMember("m_dwMask", m_dwMask, allocator);
-    v.AddMember("m_dwInvert", m_dwInvert, allocator);
+    v.AddMember("m_dwMask", (uint32_t)m_dwMask, allocator);
+    v.AddMember("m_dwInvert", (uint32_t)m_dwInvert, allocator);
 }
 
 void ProductTerm::SerializeJsonLoad(const rapidjson::Value& v)
@@ -314,6 +314,26 @@ void CommandArgument::Serialize(CArchive& ar)
 		ar << m_rate;
 		ar << m_degrees;
 	}
+}
+
+void CommandArgument::SerializeJson(rapidjson::Document& d, rapidjson::Value& v)
+{
+	Document::AllocatorType& allocator = d.GetAllocator();
+
+	v.AddMember("m_command", Value(m_command), allocator);
+	v.AddMember("m_limb", Value(m_limb), allocator);
+	v.AddMember("m_segment", Value(m_segment), allocator);
+	v.AddMember("m_rate", Value(m_rate), allocator);
+	v.AddMember("m_degrees", Value(m_degrees), allocator);
+}
+
+void CommandArgument::SerializeJsonLoad(const rapidjson::Value& v)
+{
+	m_command = v["m_command"].GetInt();
+	m_limb = v["m_limb"].GetUint();
+	m_segment = v["m_segment"].GetUint();
+	m_rate = v["m_rate"].GetUint();
+	m_degrees = v["m_degrees"].GetUint();
 }
 
 void CommandArgument::Randomize(void)
