@@ -34,6 +34,10 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     QRect rect(0, 0, 1000, 600);
+    QPen whitePen(QColor(255,255,255));
+    QGraphicsRectItem *gri = new QGraphicsRectItem(rect);
+    gri->setPen(whitePen);
+    this->scene.addItem(gri);
 
     this->env.options.Reset(1000, 600);
 
