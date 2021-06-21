@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    bool load = false;
+    bool load = true;
 
     const Value *parsedBiots = nullptr;
     int numBiots = 2;
@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
         numBiots = parsedBiots->Size();
     }
 
-    QRect rect(0, 0, 1000, 600);
+    QRect rect(0, 0, 2000, 1500);
     QPen whitePen(QColor(255,255,255));
     QGraphicsRectItem *gri = new QGraphicsRectItem(rect);
     gri->setPen(whitePen);

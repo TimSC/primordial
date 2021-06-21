@@ -348,7 +348,7 @@ void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
     m_sex = v["m_sex"].GetUint();
     m_asexual = v["m_asexual"].GetUint();
     m_chanceMale = v["m_chanceMale"].GetUint();
-    m_maxAge = v["m_maxAge"].GetUint();
+    m_maxAge = v["m_maxAge"].GetInt();
 
     if (m_children > 8 || m_children == 0)
         m_children = 8;

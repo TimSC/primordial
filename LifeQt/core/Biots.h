@@ -361,6 +361,7 @@ public:
 //		return (short) ((type == WHITE_LEAF && !trait.IsMale() && trait.IsAsexual())?GREEN_LEAF:type);
 	}
 
+    //Get world coordinates of gene line
     int x1(int gene)
     {
       return startPt[gene].x() + origin.x();

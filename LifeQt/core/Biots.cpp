@@ -11,6 +11,8 @@
 
 using namespace rapidjson;
 
+const double rotOffset = 180.0;
+
 //////////////////////////////////////////////////////////////////////
 // Biot Class
 //
@@ -258,8 +260,8 @@ int Biot::RandomCreate(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 
 	GetName();
 
-    this->graphics->setPos(this->origin);
-    this->graphics->setRotation(this->vector.GetR()-90.0);
+    //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
+    //this->graphics->setRotation(this->vector.GetR()+rotOffset);
 
 	return i;
 }
@@ -404,6 +406,8 @@ int Biot::PlaceRandom(void)
   vector.setX(origin.x());
   vector.setY(origin.y());
 
+  //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
+  //this->graphics->setRotation(this->vector.GetR()+rotOffset);
   UpdateGraphics();
   SetErasePosition();
   return i;
@@ -867,12 +871,19 @@ void Biot::SetErasePosition(void)
 
 void Biot::UpdateGraphics()
 {
-    QRect rc(0, 0, Width(), Height());
+    //this->graphics->setPos(0, 0);
+    //this->graphics->setRotation(0);
 
-	if (env.BiotShouldBox(m_Id))
+    QRect rc(0, 0, Width(), Height());
+    QPen whitePen(QColor(255,255,255));
+
+    if (env.BiotShouldBox(m_Id))
 	{
         if (boundingRect == nullptr)
+        {
             boundingRect = new QGraphicsRectItem(rc, graphics);
+            boundingRect->setPen(whitePen);
+        }
         else
             boundingRect->setRect(rc);
     }
@@ -887,10 +898,10 @@ void Biot::UpdateGraphics()
     if (m_nSick and false)
 	{
         /*
-		if (pen > -1)
-			hOldPen = (HPEN) ::SelectObject(env.m_hMemoryDC, env.options.hPen[pen]);
-		else
-			hOldPen = (HPEN) ::SelectObject(env.m_hMemoryDC, env.options.hPen[PURPLE_LEAF]);
+        if (pen > -1)
+            hOldPen = (HPEN) ::SelectObject(env.m_hMemoryDC, env.options.hPen[pen]);
+        else
+            hOldPen = (HPEN) ::SelectObject(env.m_hMemoryDC, env.options.hPen[PURPLE_LEAF]);
 */
         for (int i = 0; i < genes; i++)
 		{
@@ -947,13 +958,13 @@ void Biot::UpdateGraphics()
                 QGraphicsLineItem *line = nullptr;
                 if(lineCount >= lines.size())
                 {
-                    line = new QGraphicsLineItem(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y(), graphics);
+                    line = new QGraphicsLineItem(x1(i), y1(i), x2(i), y2(i), graphics);
                     lines.append(line);
                 }
                 else
                 {
                     line = lines[lineCount];
-                    line->setLine(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y());
+                    line->setLine(x1(i), y1(i), x2(i), y2(i));
                 }
                 line->setPen(env.options.pens[aPen]);
                 lineCount += 1;
@@ -1337,6 +1348,11 @@ CLine cLine;
 		{
 			env.PlayResource("PL.TooOld");
             //Erase();
+
+            UpdateGraphics();
+            //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
+            //this->graphics->setRotation(this->vector.GetR()+rotOffset);
+
             return false;
 		}
         bChangeSize = true;
@@ -1412,6 +1428,10 @@ CLine cLine;
 			env.PlayResource("PL.NoEnergy");
 
         //Erase();
+        UpdateGraphics();
+        //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
+        //this->graphics->setRotation(this->vector.GetR()+rotOffset);
+
         return false;
 	}
 
@@ -1479,8 +1499,8 @@ CLine cLine;
 	}
 
     UpdateGraphics();
-    this->graphics->setPos(this->origin);
-    this->graphics->setRotation(this->vector.GetR()-90.0);
+    //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
+    //this->graphics->setRotation(this->vector.GetR()+rotOffset);
 
     return true;
 }
@@ -2209,7 +2229,7 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
     origin.setX(v["origin_x"].GetInt());
     origin.setY(v["origin_y"].GetInt());
     energy = v["energy"].GetInt();
-    bDie = v["bDie"].GetBool();
+    bDie = v["bDie"].GetInt();
     m_Id = v["m_Id"].GetInt();
     m_motherId = v["m_motherId"].GetInt();
     genes2 = v["genes2"].GetInt();
@@ -2259,7 +2279,10 @@ bool Biot::OnOpen()
 
 //	if (env.WithinBorders(*this))
 //	{
+    //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
+    //this->graphics->setRotation(this->vector.GetR()+rotOffset);
     UpdateGraphics();
+
     SetErasePosition();
 //		return true;
 //	}

@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <algorithm>
+#include <iostream>
 #include <QDateTime>
 #include <QThread>
 //#include "LoadBitmap.h"
