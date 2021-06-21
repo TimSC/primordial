@@ -9,6 +9,7 @@
 #include "environ.h"
 #include "biots.h"
 
+using namespace rapidjson;
 
 //////////////////////////////////////////////////////////////////////
 // Biot Class
@@ -2136,6 +2137,155 @@ void Biot::Serialize(CArchive& ar)
 		ar << m_sFatherName;
 		ar << m_sFatherWorldName;
 	}
+}
+
+
+void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    const uint8_t archiveVersion = 11;
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("archiveVersion", Value(archiveVersion), allocator);
+
+    // Store or load other objects
+    Value traitJson(kObjectType);
+    trait.SerializeJson(d, traitJson);
+    v.AddMember("trait", traitJson, allocator);
+
+    Value commJson(kObjectType);
+    m_commandArray.SerializeJson(d, commJson);
+    v.AddMember("m_commandArray", commJson, allocator);
+
+    Value storeArrJson(kArrayType);
+    for (int i = 0; i < MAX_SYMMETRY; i++)
+    {
+        Value storeJson(kObjectType);
+        m_store[i].SerializeJson(d, storeJson, *this);
+        storeArrJson.PushBack(storeJson, allocator);
+    }
+    v.AddMember("m_store", storeArrJson, allocator);
+
+    Value trait2Json(kObjectType);
+    trait2.SerializeJson(d, trait2Json);
+    v.AddMember("trait2", trait2Json, allocator);
+
+    Value comm2Json(kObjectType);
+    m_commandArray2.SerializeJson(d, comm2Json);
+    v.AddMember("m_commandArray2", comm2Json, allocator);
+
+    Value vectorJson(kObjectType);
+    vector.SerializeJson(d, vectorJson);
+    v.AddMember("vector", vectorJson, allocator);
+
+    //short    state[MAX_GENES];
+    Value stateArray(kArrayType);
+    for(int i=0; i<MAX_GENES; i++)
+        stateArray.PushBack(state[i], allocator);
+    v.AddMember("state", stateArray, allocator);
+
+    Value m_retractDrawnArray(kArrayType);
+    Value m_retractRadiusArray(kArrayType);
+    Value m_retractSegmentArray(kArrayType);
+    for(int i=0; i<MAX_SYMMETRY; i++)
+    {
+        m_retractDrawnArray.PushBack(m_retractDrawn[i], allocator);
+        m_retractRadiusArray.PushBack(m_retractRadius[i], allocator);
+        m_retractSegmentArray.PushBack(m_retractSegment[i], allocator);
+    }
+    v.AddMember("m_retractDrawn", m_retractDrawnArray, allocator);
+    v.AddMember("m_retractRadius", m_retractRadiusArray, allocator);
+    v.AddMember("m_retractSegment", m_retractSegmentArray, allocator);
+
+    v.AddMember("max_genes", max_genes, allocator);
+    v.AddMember("genes", genes, allocator);
+    v.AddMember("origin_x", origin.x(), allocator);
+    v.AddMember("origin_y", origin.y(), allocator);
+    v.AddMember("energy", energy, allocator);
+    v.AddMember("bDie", bDie, allocator);
+    v.AddMember("m_Id", m_Id, allocator);
+    v.AddMember("m_motherId", m_motherId, allocator);
+    v.AddMember("genes2", genes2, allocator);
+    v.AddMember("stepEnergy", stepEnergy, allocator);
+    v.AddMember("ratio", ratio, allocator);
+    v.AddMember("m_age", m_age, allocator);
+    v.AddMember("m_sName", Value(m_sName.c_str(), allocator), allocator);
+    v.AddMember("m_sWorldName", Value(m_sWorldName.c_str(), allocator), allocator);
+    v.AddMember("m_sFatherName", Value(m_sFatherName.c_str(), allocator), allocator);
+    v.AddMember("m_sFatherWorldName", Value(m_sFatherWorldName.c_str(), allocator), allocator);
+}
+
+void Biot::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+    const uint8_t archiveVersion = 11;
+    assert (v["archiveVersion"].GetInt() == archiveVersion);
+
+    // Store or load other objects
+    trait.SerializeJsonLoad(v["trait"]);
+
+    m_commandArray.SerializeJsonLoad(v["m_commandArray"]);
+
+    const Value &st = v["m_store"];
+    for (int i = 0; i < st.Size(); i++)
+        m_store[i].SerializeJsonLoad(st[i], *this);
+
+    trait2.SerializeJsonLoad(v["trait2"]);
+
+    m_commandArray2.SerializeJsonLoad(v["m_commandArray2"]);
+
+    vector.SerializeJsonLoad(v["vector"]);
+
+    // Now handle biot level variables
+    const Value &stateJson = v["state"];
+    for(int i=0; i<stateJson.Size(); i++)
+        state[i] = stateJson[i].GetInt();
+
+    const Value &retractDrawn = v["m_retractDrawn"];
+    const Value &retractRadius = v["m_retractRadius"];
+    const Value &retractSegment = v["m_retractSegment"];
+
+    for(int i=0; i<retractDrawn.Size(); i++)
+        m_retractDrawn[i] = retractDrawn[i].GetInt();
+    for(int i=0; i<retractRadius.Size(); i++)
+        m_retractRadius[i] = retractRadius[i].GetInt();
+    for(int i=0; i<retractSegment.Size(); i++)
+        m_retractSegment[i] = retractSegment[i].GetInt();
+
+    max_genes = v["max_genes"].GetInt();
+    genes = v["genes"].GetInt();
+    origin.setX(v["origin_x"].GetInt());
+    origin.setY(v["origin_y"].GetInt());
+    energy = v["energy"].GetInt();
+    bDie = v["bDie"].GetBool();
+    m_Id = v["m_Id"].GetInt();
+    m_motherId = v["m_motherId"].GetInt();
+    genes2 = v["genes2"].GetInt();
+    stepEnergy = v["stepEnergy"].GetInt();
+    ratio = v["ratio"].GetInt();
+    m_age = v["m_age"].GetInt();
+    m_sName = v["m_sName"].GetString();
+    m_sWorldName = v["m_sWorldName"].GetString();
+    m_sFatherName = v["m_sFatherName"].GetString();
+    m_sFatherWorldName = v["m_sFatherWorldName"].GetString();
+
+    if (max_genes > MAX_GENES)
+        max_genes = MAX_GENES;
+
+    if (max_genes < 4)
+        max_genes = 4;
+
+    if (genes > max_genes)
+        genes = max_genes;
+
+    if (genes < 1)
+        genes = 1;
+
+    if (ratio > MAX_RATIO)
+        ratio = MAX_RATIO;
+
+    if (ratio < trait.GetAdultRatio())
+        ratio = trait.GetAdultRatio();
+
 }
 
 

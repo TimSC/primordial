@@ -6,6 +6,7 @@
 #include "vector.h"
 #include "genotype.h"
 #include "Brain.h"
+#include "rapidjson/document.h"
 
 // Sensor Definitions
 //
@@ -176,6 +177,8 @@ class Biot: public BRectItem
     int   Initialize(BOOL bRandom = FALSE);
     int   Contacter(Biot* enemy, int dx, int dy, int& x, int& y);
 	virtual void  Serialize(CArchive& ar);
+    virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
     short LengthLoss(int nPeno, short delta);
     

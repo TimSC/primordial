@@ -46,6 +46,39 @@ void GeneSegment::Serialize(CArchive& ar)
 	}
 }
 
+void GeneSegment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("m_angle", m_angle, allocator);
+    v.AddMember("m_radius", m_radius, allocator);
+    v.AddMember("m_visible", m_visible, allocator);
+    v.AddMember("m_startSegment", m_startSegment, allocator);
+    v.AddMember("m_color0", m_color[0], allocator);
+    v.AddMember("m_color1", m_color[1], allocator);
+
+}
+
+void GeneSegment::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    m_angle = v["m_angle"].GetInt();
+    m_radius = v["m_radius"].GetUint();
+    m_visible = v["m_visible"].GetUint();
+    m_startSegment = v["m_startSegment"].GetUint();
+    m_color[0] = v["m_color0"].GetUint();
+    m_color[1] = v["m_color1"].GetUint();
+
+    // A little crash protection
+    if (m_radius > MAX_SEGMENT_LENGTH)
+        m_radius = MAX_SEGMENT_LENGTH;
+
+    if (m_color[0] >= DIM_COLOR - 1)
+        m_color[0] = 0;
+
+    if (m_color[1] >= DIM_COLOR)
+        m_color[1] = 0;
+}
+
 void GeneSegment::Randomize(int segment, BOOL bIsVisible)
 {
 	// Perhaps we just do 16 next time, or 32
@@ -223,6 +256,29 @@ void GeneLimb::Serialize(CArchive& ar)
 		ToggleSegments();
 }
 
+void GeneLimb::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    Value segsJson(kArrayType);
+    for (int i = 0; i < MAX_SEGMENTS; i++)
+    {
+        Value segJson(kObjectType);
+        m_segment[i].SerializeJson(d, segJson);
+        segsJson.PushBack(segJson, allocator);
+    }
+    v.AddMember("m_segment", segsJson, allocator);
+}
+
+void GeneLimb::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    const Value &seg = v["m_segment"];
+    for (int i = 0; i < seg.Size(); i++)
+        m_segment[i].SerializeJsonLoad(seg[i]);
+
+    ToggleSegments();
+}
+
 
 int GeneLimb::GetSegmentsVisible()
 {
@@ -335,6 +391,96 @@ void GeneTrait::Serialize(CArchive& ar)
 		ar << m_chanceMale;
 		ar << m_maxAge;
 	}
+}
+
+void GeneTrait::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    Value lineJson1(kArrayType);
+    for (int i = 0; i < MAX_LIMB_TYPES; i++)
+    {
+        Value lineJson2(kObjectType);
+        m_geneLine[i].SerializeJson(d, lineJson2);
+        lineJson1.PushBack(lineJson2, allocator);
+    }
+    v.AddMember("m_geneLine", lineJson1, allocator);
+
+    v.AddMember("m_disperse", m_disperse, allocator);
+    v.AddMember("m_children", m_children, allocator);
+    v.AddMember("m_attackChildren", m_attackChildren, allocator);
+    v.AddMember("m_attackSiblings", m_attackSiblings, allocator);
+    v.AddMember("m_species", m_species, allocator);
+    v.AddMember("m_adultRatio0", m_adultRatio[0], allocator);
+    v.AddMember("m_adultRatio1", m_adultRatio[1], allocator);
+    v.AddMember("m_lineCount", m_lineCount, allocator);
+    v.AddMember("m_offset", m_offset, allocator);
+
+    Value linesJson(kArrayType);
+    for(int i=0; i<MAX_SYMMETRY; i++)
+        linesJson.PushBack(m_lineRef[i], allocator);
+    v.AddMember("m_lineRef", linesJson, allocator);
+
+    v.AddMember("m_mirrored", m_mirrored, allocator);
+    v.AddMember("m_sex", m_sex, allocator);
+    v.AddMember("m_asexual", m_asexual, allocator);
+    v.AddMember("m_chanceMale", m_chanceMale, allocator);
+    v.AddMember("m_maxAge", m_maxAge, allocator);
+}
+
+void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    const Value &gl = v["m_geneLine"];
+    for (int i = 0; i < gl.Size(); i++)
+            m_geneLine[i].SerializeJsonLoad(gl[i]);
+
+    m_disperse = v["m_disperse"].GetUint();
+    m_children = v["m_children"].GetUint();
+    m_attackChildren = v["m_attackChildren"].GetUint();
+    m_attackSiblings = v["m_attackSiblings"].GetUint();
+    m_species = v["m_species"].GetUint();
+    m_adultRatio[0] = v["m_adultRatio0"].GetUint();
+    m_adultRatio[1] = v["m_adultRatio1"].GetUint();
+    m_lineCount = v["m_lineCount"].GetUint();
+    m_offset = v["m_offset"].GetInt();
+
+    const Value &lr = v["m_lineRef"];
+    for(int i=0; i<lr.Size(); i++)
+        m_lineRef[i] = lr[i].GetUint();
+
+    m_mirrored = v["m_mirrored"].GetUint();
+    m_sex = v["m_sex"].GetUint();
+    m_asexual = v["m_asexual"].GetUint();
+    m_chanceMale = v["m_chanceMale"].GetUint();
+    m_maxAge = v["m_maxAge"].GetUint();
+
+    if (m_children > 8 || m_children == 0)
+        m_children = 8;
+
+    if (m_species >= 16)
+        m_species = 16;
+
+    if (m_adultRatio[0] > 6 || m_adultRatio[0] == 0)
+        m_adultRatio[0] = 6;
+
+    if (m_adultRatio[1] > 6 || m_adultRatio[1] == 0)
+        m_adultRatio[1] = 6;
+
+    if (m_lineCount > 8 || m_lineCount == 0)
+        m_lineCount = 8;
+
+    if (m_sex > 1)
+        m_sex = 1;
+
+    if (m_asexual > 1)
+        m_asexual = 1;
+
+    for (int i = 0; i < MAX_SYMMETRY; i++)
+        if (m_lineRef[i] >= MAX_LIMB_TYPES)
+            m_lineRef[i] = 0;
+
+    CalculateAngles();
+
 }
 
 

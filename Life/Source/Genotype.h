@@ -7,6 +7,7 @@
 
 #include "rand.h"
 #include "PostData.h"
+#include "rapidjson/document.h"
 
 class Biot;
 
@@ -81,6 +82,8 @@ class GeneSegment : Randomizer
     void Debug(int segment, BOOL bIsVisible);
     void Mutate(int chance, int segment);
 	virtual void Serialize(CArchive& ar);
+    virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
 	double GetRadius() { return (double) m_radius; }
 	double GetAdjustedRadius(BYTE radius) { return (double) (m_radius - radius); }
@@ -135,6 +138,8 @@ public:
     void Mutate(int chance);
     void Crossover(GeneLimb&  gLine);
     virtual void Serialize(CArchive& ar);
+    virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
 	GeneSegment& GetSegment(int segment) { return m_segment[segment]; }
 	int GetSegmentsVisible();
@@ -191,6 +196,8 @@ class GeneTrait : Randomizer
     void Mutate(int chance);
     void Crossover(GeneTrait&  gTrait);
 	virtual void Serialize(CArchive& ar);
+    virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 	void CalculateAngles();
 	void PickSex()                  { m_sex = ((int) m_chanceMale > Integer(255));  }
 	void SetChanceMale(BYTE chanceMale) { m_chanceMale = chanceMale; }
