@@ -11,8 +11,6 @@
 
 using namespace rapidjson;
 
-const double rotOffset = 180.0;
-
 //////////////////////////////////////////////////////////////////////
 // Biot Class
 //
@@ -29,6 +27,8 @@ Biot::Biot(Environment& environment) : env(environment)
   assert(env.m_scene != nullptr);
   env.m_scene->addItem(graphics);
 
+  graphicsRect = new QGraphicsItemGroup();
+  env.m_scene->addItem(graphicsRect);
 }
 
 Biot::~Biot(void)
@@ -42,7 +42,7 @@ Biot::~Biot(void)
     lines.clear();
 
     env.m_scene->removeItem(graphics);
-
+    env.m_scene->removeItem(graphicsRect);
 //	FreeBitmaps();
 }
 
@@ -147,24 +147,6 @@ float Biot::PercentEnergy()
 	else
 		return f;
 }
-
-
-//////////////////////////////////////////////////////////////////////
-// FreeBitmaps
-//
-/*
-void Biot::FreeBitmaps()
-{
-	if (m_hBitmap)
-	{
-		VERIFY(DeleteObject(m_hBitmap));
-		m_hBitmap = NULL;
-	}
-
-	m_bitmapWidth  = 0;
-	m_bitmapHeight = 0;
-}
-*/
 
 //////////////////////////////////////////////////////////////////////
 // Clear Settings
@@ -299,19 +281,6 @@ void Biot::Mutate(int chance)
 
 	SetBonus();
 }
-
-
-//////////////////////////////////////////////////////////////////////
-// RunTimeVariables
-//
-//
-/*void Biot::RunTimeVariables(void)
-{
-
-
-
-}*/
-
 
 //////////////////////////////////////////////////////////////////////
 // SetRatio
@@ -648,131 +617,15 @@ double d = double(((start.x() - stop.x()) * (start.x() - stop.x())) +
   return (int64_t) sqrt(d);
 }
 
-
-//////////////////////////////////////////////////////////////////////
-// Draw 
-//
-// Draws the biot during a WM_PAINT
-//
-//
-/*
-void Biot::Draw(void)
-{
-	HBITMAP hOld;
-
-	hOld = (HBITMAP) SelectObject(env.m_hMemoryDC, m_hBitmap); 
-    assert(Width() <= m_bitmapWidth && Height() <= m_bitmapHeight);
-	VERIFY(BitBlt(env.m_hScreenDC, m_left, m_top, Width(), Height(), env.m_hMemoryDC, 0, 0, SRCPAINT));
-	SelectObject(env.m_hMemoryDC, hOld);
-
-	SetErasePosition();
-    m_bDrawn = true;
-}
-*/
-
 //////////////////////////////////////////////////////////////////////
 // EraseAndDraw - draws the biot
 //
 //
-/*
 void Biot::EraseAndDraw(int operation)
 {
-	HBITMAP hOld;
-	int  lastWidth  = Width();
-	int  lastHeight = Height();
+    PrepareErase(operation);
 
-	// Copy off current image
-	if (env.options.bNoFlickerSet || 1)
-	{
-		RECT region;
-
-		if (m_bDrawn)
-		{
-			region.left  = lastLeft;
-			region.right = lastLeft + lastWidth;
-
-			region.top    = lastTop;
-			region.bottom = lastTop + lastHeight;
-
-			PrepareErase(operation);
-
-			if (region.left > m_left)
-				region.left = m_left;
-
-			if (region.right < m_left + Width())
-				region.right = m_left + Width();
-
-			if (region.top > m_top)
-				region.top = m_top;
-
-			if (region.bottom < m_top + Height())
-				region.bottom = m_top + Height();
-		}
-		else
-		{
-			PrepareErase(operation);
-			GetRECT(&region);
-		}
-
-		// Get background bitmap
-		HDC hMemPadDC = env.GetBitPadDC(region.right - region.left, region.bottom - region.top);
-
-		VERIFY(BitBlt(hMemPadDC, 0, 0, region.right - region.left,
-			region.bottom - region.top, env.m_hScreenDC,
-			region.left, region.top, SRCCOPY));
-  
-		if (m_bDrawn)
-		{
-			// Erase
-			hOld = (HBITMAP) SelectObject(env.m_hMemoryDC, m_hBitmap);
-            assert(lastWidth <= m_bitmapWidth && lastHeight <= m_bitmapHeight);
-			VERIFY(BitBlt(hMemPadDC, lastLeft - region.left, lastTop - region.top,
-				lastWidth,
-				lastHeight, env.m_hMemoryDC, 0, 0, DSTERASE));
-			SelectObject(env.m_hMemoryDC, hOld);
-		}
-
-
-		PrepareDraw(operation);
- 
-		hOld = (HBITMAP) SelectObject(env.m_hMemoryDC, m_hBitmap);
-        assert(Width() <= m_bitmapWidth && Height() <= m_bitmapHeight);
-		VERIFY(BitBlt(hMemPadDC, m_left - region.left, m_top - region.top,
-			Width(), Height(), env.m_hMemoryDC, 0, 0, SRCPAINT));
-		SelectObject(env.m_hMemoryDC, hOld);
-
-		VERIFY(BitBlt(env.m_hScreenDC, region.left, region.top,
-			region.right - region.left, region.bottom - region.top, hMemPadDC, 0, 0, SRCCOPY));
-
-        m_bDrawn = true;
-	}
-	else
-	{
-		// Flicker drawing routines
-		PrepareErase(operation);
-
-		if (m_bDrawn)
-		{
-			hOld = (HBITMAP) SelectObject(env.m_hMemoryDC, m_hBitmap);
-            assert(lastWidth <= m_bitmapWidth && lastHeight <= m_bitmapHeight);
- 			VERIFY(BitBlt(env.m_hScreenDC, lastLeft, lastTop, lastWidth, lastHeight, env.m_hMemoryDC, 0, 0, DSTERASE));
-			SelectObject(env.m_hMemoryDC, hOld);
-		}
-
-		PrepareDraw(operation);
-
-		hOld = (HBITMAP) SelectObject(env.m_hMemoryDC, m_hBitmap);
-        assert(Width() <= m_bitmapWidth && Height() <= m_bitmapHeight);
-		VERIFY(BitBlt(env.m_hScreenDC, m_left, m_top, Width(), Height(), env.m_hMemoryDC, 0, 0, SRCPAINT));
-		SelectObject(env.m_hMemoryDC, hOld);
-
-        m_bDrawn = true;
-	}
-
-	SetErasePosition();
-	newType = -1;
 }
-*/
 
 //////////////////////////////////////////////////////////////////////
 // PrepareErase
@@ -806,52 +659,6 @@ void Biot::PrepareErase(int operation)
 	}
 }
 
-
-//////////////////////////////////////////////////////////////////////
-// CheckBitmapSize
-//
-// Cache bitmap unless size gets larger.  We only allocate
-// new bitmaps when the size grows over the NextSize
-//
-/*
-void Biot::CheckBitmapSize(int width, int height)
-{
-	if (width > m_bitmapWidth || height > m_bitmapHeight)
-	{
-		FreeBitmaps();
-
-		if (width > m_bitmapWidth)
-			m_bitmapWidth = BRect::NextSize(width);
-
-		if (height > m_bitmapHeight)
-			m_bitmapHeight = BRect::NextSize(height);
-
-        assert(m_hBitmap == NULL);
-
-		m_hBitmap = ::CreateCompatibleBitmap(env.m_hScreenDC, m_bitmapWidth, m_bitmapHeight);
-	}
-    assert(m_hBitmap);
-}
-*/
-
-//////////////////////////////////////////////////////////////////////
-// Erase - erases the biot if it was drawn
-//
-//
-/*
-void Biot::Erase(void)
-{
-	if (m_bDrawn)
-	{
-        m_bDrawn = false;
-		HBITMAP hOld = (HBITMAP) SelectObject(env.m_hMemoryDC, m_hBitmap);
-        assert(Width() <= m_bitmapWidth && Height() <= m_bitmapHeight);
-		VERIFY(BitBlt(env.m_hScreenDC, lastLeft, lastTop, Width(), Height(), env.m_hMemoryDC, 0, 0, DSTERASE));//SRCAND));
-		SelectObject(env.m_hMemoryDC, hOld);
-	}
-}
-*/
-
 //////////////////////////////////////////////////////////////////////
 // SetErasePosition
 //
@@ -871,17 +678,17 @@ void Biot::SetErasePosition(void)
 
 void Biot::UpdateGraphics()
 {
-    //this->graphics->setPos(0, 0);
-    //this->graphics->setRotation(0);
+    this->graphicsRect->setPos(CenterX(), CenterY());
+    //this->graphicsRect->setRotation(vector.GetR());
 
-    QRect rc(0, 0, Width(), Height());
+    QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
     QPen whitePen(QColor(255,255,255));
 
     if (env.BiotShouldBox(m_Id))
 	{
         if (boundingRect == nullptr)
         {
-            boundingRect = new QGraphicsRectItem(rc, graphics);
+            boundingRect = new QGraphicsRectItem(rc, graphicsRect);
             boundingRect->setPen(whitePen);
         }
         else
@@ -895,83 +702,34 @@ void Biot::UpdateGraphics()
 
     size_t lineCount = 0;
 
-    if (m_nSick and false)
-	{
-        /*
-        if (pen > -1)
-            hOldPen = (HPEN) ::SelectObject(env.m_hMemoryDC, env.options.hPen[pen]);
-        else
-            hOldPen = (HPEN) ::SelectObject(env.m_hMemoryDC, env.options.hPen[PURPLE_LEAF]);
-*/
-        for (int i = 0; i < genes; i++)
-		{
-			if (state[i] > 0)
-			{
-				//State should be zero if distance is
-                assert(distance[i] > 0);
+    for (int i = 0; i < genes; i++)
+    {
+        if (state[i] > 0)
+        {
+            short aPen = nType[i];
 
+            if (state[i] != distance[i])
+                aPen += DIM_COLOR;
 
-/*
-				VERIFY(::MoveToEx(env.m_hMemoryDC, startPt[i].x - leftX, startPt[i].y - topY, NULL));
-				VERIFY(::LineTo(env.m_hMemoryDC, stopPt[i].x - leftX, stopPt[i].y - topY));
-                */
-			}
-		}
-//		::SelectObject(env.m_hMemoryDC, hOldPen);
-	}
-	else
-	{
-/*		int aPen = -1;
-        int lastX = -999999;
-        int lastY = -999999;
-        int startX = 0;
-        int startY = 0;
+            if (m_nSick)
+                aPen = PURPLE_LEAF;
 
-//		hOldPen = (HPEN) SelectObject(env.m_hMemoryDC, env.options.hPen[0]);*/
-        for (int i = 0; i < genes; i++)
-		{
-			if (state[i] > 0)
-			{
-                short aPen = nType[i];
+            QGraphicsLineItem *line = nullptr;
+            if(lineCount >= lines.size())
+            {
+                line = new QGraphicsLineItem(x1(i), y1(i), x2(i), y2(i), graphics);
+                lines.append(line);
+            }
+            else
+            {
+                line = lines[lineCount];
+                line->setLine(x1(i), y1(i), x2(i), y2(i));
+            }
+            line->setPen(env.options.pens[aPen]);
+            lineCount += 1;
+        }
+    }
 
-				if (state[i] != distance[i])
-					aPen += DIM_COLOR;
-/*
-				if (aPen != pen)
-				{
-					pen = aPen;
-					SelectObject(env.m_hMemoryDC, env.options.hPen[pen]);
-                }*/
-
-                if (m_nSick)
-                    aPen = PURPLE_LEAF;
-
-                //startX = startPt[i].x() - leftX;
-                //startY = startPt[i].y() - topY;
-
-                //if (lastX != startX || lastY != startY)
-                //	VERIFY(::MoveToEx(env.m_hMemoryDC, startX, startY, NULL));
-
-                //lastX = stopPt[i].x() - leftX; lastY = stopPt[i].y() - topY;
-                //VERIFY(::LineTo(env.m_hMemoryDC, lastX, lastY));
-
-                QGraphicsLineItem *line = nullptr;
-                if(lineCount >= lines.size())
-                {
-                    line = new QGraphicsLineItem(x1(i), y1(i), x2(i), y2(i), graphics);
-                    lines.append(line);
-                }
-                else
-                {
-                    line = lines[lineCount];
-                    line->setLine(x1(i), y1(i), x2(i), y2(i));
-                }
-                line->setPen(env.options.pens[aPen]);
-                lineCount += 1;
-			}
-		}
-//		::SelectObject(env.m_hMemoryDC, hOldPen);
-	}
 
     for(size_t i = lineCount; i < lines.size(); i ++)
     {
@@ -1374,26 +1132,26 @@ CLine cLine;
 	// Should we recalculate (top priority)
 	if (redraw.ShouldRedraw() || dr)
 	{
-        //EraseAndDraw(RECALCULATE);
+        EraseAndDraw(RECALCULATE);
 	}
 	else
 	{
 		if (bChangeSize)
 		{
-            //EraseAndDraw(REFORM);
+            EraseAndDraw(REFORM);
 		}
 		else
 		{
 			// Do we just need to reform the bitmap?
 			if (lastType != newType || lastType != -1)
 			{
-                //EraseAndDraw(REFORM);
+                EraseAndDraw(REFORM);
 			}
 			else
 			{
 				if (dx || dy)
 				{
-                    //EraseAndDraw(NORMAL);
+                    EraseAndDraw(NORMAL);
 				}
 			}
 		}
@@ -1444,7 +1202,7 @@ CLine cLine;
 		if (ratio > trait.GetAdultRatio() && 
 			energy > stepEnergy)
 		{
-            //EraseAndDraw(GROW);
+            EraseAndDraw(GROW);
 		}
 
 		if (m_maxAge < m_age)
@@ -1949,146 +1707,6 @@ inline void Biot::InjectGenes(int type, Biot& enemy)
 		env.PlayResource("PL.Mate");
 	}
 }
-
-
-//////////////////////////////////////////////////////////////////////
-//
-// ContactEnergy
-//
-//  
-/*int64_t Biot::ContactEnergy(int type, int etype, Biot* enemy)
-{
-int64_t Energy;
-
-  if (env.leafContact[type][etype] > 0)
-  {
-    // You gain a fraction of your base energy (no greater than the enemies)
-    // This is further reduced by the % red you are
-    Energy = ((childBaseEnergy / env.leafContact[type][etype]) * colorDistance[type]) / totalDistance;
-    if (Energy > enemy->energy)
-      Energy = enemy->energy;
-  }
-  else
-  {
-    // You lose a fraction of your enemies base energy 
-    // This is further reduced by the % of the enemies color
-    Energy = ((enemy->childBaseEnergy / env.leafContact[type][etype]) * enemy->colorDistance[etype]) / enemy->totalDistance;
-  }  
-  return Energy;
-} */
-
-#if 0 //Unused?
-//////////////////////////////////////////////////////////////////////
-// LineContact
-//
-//  GREEN_LEAF
-//  BLUE_LEAF,
-//  RED_LEAF,
-//  LBLUE_LEAF,
-//  WHITE_LEAF,
-
-int64_t Biot::LineContact(int line, int eline, Biot* enemy, short* delta)
-{
-int64_t contact     = env.options.leafContact[nType[line]][enemy->nType[eline]];
-int64_t energyTransfer;
-double et;
-//FIX
-//double enemySize = ((double)enemy->totalDistance) / enemy->trait.GetLines();
-//double yourSize  = ((double)totalDistance) / trait.GetLines();
-
-double enemyTranslation = fabs(enemy->vector.getDeltaX()) + fabs(enemy->vector.getDeltaY()); 
-double translation      = fabs(vector.getDeltaX()) + fabs(vector.getDeltaY());
-
-//  translation      = vector.distance(vector.getDeltaX(), vector.getDeltaY());
-//  enemyTranslation = vector.distance(enemy->vector.getDeltaX(), enemy->vector.getDeltaY());
-
-  // Is he going to gain energy?
-  if (contact > 0)
-  {
-    // We are going to gain energy, but how much?
-    // We take the shortest line
-    *delta = std::min(state[line], enemy->state[eline]);
-
-    // We assume the enemy will lose the length after his line
-    *delta = enemy->LengthLoss(eline, *delta);
-
-    if ((enemy->totalDistance - ((int64_t)*delta)) <= 0)
-      energyTransfer = enemy->energy;
-    else
-    {
-      // The greater my relative size, the better
-      // The chunk I bit off gains me energy related to the chunk percentage of the enemy
-//      et = ((float)totalDistance / (float)(enemy->totalDistance + totalDistance) * ((float) contact * (float) enemy->energy * (float)(*delta) / (float) enemy->totalDistance));
-
-//      et = ((double)totalDistance / (double)(enemy->totalDistance + totalDistance)) + 0.5;
-
-//      if (enemySize + yourSize > 0)
-//        et = (yourSize / (enemySize + yourSize)) + 0.5;
-//      else
-//        et = 1.0;
-
-      et = ((double)enemy->energy * (double) (contact * (*delta)) / (double) enemy->totalDistance);
-
-//      if ((translation + enemyTranslation) > 0)
-//        et *= (0.5 + translation / (translation + enemyTranslation));
-
-      if ((translation + enemyTranslation) > 0)
-        et *= (0.5 + translation / (translation + enemyTranslation));
-
-      energyTransfer = (int64_t) et; //(contact * enemy->energy * ((int64_t)*delta)) / enemy->totalDistance;
-    }
-
-    energyTransfer = (energyTransfer * 3)/ 4;
-
-    *delta = 0;
-  }
-  else
-  {
-    // If your blue, you can half the impact of red
-//    if (nType[line] == BLUE_LEAF && enemy->nType[eline] == RED_LEAF)
-//      *delta = min(enemy->state[eline] >> 1, state[line]);
-//    else
-      // If your red, double the impact of blue
-//      if (nType[line] == RED_LEAF && enemy->nType[eline] == BLUE_LEAF)
-//        *delta = min(enemy->state[eline] << 1, state[line]);
-//      else
-//        if (nType[line] == BLUE_LEAF && enemy->nType[eline] == BLUE_LEAF)
-//        {
-//          *delta = min(enemy->state[eline] >> 1, state[line] >> 1);
-//          if (*delta == 0)
-//            (*delta)++;
-//        }
-//        else
-          // I lose up to my own length or his length, which ever is shorter
-          *delta = std::min(enemy->state[eline], state[line]);
-
-    short totalLoss = LengthLoss(line, *delta);
-
-    // We got a negative delta here and a totalDistance of zero
-    // All lines in state were negative - it may be line zero was attacked
-    // You pick your line, pick the enemies, possibly make your next line negative
-    if ((totalDistance - ((int64_t)totalLoss)) <= 0)
-      energyTransfer = -energy;
-    else
-    {
-      // The smaller my relative size, the bigger the loss
-      // The larger the delta, as compared to my size, the worse I'm off
-      et = ((double)energy * (double) (contact * (*delta)) / (double) totalDistance);
-
-      // The faster my emeny, the more I lose
-      if ((translation + enemyTranslation) > 0)
-        et *= (0.5 + enemyTranslation / (translation + enemyTranslation));
-
-      if (nType[line] == BLUE_LEAF)
-        energyTransfer = 0;
-      else
-        energyTransfer = (int64_t) et; //(contact * enemy->energy * ((int64_t)*delta)) / enemy->totalDistance;
-    }
-//      energyTransfer = ((contact * energy * ((int64_t)totalLoss)) / totalDistance);
-  }
-  return energyTransfer;
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 // CopyGenes
