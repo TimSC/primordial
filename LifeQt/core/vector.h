@@ -40,8 +40,8 @@ public:
 
     Vector(void);
 
-    //virtual void Serialize(QDataStream& ar);
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
     // Proposes movement in rotation, and translation
 	// Always call tryRotate first!!

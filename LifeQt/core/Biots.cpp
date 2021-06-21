@@ -2092,87 +2092,6 @@ void Biot::CopyGenes(Biot& enemy)
 // Serialize
 //
 //
-/*
-void Biot::Serialize(QDataStream& ar)
-{
-    const uint8_t archiveVersion = 11;
-    int64_t i;
-	
-	if (ar.IsLoading())
-	{
-        uint8_t version;
-		// Check version
-		ar >> version;
-		if (version != archiveVersion)
-            AfxThrowArchiveException(QDataStreamException::badSchema, _T("Biot"));
-	}
-	else
-	{
-		ar << archiveVersion;
-	}
-
-	// Store or load other objects
-	trait.Serialize(ar);
-
-	m_commandArray.Serialize(ar);
-	for (i = 0; i < MAX_SYMMETRY; i++)
-		m_store[i].Serialize(ar);
-
-	trait2.Serialize(ar);
-
-	m_commandArray2.Serialize(ar);
-
-	vector.Serialize(ar);
-
-	// Now handle biot level variables
-	if (ar.IsLoading())
-	{
-		ar.Read((LPBYTE) state, sizeof(state));
-
-		ar.Read((LPBYTE) m_retractDrawn, sizeof(m_retractDrawn));
-		ar.Read((LPBYTE) m_retractRadius, sizeof(m_retractRadius));
-		ar.Read((LPBYTE) m_retractSegment, sizeof(m_retractSegment));
-
-		ar >> max_genes;
-		ar >> genes;
-		ar >> origin;
-		ar >> energy;
-		ar >> bDie;
-		ar >> m_Id;
-		ar >> m_motherId;
-		ar >> genes2;
-		ar >> stepEnergy;
-		ar >> ratio;
-		ar >> m_age;
-		ar >> m_sName;
-		ar >> m_sWorldName;
-		ar >> m_sFatherName;
-		ar >> m_sFatherWorldName;
-
-		if (max_genes > MAX_GENES)
-			max_genes = MAX_GENES;
-
-		if (max_genes < 4)
-			max_genes = 4;
-
-		if (genes > max_genes)
-			genes = max_genes;
-
-		if (genes < 1)
-			genes = 1;
-
-		if (ratio > MAX_RATIO)
-			ratio = MAX_RATIO;
-
-		if (ratio < trait.GetAdultRatio())
-			ratio = trait.GetAdultRatio();
-	}
-	else
-	{
-
-	}
-}
-*/
 
 void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
@@ -2246,6 +2165,79 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("m_sWorldName", Value(m_sWorldName.c_str(), allocator), allocator);
     v.AddMember("m_sFatherName", Value(m_sFatherName.c_str(), allocator), allocator);
     v.AddMember("m_sFatherWorldName", Value(m_sFatherWorldName.c_str(), allocator), allocator);
+}
+
+void Biot::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+    const uint8_t archiveVersion = 11;
+    assert (v["archiveVersion"].GetInt() == archiveVersion);
+
+    // Store or load other objects
+    trait.SerializeJsonLoad(v["trait"]);
+
+    m_commandArray.SerializeJsonLoad(v["m_commandArray"]);
+
+    const Value &st = v["m_store"];
+    for (int i = 0; i < st.Size(); i++)
+        m_store[i].SerializeJsonLoad(st[i]);
+
+    trait2.SerializeJsonLoad(v["trait2"]);
+
+    m_commandArray2.SerializeJsonLoad(v["m_commandArray2"]);
+
+    vector.SerializeJsonLoad(v["vector"]);
+
+    // Now handle biot level variables
+    const Value &stateJson = v["state"];
+    for(int i=0; i<stateJson.Size(); i++)
+        state[i] = stateJson[i].GetInt();
+
+    const Value &retractDrawn = v["m_retractDrawn"];
+    const Value &retractRadius = v["m_retractRadius"];
+    const Value &retractSegment = v["m_retractSegment"];
+
+    for(int i=0; i<retractDrawn.Size(); i++)
+        m_retractDrawn[i] = retractDrawn[i].GetInt();
+    for(int i=0; i<retractRadius.Size(); i++)
+        m_retractRadius[i] = retractRadius[i].GetInt();
+    for(int i=0; i<retractSegment.Size(); i++)
+        m_retractSegment[i] = retractSegment[i].GetInt();
+
+    max_genes = v["max_genes"].GetInt();
+    genes = v["genes"].GetInt();
+    origin.setX(v["origin_x"].GetInt());
+    origin.setY(v["origin_y"].GetInt());
+    energy = v["energy"].GetInt();
+    bDie = v["bDie"].GetBool();
+    m_Id = v["m_Id"].GetInt();
+    m_motherId = v["m_motherId"].GetInt();
+    genes2 = v["genes2"].GetInt();
+    stepEnergy = v["stepEnergy"].GetInt();
+    ratio = v["ratio"].GetInt();
+    m_age = v["m_age"].GetInt();
+    m_sName = v["m_sName"].GetString();
+    m_sWorldName = v["m_sWorldName"].GetString();
+    m_sFatherName = v["m_sFatherName"].GetString();
+    m_sFatherWorldName = v["m_sFatherWorldName"].GetString();
+
+    if (max_genes > MAX_GENES)
+        max_genes = MAX_GENES;
+
+    if (max_genes < 4)
+        max_genes = 4;
+
+    if (genes > max_genes)
+        genes = max_genes;
+
+    if (genes < 1)
+        genes = 1;
+
+    if (ratio > MAX_RATIO)
+        ratio = MAX_RATIO;
+
+    if (ratio < trait.GetAdultRatio())
+        ratio = trait.GetAdultRatio();
 
 }
 

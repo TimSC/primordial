@@ -22,29 +22,6 @@ Vector::Vector()
 // Physics as interpreted by me.
 //
 //
-/*
-void Vector::Serialize(QDataStream& ar)
-{
-	if (ar.IsLoading())
-	{
-		ar >> dx;
-		ar >> dy;
-		ar >> x;
-		ar >> y;
-		ar >> dr;
-		ar >> r;
-	}
-	else
-	{
-		ar << dx;
-		ar << dy;
-		ar << x;
-		ar << y;
-		ar << dr;
-		ar << r;
-	}
-}
-*/
 
 void Vector::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
@@ -58,3 +35,12 @@ void Vector::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("r", r, allocator);
 }
 
+void Vector::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    dx = v["dx"].GetDouble();
+    dy = v["dy"].GetDouble();
+    x = v["x"].GetDouble();
+    y = v["y"].GetDouble();
+    dr = v["dr"].GetDouble();
+    r = v["r"].GetDouble();
+}

@@ -180,8 +180,8 @@ class Biot: public BRectItem
     int   RandomCreate(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
     int   Initialize(bool bRandom = false);
     int   Contacter(Biot* enemy, int dx, int dy, int& x, int& y);
-//    virtual void  Serialize(QDataStream& ar);
     virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
     short LengthLoss(int nPeno, short delta);
     

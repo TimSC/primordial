@@ -64,6 +64,12 @@ void ProductTerm::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("m_dwInvert", m_dwInvert, allocator);
 }
 
+void ProductTerm::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    m_dwMask = v["m_dwMask"].GetUint();
+    m_dwInvert = v["m_dwInvert"].GetUint();
+}
+
 //
 // ProductArray (Contains an array of product definitions)
 //
@@ -129,6 +135,17 @@ void ProductArray::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
         prodSumArr.PushBack(obj, allocator);
     }
     v.AddMember("m_productSum", prodSumArr, allocator);
+}
+
+void ProductArray::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    const Value &pt = v["m_productTerm"];
+    for (int i = 0; i < pt.Size(); i++)
+        m_productTerm[i].SerializeJsonLoad(pt[i]);
+
+    const Value &ps = v["m_productSum"];
+    for (int i = 0; i < ps.Size(); i++)
+        m_productSum[i].SerializeJsonLoad(ps[i]);
 }
 
 void ProductArray::Crossover(ProductArray& productArray)
@@ -228,6 +245,15 @@ void ProductSum::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("m_bTrue", m_bTrue, allocator);
 }
 
+void ProductSum::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    const Value &ref = v["m_reference"];
+    for (int i = 0; i < ref.Size(); i++)
+         m_reference[i] = ref[i].GetUint();
+
+    m_bTrue = v["m_bTrue"].GetBool();
+}
+
 void ProductSum::Crossover(ProductSum& productSum)
 {
 	Randomizer rand;
@@ -271,27 +297,6 @@ bool ProductSum::IsTrue(ProductArray& productArray, uint32_t dwSensor)
 // CommandArgument
 //
 //
-/*
-void CommandArgument::Serialize(QDataStream& ar)
-{
-	if (ar.IsLoading())
-	{
-		ar >> m_command;
-		ar >> m_limb;
-		ar >> m_segment;
-		ar >> m_rate;
-		ar >> m_degrees;
-	}
-	else
-	{
-		ar << m_command;
-		ar << m_limb;
-		ar << m_segment;
-		ar << m_rate;
-		ar << m_degrees;
-	}
-}
-*/
 
 void CommandArgument::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
@@ -302,6 +307,15 @@ void CommandArgument::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("m_segment", Value(m_segment), allocator);
     v.AddMember("m_rate", Value(m_rate), allocator);
     v.AddMember("m_degrees", Value(m_degrees), allocator);
+}
+
+void CommandArgument::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    m_command = v["m_command"].GetInt();
+    m_limb = v["m_limb"].GetUint();
+    m_segment = v["m_segment"].GetUint();
+    m_rate = v["m_rate"].GetUint();
+    m_degrees = v["m_degrees"].GetUint();
 }
 
 void CommandArgument::Randomize(void)
@@ -407,10 +421,24 @@ void CommandArray::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     for (int i = 0; i < GetTypeCount(); i++)
     {
         Value commJson(kObjectType);
-        m_commandLimbType[i].SerializeJson(d, v);
+        m_commandLimbType[i].SerializeJson(d, commJson);
         commLimbArrJson.PushBack(commJson, allocator);
     }
     v.AddMember("m_commandLimbType", commLimbArrJson, allocator);
+}
+
+void CommandArray::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    const Value &commArrJson = v["m_command"];
+    for (int i = 0; i < commArrJson.Size(); i++)
+        m_command[i].SerializeJsonLoad(commArrJson[i]);
+
+    m_productArray.SerializeJsonLoad(v["m_productArray"]);
+
+    const Value &commLimbArrJson = v["m_commandLimbType"];
+    for (int i = 0; i < commLimbArrJson.Size(); i++)
+        m_commandLimbType[i].SerializeJsonLoad(commLimbArrJson[i]);
+
 }
 
 void CommandArray::Crossover(CommandArray& commandArray)
@@ -517,6 +545,18 @@ void CommandLimbType::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     }
     v.AddMember("m_comref", comJson, allocator);
     v.AddMember("m_sumref", sumJson, allocator);
+}
+
+void CommandLimbType::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    const Value &cr = v["m_comref"];
+    for(int i=0; i<cr.Size(); i++)
+        m_comref[i] = cr[i].GetUint();
+
+    const Value &sr = v["m_sumref"];
+    for(int i=0; i<sr.Size(); i++)
+        m_sumref[i] = sr[i].GetUint();
+
 }
 
 void CommandLimbType::Crossover(CommandLimbType& commandLimbType)
@@ -630,6 +670,12 @@ void CommandLimbStore::SerializeJson(rapidjson::Document &d, rapidjson::Value &v
         commandArr.PushBack(commandJson, allocator);
     }
     v.AddMember("command", commandArr, allocator);
+}
+
+void CommandLimbStore::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+
 }
 
 void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
@@ -907,6 +953,12 @@ void CommandFlapLimbTypeSegment::SerializeJson(rapidjson::Document &d, rapidjson
 
 }
 
+void CommandFlapLimbTypeSegment::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+
+}
+
 ///////////////////////////////////////////////////////////////
 //Don't give me no flap!
 //
@@ -1049,6 +1101,12 @@ void CommandFlapLimbSegment::SerializeJson(rapidjson::Document &d, rapidjson::Va
 
 }
 
+void CommandFlapLimbSegment::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+
+}
+
 ///////////////////////////////////////////////////////////////
 void CommandMoveLimbSegment::Initialize(CommandLimbStore& store)
 {
@@ -1109,6 +1167,12 @@ void CommandMoveLimbSegment::SerializeJson(rapidjson::Document &d, rapidjson::Va
     v.AddMember("m_nRate", m_nRate, allocator);
     v.AddMember("m_nMaxDegrees", m_nMaxDegrees, allocator);
     v.AddMember("m_nAppliedDegrees", m_nAppliedDegrees, allocator);
+}
+
+void CommandMoveLimbSegment::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+
 }
 
 ///////////////////////////////////////////////////////////////
@@ -1174,6 +1238,12 @@ void CommandMoveLimbTypeSegment::SerializeJson(rapidjson::Document &d, rapidjson
     v.AddMember("m_nAppliedDegrees", m_nAppliedDegrees, allocator);
 }
 
+void CommandMoveLimbTypeSegment::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+
+}
+
 ///////////////////////////////////////////////////////////////
 void CommandMoveLimbSegments::Initialize(CommandLimbStore& store)
 {
@@ -1235,6 +1305,12 @@ void CommandMoveLimbSegments::SerializeJson(rapidjson::Document &d, rapidjson::V
 
 }
 
+void CommandMoveLimbSegments::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+
+}
+
 ///////////////////////////////////////////////////////////////
 void CommandMoveLimbTypeSegments::Initialize(CommandLimbStore& store)
 {
@@ -1293,6 +1369,12 @@ void CommandMoveLimbTypeSegments::SerializeJson(rapidjson::Document &d, rapidjso
     v.AddMember("m_nRate", m_nRate, allocator);
     v.AddMember("m_nMaxDegrees", m_nMaxDegrees, allocator);
     v.AddMember("m_nAppliedDegrees", m_nAppliedDegrees, allocator);
+}
+
+void CommandMoveLimbTypeSegments::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+
 }
 
 ///////////////////////////////////////////////////////////////
@@ -1376,6 +1458,12 @@ void CommandRetractLimb::SerializeJson(rapidjson::Document &d, rapidjson::Value 
     v.AddMember("m_nAppliedRadius", m_nAppliedRadius, allocator);
 }
 
+void CommandRetractLimb::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+
+}
+
 
 ///////////////////////////////////////////////////////////////
 //
@@ -1457,6 +1545,11 @@ void CommandRetractLimbType::SerializeJson(rapidjson::Document &d, rapidjson::Va
     v.AddMember("m_nAppliedRadius", m_nAppliedRadius, allocator);
 }
 
+void CommandRetractLimbType::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+
+}
 
 ///////////////////////////////////////////////////////////////
 void CommandNOP::Initialize(CommandLimbStore& /*store*/)
@@ -1471,6 +1564,11 @@ void CommandNOP::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("type", "CommandNOP", allocator);
 }
 
+void CommandNOP::SerializeJsonLoad(const rapidjson::Value& v)
+{
+
+
+}
 
 void CommandNOP::Execute(CommandLimbStore& /*store*/)
 {
@@ -1588,7 +1686,11 @@ void CommandMemory::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("m_bSet", m_bSet, allocator);
 }
 
+void CommandMemory::SerializeJsonLoad(const rapidjson::Value& v)
+{
 
+
+}
 
 
 
