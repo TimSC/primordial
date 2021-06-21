@@ -18,12 +18,20 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ifstream ifs("example.json");
-    IStreamWrapper isw(ifs);
+    bool load = false;
 
+    const Value *parsedBiots = nullptr;
+    int numBiots = 2;
     Document d;
-    d.ParseStream(isw);
-    const Value& parsedBiots = d["biots"];
+    if(load)
+    {
+        ifstream ifs("example.json");
+        IStreamWrapper isw(ifs);
+
+        d.ParseStream(isw);
+        parsedBiots = &d["biots"];
+        numBiots = parsedBiots->Size();
+    }
 
     QRect rect(0, 0, 1000, 600);
 
@@ -31,18 +39,21 @@ MainWindow::MainWindow(QWidget *parent)
 
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
     //qint64 seed = 100;
-    this->env.OnNew(this->scene, rect, parsedBiots.Size(), seed,
+    this->env.OnNew(this->scene, rect, numBiots, seed,
                 0, 1, 10);
 
     this->ui->graphicsView->setScene(&this->scene);
 
-    for(int i=0; i<parsedBiots.Size(); i++)
+    if(load)
     {
-        Biot *biot = env.m_biotList[i];
-        biot->SerializeJsonLoad(parsedBiots[i]);
+        for(int i=0; i<parsedBiots->Size(); i++)
+        {
+            Biot *biot = env.m_biotList[i];
+            biot->SerializeJsonLoad((*parsedBiots)[i]);
+            biot->OnOpen();
+        }
     }
-
-    if(0)
+    else
     {
         Document d;
         d.SetObject();
