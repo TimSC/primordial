@@ -2180,7 +2180,7 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
 
     const Value &st = v["m_store"];
     for (int i = 0; i < st.Size(); i++)
-        m_store[i].SerializeJsonLoad(st[i]);
+        m_store[i].SerializeJsonLoad(st[i], *this);
 
     trait2.SerializeJsonLoad(v["trait2"]);
 

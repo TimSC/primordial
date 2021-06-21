@@ -547,7 +547,7 @@ class CommandLimbStore
 {
 public:
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v, Biot& biot);
-    void SerializeJsonLoad(const rapidjson::Value& v);
+    void SerializeJsonLoad(const rapidjson::Value& v, Biot& biot);
 	void Initialize(int nLimbType, int nLimb, Biot& biot);
     void Execute(Biot& biot, uint32_t dwSensor);
 

@@ -42,21 +42,24 @@ MainWindow::MainWindow(QWidget *parent)
         biot->SerializeJsonLoad(parsedBiots[i]);
     }
 
-    /*Document d;
-    d.SetObject();
-    Value biotsJson(kArrayType);
-    for(int i=0; i<env.m_biotList.size(); i++)
+    if(0)
     {
-        Value biotJson(kObjectType);
-        Biot *biot = env.m_biotList[i];
-        biot->SerializeJson(d, biotJson);
-        biotsJson.PushBack(biotJson, d.GetAllocator());
+        Document d;
+        d.SetObject();
+        Value biotsJson(kArrayType);
+        for(int i=0; i<env.m_biotList.size(); i++)
+        {
+            Value biotJson(kObjectType);
+            Biot *biot = env.m_biotList[i];
+            biot->SerializeJson(d, biotJson);
+            biotsJson.PushBack(biotJson, d.GetAllocator());
+        }
+        d.AddMember("biots", biotsJson, d.GetAllocator());
+        ofstream myfile("example.json");
+        OStreamWrapper osw(myfile);
+        Writer<OStreamWrapper> writer(osw);
+        d.Accept(writer);
     }
-    d.AddMember("biots", biotsJson, d.GetAllocator());
-    ofstream myfile("example.json");
-    OStreamWrapper osw(myfile);
-    Writer<OStreamWrapper> writer(osw);
-    d.Accept(writer);*/
 
     startTimer(1);     // 1-millisecond timer
 }
