@@ -43,7 +43,8 @@ public:
     static std::string ToDays(uint32_t dwAge);
     static uint32_t   ToGenerations(const std::string &szDays);
 
-    //virtual void Serialize(QDataStream& ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
 	enum {
 		SAMPLES     = 100,
@@ -90,11 +91,14 @@ public:
 // Holds statistics related to the environment.  I just broke this off
 // from the Environment class to cut the complexity down.
 //
-class CEnvStatsList : public QList<CEnvStats *>
+class CEnvStatsList : public QList<CEnvStats>
 {
 public:
 	CEnvStatsList(){};
-    //virtual void Serialize(QDataStream& ar);
+    virtual ~CEnvStatsList();
+
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
 };
 
@@ -118,7 +122,8 @@ public:
 
 	void FreeAll();
 
-    //virtual void  Serialize(QDataStream& ar, Environment& env);
+    void SerializeJson(class Environment &env, rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(class Environment &env, const rapidjson::Value& v);
 
 private:
 	int  m_nBiot;
@@ -135,6 +140,9 @@ class Environment : public BRect, Randomizer
 public:                  
 	Environment();
 	~Environment(void);
+
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
 	Biot* HitCheck(Biot *me, BRectSortPos& pos);
 //	Biot* HitCheck(Biot *me, int* pStart = NULL); { return m_biotList.HitCheck(me, pStart); }

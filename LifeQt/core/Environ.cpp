@@ -1,11 +1,10 @@
  ///////////////////////////////////////////////////////////////////////////////
-//	      FOX WORKED ON THIS ENTIRE DOC(ANYTHING WITH 'options')
+//
 // Environment
 //
 // This class defines the environment of the biots
 //
-//
-//#include "Primordial Life.h"
+// FOX WORKED ON THIS ENTIRE DOC(ANYTHING WITH 'options')
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,11 +13,11 @@
 #include <iostream>
 #include <QDateTime>
 #include <QThread>
-//#include "LoadBitmap.h"
-//#include "MainFrm.h"
 //#include "evolve.h"
 #include "Environ.h"
 #include "Biots.h"
+
+using namespace rapidjson;
 
 // from evolve.cpp
 extern char szFile[];
@@ -50,9 +49,7 @@ char szFriction[]       = "friction";
 
 CBiotList::CBiotList() : m_nBiot(-1), m_bLooped(false)
 {
-//    Biot* nullBiot = nullptr;
-//    for(size_t i=0; i<200; i++)
- //       this->append(nullBiot);
+
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -163,42 +160,47 @@ Biot* CBiotList::HitCheck(Biot *me, int* pStart)
 // Serialize
 //
 //
-/*
-void  CBiotList::Serialize(QDataStream& ar, Environment& env)
+
+void CBiotList::SerializeJson(class Environment &env, rapidjson::Document &d, rapidjson::Value &v)
 {
-	if (ar.IsLoading())
-	{
-		FreeAll();
+    Document::AllocatorType& allocator = d.GetAllocator();
 
-		int size;
-		Biot* pBiot;
+    v.AddMember("m_bLooped", m_bLooped, allocator);
 
-		ar >> size;
-		ar >> m_bLooped;
-		ar >> m_nBiot;
+    Value biotsJson(kArrayType);
+    for(int i=0; i<env.m_biotList.size(); i++)
+    {
+        Value biotJson(kObjectType);
+        Biot *biot = env.m_biotList[i];
+        biot->SerializeJson(d, biotJson);
+        biotsJson.PushBack(biotJson, d.GetAllocator());
+    }
+    v.AddMember("biots", biotsJson, d.GetAllocator());
+}
 
-		for (int i = 0; i < size; i++)
-		{
-			if ((pBiot = new Biot(env)) != NULL)
-			{
-				pBiot->Serialize(ar);
-				Add(pBiot);
-			}
-			else
-				break;
-		}
-	}
-	else
-	{
-		ar << GetSize();
-		ar << m_bLooped;
-		ar << m_nBiot;
-		for (int i = 0; i < GetSize(); i++)
-			GetAt(i)->Serialize(ar);
-	}
-}	
+void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value& v)
+{
+    FreeAll();
 
-*/
+    Biot* pBiot = nullptr;
+
+    const Value &biotsJson = v["biots"];
+    m_nBiot = biotsJson.Size();
+
+    m_bLooped = v["m_bLooped"].GetBool();
+
+    for (int i = 0; i < m_nBiot; i++)
+    {
+        if ((pBiot = new Biot(env)) != NULL)
+        {
+            pBiot->SerializeJsonLoad(biotsJson[i]);
+            env.AddBiot(pBiot);
+        }
+        else
+            break;
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 // OnStop
 //
@@ -370,93 +372,117 @@ std::string CEnvStats::GetExtinctionsStr()
 // Serialize
 // 
 //
-/*
-void CEnvStats::Serialize(QDataStream& ar)
-{
-	const long archVersion = 2;
 
-	if (ar.IsLoading())
-	{
-		long version;
-		ar >> version;
-		ar >> m_collisionCount;
-		ar >> m_births;
-		ar >> m_deaths;
-		ar >> m_arrivals;
-		ar >> m_departures;
-		ar >> m_days;
-		ar >> m_peakPopulation;
-		ar >> m_population;
-		ar >> m_extinctions;
-		ar >> m_perWhite;
-		ar >> m_perGreen;
-		ar >> m_perRed;
-		ar >> m_perBlue;
-		ar >> m_perLtBlue;
-		ar >> m_ageRange;
-		ar >> m_ageIntervals;
-		ar.Read(m_ages, sizeof(m_ages));
-		ar.Read(m_energy, sizeof(m_energy));
-	}
-	else
-	{
-		ar << archVersion;
-		ar << m_collisionCount;
-		ar << m_births;
-		ar << m_deaths;
-		ar << m_arrivals;
-		ar << m_departures;
-		ar << m_days;
-		ar << m_peakPopulation;
-		ar << m_population;
-		ar << m_extinctions;
-		ar << m_perWhite;
-		ar << m_perGreen;
-		ar << m_perRed;
-		ar << m_perBlue;
-		ar << m_perLtBlue;
-		ar << m_ageRange;
-		ar << m_ageIntervals;
-		ar.Write(m_ages, sizeof(m_ages));
-		ar.Write(m_energy, sizeof(m_energy));
-	}
+void CEnvStats::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    const long archVersion = 2;
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("archVersion", archVersion, allocator);
+    v.AddMember("m_collisionCount", m_collisionCount, allocator);
+    v.AddMember("m_births", m_births, allocator);
+    v.AddMember("m_deaths", m_deaths, allocator);
+    v.AddMember("m_arrivals", m_arrivals, allocator);
+    v.AddMember("m_departures", m_departures, allocator);
+    v.AddMember("m_days", m_days, allocator);
+    v.AddMember("m_peakPopulation", m_peakPopulation, allocator);
+    v.AddMember("m_population", m_population, allocator);
+    v.AddMember("m_extinctions", m_extinctions, allocator);
+    v.AddMember("m_perWhite", m_perWhite, allocator);
+    v.AddMember("m_perGreen", m_perGreen, allocator);
+    v.AddMember("m_perRed", m_perRed, allocator);
+    v.AddMember("m_perBlue", m_perBlue, allocator);
+    v.AddMember("m_perLtBlue", m_perLtBlue, allocator);
+    v.AddMember("m_ageRange", m_ageRange, allocator);
+    v.AddMember("m_ageIntervals", m_ageIntervals, allocator);
+
+    Value agesArray(kArrayType);
+    for(int i=0; i<INTERVALS; i++)
+        agesArray.PushBack(Value(m_ages[i]), allocator);
+    v.AddMember("m_ages", agesArray, allocator);
+
+    Value energyArray(kArrayType);
+    for(int i=0; i<ENERGY_LEVELS; i++)
+        energyArray.PushBack(Value(m_energy[i]), allocator);
+    v.AddMember("m_energy", energyArray, allocator);
+
 }
 
-*/
+void CEnvStats::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    long version = v["archVersion"].GetInt();
+
+    m_births = v["m_births"].GetInt64();
+    m_deaths = v["m_deaths"].GetInt64();
+    m_arrivals = v["m_arrivals"].GetInt64();
+    m_departures = v["m_departures"].GetInt64();
+    m_peakPopulation = v["m_peakPopulation"].GetInt64();
+    m_population = v["m_population"].GetInt64();
+    m_extinctions = v["m_extinctions"].GetInt64();
+    m_collisionCount = v["m_collisionCount"].GetInt64();
+
+    //m_freeEnvArea = v["m_freeEnvArea"].GetInt64();
+    //m_totalEnvArea = v["m_totalEnvArea"].GetInt64();
+
+    m_ageIntervals = v["m_ageIntervals"].GetUint64();
+    m_ageRange = v["m_ageRange"].GetUint64();
+
+    m_perWhite = v["m_perWhite"].GetFloat();
+    m_perGreen = v["m_perGreen"].GetFloat();
+    m_perRed = v["m_perRed"].GetFloat();
+    m_perBlue = v["m_perBlue"].GetFloat();
+    m_perLtBlue = v["m_perLtBlue"].GetFloat();
+
+    m_days = v["m_days"].GetDouble();
+
+    const Value &ageArray = v["m_ages"];
+    for(int i=0; i<INTERVALS; i++)
+        m_ages[i] = ageArray[i].GetInt64();
+
+    const Value &energyArray = v["m_energy"];
+    for(int i=0; i<ENERGY_LEVELS; i++)
+        m_energy[i] = energyArray[i].GetInt64();
+
+}
+
 //////////////////////////////////////////////////////////
 // Serialize
 // 
 //
-/*
-void CEnvStatsList::Serialize(QDataStream& ar)
+
+CEnvStatsList::~CEnvStatsList()
 {
-	if (ar.IsLoading())
-	{
-		RemoveAll();
-
-		CEnvStats stats;
-		int count;
-
-		ar >> count;
-		while (count > 0)
-		{
-			stats.Serialize(ar);
-			AddTail(stats);
-			count--;
-		}
-	}
-	else
-	{
-		POSITION pos = GetHeadPosition();
-		ar << GetCount();
-
-		while (pos != NULL)
-			GetNext(pos).Serialize(ar);
-	}
-
 
 }
-*/
+
+void CEnvStatsList::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    Value arr(kArrayType);
+    for(auto it=this->begin(); it!=this->end(); it++)
+    {
+        Value stats(kObjectType);
+        CEnvStats &statPtr = *it;
+        statPtr.SerializeJson(d, stats);
+        arr.PushBack(stats, allocator);
+    }
+    v.AddMember("stats", arr, allocator);
+}
+
+void CEnvStatsList::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    clear();
+    const Value &arr = v["stats"];
+
+    for(int i=0; i!=arr.Size(); i++)
+    {
+        CEnvStats stats;
+        stats.SerializeJsonLoad(arr[i]);
+        this->push_back(stats);
+    }
+}
+
 //////////////////////////////////////////////////////////////////////
 // Environment Class
 //
@@ -734,7 +760,7 @@ void Environment::OnNew(QGraphicsScene &scene,
 	options.m_generation = 0;
 
 	m_stats.Sample(*this);
-    m_statsList.append(&m_stats);
+    m_statsList.append(m_stats);
 	m_stats.NewSample();
 }
 
@@ -829,7 +855,7 @@ void Environment::Skip()
 			if ((options.m_generation & CEnvStats::SAMPLE_TIME) == CEnvStats::SAMPLE_TIME)
 			{
 				m_stats.Sample(*this);
-                m_statsList.append(&m_stats);
+                m_statsList.append(m_stats);
 				m_stats.NewSample();
                 if (m_statsList.size() > 100)
                     m_statsList.removeFirst();
@@ -996,103 +1022,113 @@ Biot* Environment::HitCheck(Biot *me, BRectSortPos& pos)
 // Serialize
 //
 //Fox BEGIN
-/*
-void Environment::Serialize(QDataStream& ar)
+
+void Environment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
-	const BYTE archiveVersion = 13;
-	CPostData data;
+    const uint8_t archiveVersion = 13;
+    Document::AllocatorType& allocator = d.GetAllocator();
 
-	if (ar.IsStoring())
-	{
-		ar << archiveVersion;
-		ar << options.m_generation;
-		ar << m_uniqueID;
-		ar << options.bSoundOn;
-		ar << options.bMouse;
-		ar << options.nSexual;		
-		ar << options.bSiblingsAttack;
-		ar << options.bParentAttack;		
-		ar << options.chance;
-		ar << options.regenCost;
-		ar << options.regenTime;
-		ar << options.m_leafEnergy;
-		ar << options.friction;
+    v.AddMember("archiveVersion", archiveVersion, allocator);
+    v.AddMember("m_generation", options.m_generation, allocator);
+    v.AddMember("m_uniqueID", m_uniqueID, allocator);
+    v.AddMember("bSoundOn", options.bSoundOn, allocator);
+    v.AddMember("bMouse", options.bMouse, allocator);
+    v.AddMember("nSexual", options.nSexual, allocator);
+    v.AddMember("bSiblingsAttack", options.bSiblingsAttack, allocator);
+    v.AddMember("bParentAttack", options.bParentAttack, allocator);
+    v.AddMember("chance", options.chance, allocator);
+    v.AddMember("regenCost", options.regenCost, allocator);
+    v.AddMember("regenTime", options.regenTime, allocator);
+    v.AddMember("m_leafEnergy", options.m_leafEnergy, allocator);
+    v.AddMember("friction", options.friction, allocator);
 
-		// The starting parameters
-		ar << m_orginalSeed;
-		ar << options.m_initialPopulation;
-		BRect::Serialize(ar);
+    // The starting parameters
+    v.AddMember("m_orginalSeed", m_orginalSeed, allocator);
+    v.AddMember("m_initialPopulation", options.m_initialPopulation, allocator);
 
-		// Random state
-		Randomizer::Serialize(ar);
+    Value br(kObjectType);
+    BRect::SerializeJson(d, br);
+    v.AddMember("brect", br, allocator);
 
-		// Stats
-		m_stats.Serialize(ar);
-		m_statsList.Serialize(ar);
+    // Random state
+    Value ran(kObjectType);
+    Randomizer::SerializeJson(d, ran);
+    v.AddMember("randomizer", ran, allocator);
 
-//		sock.Serialize(ar);
-		m_biotList.Serialize(ar, *this);
-	}
-	else
-	{
-		BYTE version;
-		// Check version
-		ar >> version;
-		if (version != archiveVersion)
-            AfxThrowArchiveException(QDataStreamException::badSchema, _T("Environment"));
+    // Stats
+    Value stats(kObjectType);
+    m_stats.SerializeJson(d, stats);
+    v.AddMember("m_stats", stats, allocator);
 
-		ar >> options.m_generation;
-
-		ar >> m_uniqueID;
-
-		ar >> options.bSoundOn;
-        if (options.bSoundOn != false)
-            options.bSoundOn = true;
-
-		ar >> options.bMouse;
-
-		if (AfxIsNT() && AfxGetPLife().GetView() == CPrimCmdLine::SHOW_SAVER_WINDOW)
-            options.bMouse = false;
-
-		ar >> options.nSexual;
-		if (options.nSexual < 1 ||
-			options.nSexual > 3)
-			options.nSexual = 3;		
-
-		ar >> options.bSiblingsAttack;
-        if (options.bSiblingsAttack != false)
-            options.bSiblingsAttack = true;
-
-		ar >> options.bParentAttack;
-        if (options.bParentAttack != false)
-            options.bParentAttack = true;
-
-		ar >> options.chance;
-		if (options.chance < 0)
-			options.chance = 41;
-
-		ar >> options.regenCost;
-		ar >> options.regenTime;
-		ar >> options.m_leafEnergy;
-		ar >> options.friction;
-
-		// The starting parameters
-		ar >> m_orginalSeed;
-		ar >> options.m_initialPopulation;
-		BRect::Serialize(ar);
-
-		// Random state
-		Randomizer::Serialize(ar);
-
-		// Stats
-		m_stats.Serialize(ar);
-		m_statsList.Serialize(ar);
+    Value statsLi(kObjectType);
+    m_statsList.SerializeJson(d, statsLi);
+    v.AddMember("m_statsList", statsLi, allocator);
 
 //		sock.Serialize(ar);
-		m_biotList.Serialize(ar, *this);
-	}
-}     
-//Fox END
-*/
+    Value biotLi(kObjectType);
+    m_biotList.SerializeJson(*this, d, biotLi);
+    v.AddMember("biots", biotLi, allocator);
+}
 
+void Environment::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    DeleteContents();
+    const uint8_t archiveVersion = 13;
+
+    int32_t version = v["archiveVersion"].GetInt();
+    // Check version
+    assert (version == archiveVersion);
+
+    options.m_generation = v["m_generation"].GetUint();
+
+    m_uniqueID = v["m_uniqueID"].GetUint();
+
+    options.bSoundOn = v["bSoundOn"].GetBool();
+    if (options.bSoundOn != false)
+        options.bSoundOn = true;
+
+    options.bMouse = v["bMouse"].GetBool();
+
+    //if (AfxIsNT() && AfxGetPLife().GetView() == CPrimCmdLine::SHOW_SAVER_WINDOW)
+    //    options.bMouse = false;
+
+    options.nSexual = v["nSexual"].GetInt();
+    if (options.nSexual < 1 ||
+        options.nSexual > 3)
+        options.nSexual = 3;
+
+    options.bSiblingsAttack = v["bSiblingsAttack"].GetBool();
+    if (options.bSiblingsAttack != false)
+        options.bSiblingsAttack = true;
+
+    options.bParentAttack = v["bParentAttack"].GetBool();
+    if (options.bParentAttack != false)
+        options.bParentAttack = true;
+
+    options.chance = v["chance"].GetInt();
+    if (options.chance < 0)
+        options.chance = 41;
+
+    options.regenCost = v["regenCost"].GetInt64();
+    options.regenTime = v["regenTime"].GetUint();
+    options.m_leafEnergy = v["m_leafEnergy"].GetInt();
+    options.friction = v["friction"].GetFloat();
+
+    // The starting parameters
+    m_orginalSeed = v["m_orginalSeed"].GetInt();
+    options.m_initialPopulation = v["m_initialPopulation"].GetInt();
+
+    BRect::SerializeJsonLoad(v["brect"]);
+
+    // Random state
+    Randomizer::SerializeJsonLoad(v["randomizer"]);
+
+    // Stats
+    m_stats.SerializeJsonLoad(v["m_stats"]);
+    m_statsList.SerializeJsonLoad(v["m_statsList"]);
+
+//		sock.Serialize(ar);
+    m_biotList.SerializeJsonLoad(*this, v["biots"]);
+
+}
 

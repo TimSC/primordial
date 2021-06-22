@@ -5,6 +5,7 @@
 #include <fstream>
 #include <QDebug>
 #include <QDateTime>
+#include <QFileDialog>
 #include "core/Biots.h"
 #include "rapidjson/writer.h"
 #include <rapidjson/ostreamwrapper.h>
@@ -18,21 +19,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    bool load = false;
-    bool save = false;
-
-    const Value *parsedBiots = nullptr;
-    int numBiots = 20;
-    Document d;
-    if(load)
-    {
-        ifstream ifs("example.json");
-        IStreamWrapper isw(ifs);
-
-        d.ParseStream(isw);
-        parsedBiots = &d["biots"];
-        numBiots = parsedBiots->Size();
-    }
 
     QRect rect(0, 0, 2000, 1500);
     QPen whitePen(QColor(255,255,255));
@@ -44,39 +30,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
     //qint64 seed = 100;
+    int numBiots = 20;
     this->env.OnNew(this->scene, rect, numBiots, seed,
                 0, 1, 10);
 
     this->ui->graphicsView->setScene(&this->scene);
-
-    if(load)
-    {
-        for(int i=0; i<parsedBiots->Size(); i++)
-        {
-            Biot *biot = env.m_biotList[i];
-            biot->SerializeJsonLoad((*parsedBiots)[i]);
-        }
-        this->env.OnOpen();
-    }
-
-    if(save)
-    {
-        Document d;
-        d.SetObject();
-        Value biotsJson(kArrayType);
-        for(int i=0; i<env.m_biotList.size(); i++)
-        {
-            Value biotJson(kObjectType);
-            Biot *biot = env.m_biotList[i];
-            biot->SerializeJson(d, biotJson);
-            biotsJson.PushBack(biotJson, d.GetAllocator());
-        }
-        d.AddMember("biots", biotsJson, d.GetAllocator());
-        ofstream myfile("example.json");
-        OStreamWrapper osw(myfile);
-        Writer<OStreamWrapper> writer(osw);
-        d.Accept(writer);
-    }
 
     startTimer(1);     // 1-millisecond timer
 }
@@ -90,4 +48,67 @@ void MainWindow::timerEvent(QTimerEvent *event)
 {
     //cout << this->env.GetPopulation() << endl;
     this->env.Skip();
+}
+
+void MainWindow::on_actionOpen_triggered()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,
+        tr("Open Address Book"), "",
+        tr("Primordial Life Files (*.plfj);;All Files (*)"));
+
+    if (fileName.isEmpty())
+            return;
+
+    QRect rect(0, 0, 2000, 1500);
+
+    const Value *parsedBiots = nullptr;
+    int numBiots = 20;
+    Document d;
+
+    ifstream ifs(fileName.toStdString().c_str());
+    IStreamWrapper isw(ifs);
+
+    d.ParseStream(isw);
+/*    parsedBiots = &d["biots"];
+    numBiots = parsedBiots->Size();
+
+    qint64 seed = QDateTime::currentMSecsSinceEpoch();
+    this->env.OnNew(this->scene, rect, numBiots, seed,
+                0, 1, 10);
+
+    for(int i=0; i<parsedBiots->Size(); i++)
+    {
+        Biot *biot = env.m_biotList[i];
+        biot->SerializeJsonLoad((*parsedBiots)[i]);
+    }*/
+    this->env.SerializeJsonLoad(d["environment"]);
+    this->env.OnOpen();
+
+}
+
+void MainWindow::on_actionSave_As_triggered()
+{
+    QString fileName = QFileDialog::getSaveFileName(this,
+        tr("Save As"), "",
+        tr("Primordial Life Files (*.plfj);;All Files (*)"));
+
+    if (fileName.isEmpty())
+            return;
+
+    Document d;
+    d.SetObject();
+    Value envJson(kObjectType);
+    /*for(int i=0; i<env.m_biotList.size(); i++)
+    {
+        Value biotJson(kObjectType);
+        Biot *biot = env.m_biotList[i];
+        biot->SerializeJson(d, biotJson);
+        biotsJson.PushBack(biotJson, d.GetAllocator());
+    }*/
+    this->env.SerializeJson(d, envJson);
+    d.AddMember("environment", envJson, d.GetAllocator());
+    ofstream myfile(fileName.toStdString().c_str());
+    OStreamWrapper osw(myfile);
+    Writer<OStreamWrapper> writer(osw);
+    d.Accept(writer);
 }

@@ -15,6 +15,7 @@
 #include <QPoint>
 #include <QDataStream>
 #include <QList>
+#include "rapidjson/document.h"
 const double PI      = 3.1415926535898;
 
 
@@ -152,6 +153,8 @@ public:
 	}
 
     //virtual void Serialize(QDataStream& ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
 	// Rounds a number up to the next size
 	int NextSize(int value);  

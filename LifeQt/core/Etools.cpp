@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include "Etools.h"
 
+using namespace rapidjson;
 
 ////////////////////////////////////////////////////////////////////////////////////
 // Class CLine
@@ -253,25 +254,24 @@ int BRect::Contains(int x, int y)
 //
 // Takes or sets the state of the randmizer
 //
-/*
-void BRect::Serialize(QDataStream& ar)
+
+void BRect::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
-	if (ar.IsStoring())
-	{
-		ar << m_left;
-		ar << m_right;
-		ar << m_top;
-		ar << m_bottom;
-	}
-	else
-	{
-		ar >> m_left;
-		ar >> m_right;
-		ar >> m_top;
-		ar >> m_bottom;
-	}
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("m_left", m_left, allocator);
+    v.AddMember("m_right", m_right, allocator);
+    v.AddMember("m_top", m_top, allocator);
+    v.AddMember("m_bottom", m_bottom, allocator);
 }
-*/
+
+void BRect::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    m_left = v["m_left"].GetInt();
+    m_right = v["m_right"].GetInt();
+    m_top = v["m_top"].GetInt();
+    m_bottom = v["m_bottom"].GetInt();
+}
 
 //////////////////////////////////////////////////////////////////
 // NextSizeTwo

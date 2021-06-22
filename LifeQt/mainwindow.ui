@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Primordial Life</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -29,8 +29,163 @@
      <height>20</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuSimulation">
+    <property name="title">
+     <string>Simulation</string>
+    </property>
+    <addaction name="actionStart_Simulation"/>
+    <addaction name="actionSettings"/>
+    <addaction name="separator"/>
+    <addaction name="actionNew"/>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSave_As"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuBiots">
+    <property name="title">
+     <string>Biots</string>
+    </property>
+    <addaction name="actionCure_Sicken"/>
+    <addaction name="actionExamine"/>
+    <addaction name="actionFeed"/>
+    <addaction name="actionMutate"/>
+    <addaction name="actionOpen_2"/>
+    <addaction name="actionRelocate"/>
+    <addaction name="actionSave_2"/>
+    <addaction name="actionTerminate"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionFull_Screen"/>
+    <addaction name="actionOptimal_size"/>
+    <addaction name="separator"/>
+    <addaction name="actionStatus_Bar"/>
+    <addaction name="separator"/>
+    <addaction name="actionEnvironmental_Statistics"/>
+    <addaction name="actionNetwork_Status"/>
+   </widget>
+   <widget class="QMenu" name="menuInformation">
+    <property name="title">
+     <string>Information</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionLearn_about_Primordial_Life"/>
+   </widget>
+   <addaction name="menuSimulation"/>
+   <addaction name="menuBiots"/>
+   <addaction name="menuView"/>
+   <addaction name="menuInformation"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionStart_Simulation">
+   <property name="text">
+    <string>Start Simulation</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings...</string>
+   </property>
+  </action>
+  <action name="actionNew">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open...</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSave_As">
+   <property name="text">
+    <string>Save As...</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionCure_Sicken">
+   <property name="text">
+    <string>Cure/Sicken</string>
+   </property>
+  </action>
+  <action name="actionExamine">
+   <property name="text">
+    <string>Examine</string>
+   </property>
+  </action>
+  <action name="actionFeed">
+   <property name="text">
+    <string>Feed</string>
+   </property>
+  </action>
+  <action name="actionMutate">
+   <property name="text">
+    <string>Mutate</string>
+   </property>
+  </action>
+  <action name="actionOpen_2">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionRelocate">
+   <property name="text">
+    <string>Relocate</string>
+   </property>
+  </action>
+  <action name="actionSave_2">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionTerminate">
+   <property name="text">
+    <string>Terminate</string>
+   </property>
+  </action>
+  <action name="actionFull_Screen">
+   <property name="text">
+    <string>Full Screen</string>
+   </property>
+  </action>
+  <action name="actionOptimal_size">
+   <property name="text">
+    <string>Optimal Size</string>
+   </property>
+  </action>
+  <action name="actionStatus_Bar">
+   <property name="text">
+    <string>Status Bar</string>
+   </property>
+  </action>
+  <action name="actionEnvironmental_Statistics">
+   <property name="text">
+    <string>Environmental Statistics</string>
+   </property>
+  </action>
+  <action name="actionNetwork_Status">
+   <property name="text">
+    <string>Network Status...</string>
+   </property>
+  </action>
+  <action name="actionLearn_about_Primordial_Life">
+   <property name="text">
+    <string>Learn about Primordial Life...</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

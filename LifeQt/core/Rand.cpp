@@ -8,6 +8,9 @@ rand.cpp: By Bob Jenkins.  My random number generator, ISAAC.
 */
 #include "Rand.h"
 #include <QDateTime>
+
+using namespace rapidjson;
+
 /*
 ------------------------------------------------------------------------------
 
@@ -170,35 +173,43 @@ void Randomizer::Isaac()
 //
 // Takes or sets the state of the randmizer
 //
-/*
-void Randomizer::Serialize(QDataStream& ar)
+
+void  Randomizer::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
-	if (ar.IsStoring())
-	{
-		for (int i = 0; i < RANDSIZ; i++)
-		{
-			ar << randrsl[i];
-			ar << mm[i];
-		}
-		ar << randcnt;
-		ar << aa;
-		ar << bb;
-		ar << cc;
-	}
-	else
-	{
-		for (int i = 0; i < RANDSIZ; i++)
-		{
-			ar >> randrsl[i];
-			ar >> mm[i];
-		}
-		ar >> randcnt;
-		ar >> aa;
-		ar >> bb;
-		ar >> cc;
-	}
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    Value randrslArr(kArrayType);
+    Value mmArr(kArrayType);
+    for (int i = 0; i < RANDSIZ; i++)
+    {
+        randrslArr.PushBack(Value(randrsl[i]), allocator);
+        mmArr.PushBack(Value(mm[i]), allocator);
+    }
+    v.AddMember("randrsl", randrslArr, allocator);
+    v.AddMember("mm", mmArr, allocator);
+
+    v.AddMember("randcnt", Value(randcnt), allocator);
+    v.AddMember("aa", Value(aa), allocator);
+    v.AddMember("bb", Value(bb), allocator);
+    v.AddMember("cc", Value(cc), allocator);
 }
-*/
+
+void Randomizer::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    const Value &randrslArr = v["randrsl"];
+    for (int i = 0; i < randrslArr.Size(); i++)
+        randrsl[i] = randrslArr[i].GetUint();
+
+    const Value &mmArr = v["mm"];
+    for (int i = 0; i < mmArr.Size(); i++)
+        mm[i] = mmArr[i].GetUint();
+
+    randcnt = v["randcnt"].GetUint();
+    aa = v["aa"].GetUint();
+    bb = v["bb"].GetUint();
+    cc = v["cc"].GetUint();
+
+}
 
 short Randomizer::Short(int max)
 {

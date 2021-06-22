@@ -9,7 +9,7 @@ rand.h: definitions for a random number generator
 #define RAND_H
 
 #include <stdint.h>
-#include <QDataStream>
+#include "rapidjson/document.h"
 
 typedef uint32_t  ub4;   /* unsigned 4-uint8_t quantities */
 #define RANDSIZL   (8)
@@ -46,7 +46,9 @@ public:
 	void RandSeed(int seed);
 
 	// Save or load seed
-    void Serialize(QDataStream& ar);
+    //void Serialize(QDataStream& ar);
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
 	// Helpful random methods
 	int Integer(int max)

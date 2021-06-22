@@ -1840,7 +1840,7 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
     origin.setX(v["origin_x"].GetInt());
     origin.setY(v["origin_y"].GetInt());
     energy = v["energy"].GetInt();
-    bDie = v["bDie"].GetInt();
+    bDie = v["bDie"].GetBool();
     m_Id = v["m_Id"].GetInt();
     m_motherId = v["m_motherId"].GetInt();
     genes2 = v["genes2"].GetInt();

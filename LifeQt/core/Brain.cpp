@@ -200,8 +200,7 @@ void ProductSum::SerializeJsonLoad(const rapidjson::Value& v)
     for (int i = 0; i < ref.Size(); i++)
          m_reference[i] = ref[i].GetUint();
 
-    //m_bTrue = v["m_bTrue"].GetBool();
-    m_bTrue = v["m_bTrue"].GetInt();
+    m_bTrue = v["m_bTrue"].GetBool();
 }
 
 void ProductSum::Crossover(ProductSum& productSum)
