@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QDateTime>
 #include <QFileDialog>
+#include <QOpenGLWidget>
 #include "core/Biots.h"
 #include "rapidjson/writer.h"
 #include <rapidjson/ostreamwrapper.h>
@@ -19,10 +20,19 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    if(1)
+    {
+        QOpenGLWidget *gl = new QOpenGLWidget();
+        QSurfaceFormat format;
+        //format.setSamples(16);
+        gl->setFormat(format);
+        this->ui->graphicsView->setViewport(gl);
+    }
 
     QRect rect(0, 0, 2000, 1500);
     QPen whitePen(QColor(255,255,255));
     QGraphicsRectItem *gri = new QGraphicsRectItem(rect);
+
     gri->setPen(whitePen);
     this->scene.addItem(gri);
 
@@ -97,7 +107,7 @@ void MainWindow::on_actionNew_triggered()
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
     int numBiots = 20;
 
-    this->env.Clear();
+    this->env.DeleteContents();
     this->env.OnNew(this->scene, rect, numBiots, seed,
                                   0, 1, 10);
 }
