@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     gri->setPen(whitePen);
     this->scene.addItem(gri);
 
-    this->env.options.Reset(1000, 600);
+    this->env.options.Reset(rect.x(), rect.y());
 
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
     //qint64 seed = 100;
@@ -53,34 +53,18 @@ void MainWindow::timerEvent(QTimerEvent *event)
 void MainWindow::on_actionOpen_triggered()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
-        tr("Open Address Book"), "",
+        tr("Open Address Book"), this->currentFilename.c_str(),
         tr("Primordial Life Files (*.plfj);;All Files (*)"));
 
     if (fileName.isEmpty())
             return;
 
-    QRect rect(0, 0, 2000, 1500);
-
-    const Value *parsedBiots = nullptr;
-    int numBiots = 20;
     Document d;
 
     ifstream ifs(fileName.toStdString().c_str());
     IStreamWrapper isw(ifs);
 
     d.ParseStream(isw);
-/*    parsedBiots = &d["biots"];
-    numBiots = parsedBiots->Size();
-
-    qint64 seed = QDateTime::currentMSecsSinceEpoch();
-    this->env.OnNew(this->scene, rect, numBiots, seed,
-                0, 1, 10);
-
-    for(int i=0; i<parsedBiots->Size(); i++)
-    {
-        Biot *biot = env.m_biotList[i];
-        biot->SerializeJsonLoad((*parsedBiots)[i]);
-    }*/
     this->env.SerializeJsonLoad(d["environment"]);
     this->env.OnOpen();
 
@@ -89,26 +73,70 @@ void MainWindow::on_actionOpen_triggered()
 void MainWindow::on_actionSave_As_triggered()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
-        tr("Save As"), "",
+        tr("Save As"), this->currentFilename.c_str(),
         tr("Primordial Life Files (*.plfj);;All Files (*)"));
 
     if (fileName.isEmpty())
             return;
 
+    this->currentFilename = fileName.toStdString();
     Document d;
     d.SetObject();
     Value envJson(kObjectType);
-    /*for(int i=0; i<env.m_biotList.size(); i++)
-    {
-        Value biotJson(kObjectType);
-        Biot *biot = env.m_biotList[i];
-        biot->SerializeJson(d, biotJson);
-        biotsJson.PushBack(biotJson, d.GetAllocator());
-    }*/
     this->env.SerializeJson(d, envJson);
     d.AddMember("environment", envJson, d.GetAllocator());
     ofstream myfile(fileName.toStdString().c_str());
     OStreamWrapper osw(myfile);
     Writer<OStreamWrapper> writer(osw);
     d.Accept(writer);
+}
+
+void MainWindow::on_actionNew_triggered()
+{
+    QRect rect(0, 0, 2000, 1500);
+    qint64 seed = QDateTime::currentMSecsSinceEpoch();
+    int numBiots = 20;
+
+    this->env.Clear();
+    this->env.OnNew(this->scene, rect, numBiots, seed,
+                                  0, 1, 10);
+}
+
+void MainWindow::on_actionExit_triggered()
+{
+    QApplication::quit();
+}
+
+void MainWindow::on_actionSave_triggered()
+{
+    if (this->currentFilename.empty())
+    {
+        on_actionSave_As_triggered();
+        return;
+    }
+
+    Document d;
+    d.SetObject();
+    Value envJson(kObjectType);
+    this->env.SerializeJson(d, envJson);
+    d.AddMember("environment", envJson, d.GetAllocator());
+    ofstream myfile(this->currentFilename);
+    OStreamWrapper osw(myfile);
+    Writer<OStreamWrapper> writer(osw);
+    d.Accept(writer);
+}
+
+void MainWindow::on_actionStart_Simulation_triggered()
+{
+
+}
+
+void MainWindow::on_actionSettings_triggered()
+{
+
+}
+
+void MainWindow::on_actionLearn_about_Primordial_Life_triggered()
+{
+
 }

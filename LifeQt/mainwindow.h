@@ -25,10 +25,23 @@ private slots:
 
     void on_actionSave_As_triggered();
 
+    void on_actionNew_triggered();
+
+    void on_actionExit_triggered();
+
+    void on_actionSave_triggered();
+
+    void on_actionStart_Simulation_triggered();
+
+    void on_actionSettings_triggered();
+
+    void on_actionLearn_about_Primordial_Life_triggered();
+
 private:
     Ui::MainWindow *ui;
 
     class Environment env;
+    std::string currentFilename;
 
     QGraphicsScene scene;
 };
