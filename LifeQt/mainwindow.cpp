@@ -18,10 +18,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    bool load = true;
+    bool load = false;
+    bool save = false;
 
     const Value *parsedBiots = nullptr;
-    int numBiots = 2;
+    int numBiots = 20;
     Document d;
     if(load)
     {
@@ -57,7 +58,8 @@ MainWindow::MainWindow(QWidget *parent)
         }
         this->env.OnOpen();
     }
-    else
+
+    if(save)
     {
         Document d;
         d.SetObject();

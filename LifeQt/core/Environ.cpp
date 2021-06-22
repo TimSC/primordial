@@ -910,6 +910,10 @@ void Environment::Skip()
     }
 
 */
+
+    for(int i=0; i<m_biotList.size(); i++)
+        m_biotList[i]->UpdateGraphics();
+
     m_bBlocked = false;
 }
 

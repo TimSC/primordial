@@ -1102,7 +1102,7 @@ CLine cLine;
 			env.PlayResource("PL.TooOld");
             //Erase();
 
-            UpdateGraphics();
+            //UpdateGraphics();
             //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
             //this->graphics->setRotation(this->vector.GetR()+rotOffset);
 
@@ -1181,7 +1181,7 @@ CLine cLine;
 			env.PlayResource("PL.NoEnergy");
 
         //Erase();
-        UpdateGraphics();
+        //UpdateGraphics();
         //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
         //this->graphics->setRotation(this->vector.GetR()+rotOffset);
 
@@ -1251,7 +1251,7 @@ CLine cLine;
 		}
 	}
 
-    UpdateGraphics();
+    //UpdateGraphics();
 
     return true;
 }
@@ -1892,7 +1892,7 @@ bool Biot::OnOpen()
 //	{
     //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
     //this->graphics->setRotation(this->vector.GetR()+rotOffset);
-    UpdateGraphics();
+    //UpdateGraphics();
 
     SetErasePosition();
 //		return true;
