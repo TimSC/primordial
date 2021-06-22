@@ -675,6 +675,7 @@ void Biot::UpdateGraphics()
 {
     this->graphicsRect->setPos(CenterX(), CenterY());
     //this->graphicsRect->setRotation(vector.GetR());
+    this->graphics->setPos(origin);
 
     QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
     QPen whitePen(QColor(255,255,255));
@@ -712,13 +713,13 @@ void Biot::UpdateGraphics()
             QGraphicsLineItem *line = nullptr;
             if(lineCount >= lines.size())
             {
-                line = new QGraphicsLineItem(x1(i), y1(i), x2(i), y2(i), graphics);
+                line = new QGraphicsLineItem(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y(), graphics);
                 lines.append(line);
             }
             else
             {
                 line = lines[lineCount];
-                line->setLine(x1(i), y1(i), x2(i), y2(i));
+                line->setLine(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y());
             }
             line->setPen(env.options.pens[aPen]);
             lineCount += 1;
