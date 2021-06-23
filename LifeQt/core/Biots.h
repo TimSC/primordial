@@ -140,21 +140,16 @@ class Biot: public BRectItem
 
     void ClearSettings(void);
     void Draw(void);
-    void SetErasePosition(void);
-    void Erase(void);
     void UpdateGraphics();
     void FormMask(void);
     void FreeBitmaps();
 	enum {
 		NORMAL,
 		REDRAW,
-		REFORM,
 		RECALCULATE,
 		GROW
 	};
-	void PrepareErase(int operation);
-	void PrepareDraw(int operation);
-	void EraseAndDraw(int operation);
+    void Prepare(int operation);
     void WallBounce(int x, int y);
 	
 	void Motion(const double deltaX, const double deltaY, double Vx, double Vy, const double radius);
@@ -186,7 +181,8 @@ class Biot: public BRectItem
     short LengthLoss(int nPeno, short delta);
     
     int64_t Distance(QPoint& start, QPoint& stop);
-    int64_t Symmetric(int aRatio);
+    int64_t UpdateShape(int aRatio);
+    void UpdateShapeRotation();
     int64_t LineContact(int line, int eline, Biot* enemy, short* delta);
     bool AdjustState(int index, short delta);
     bool OnOpen();
@@ -275,6 +271,8 @@ class Biot: public BRectItem
     QPointF     stopPtLocal[MAX_GENES];
     QPointF     startPt[MAX_GENES];
     QPointF     stopPt[MAX_GENES];
+    bool        bShapeChanged;
+
     short     distance[MAX_GENES];
     GeneTrait trait;
 
@@ -338,8 +336,6 @@ public:
     int      rightX;
     int      ratio;
     int      lastType;
-    int      lastLeft;
-    int      lastTop;
     int      max_genes;
     int      genes;
     int64_t     turnBenefit;
@@ -425,18 +421,6 @@ inline void Biot::MoveBiot(int x, int y)
 	Offset(x, y);
     origin.setX(origin.x() + x);
     origin.setY(origin.y() + y);
-}
-
-
-// ////////////////////////////////////////////////////////////////////
-// PrepareDraw
-//
-// For a new bitmap if required.
-//
-inline void Biot::PrepareDraw(int operation)
-{
-	if (operation != NORMAL)
-        UpdateGraphics();
 }
 
 // ////////////////////////////////////////////////////////////////////

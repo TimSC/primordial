@@ -169,7 +169,6 @@ void Biot::ClearSettings(void)
 	m_nSick        = 0;
 	lastType       = BLACK_LEAF;
 	newType        = -2;
-	lastLeft       = lastTop   = 0;
 	ratio          = 1;
 	m_age          = 0;
 	
@@ -261,13 +260,14 @@ void Biot::Mutate(int chance)
 	trait.Mutate(chance);
 	m_commandArray.Mutate(chance);
 
-	adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
+    adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.options.startEnergy;
 	if (energy < adultBaseEnergy)
 		energy = adultBaseEnergy;
 
 	SetRatio();
-	totalDistance   = Symmetric(ratio);
+    totalDistance   = UpdateShape(ratio);
 	childBaseEnergy = totalDistance * env.options.startEnergy;
+    UpdateShapeRotation();
   
 	// If not loaded, we need a new ID
 	m_maxAge = trait.GetMaxAge();
@@ -309,12 +309,13 @@ void Biot::SetRatio(void)
 //
 int Biot::Initialize(bool bRandom)
 {
-	adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
+    adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.options.startEnergy;
 	if (bRandom || energy <= 0)
 		energy = adultBaseEnergy;
 
 	SetRatio();
-	totalDistance   = Symmetric(ratio);
+    totalDistance   = UpdateShape(ratio);
+    UpdateShapeRotation();
 
 	childBaseEnergy = totalDistance * env.options.startEnergy;
   
@@ -372,8 +373,8 @@ int Biot::PlaceRandom(void)
   vector.setX(origin.x());
   vector.setY(origin.y());
 
+  bShapeChanged = true;
   UpdateGraphics();
-  SetErasePosition();
   return i;
 }
 
@@ -435,28 +436,23 @@ static int side[8][2] = {
 
 
 // ////////////////////////////////////////////////////////////////////
-// Symmetric
+// UpdateShape
 //
 //
-int64_t Biot::Symmetric(int aRatio)
+int64_t Biot::UpdateShape(int aRatio)
 {
-int64_t  dist    = 0;
-double X = 0.0, Y = 0.0;
-int i = 0, nPeno = 0;
-//int nSet = 0;
-//bool bFirstLine = true;
-int  nLastGene = -1;
+    int64_t  dist    = 0;
+    double X = 0.0, Y = 0.0;
+    int i = 0, nPeno = 0;
+    //int nSet = 0;
+    //bool bFirstLine = true;
+    int  nLastGene = -1;
 
 	colorDistance[GREEN_LEAF]   = 
 	colorDistance[RED_LEAF  ]   =
 	colorDistance[BLUE_LEAF ]   =
 	colorDistance[WHITE_LEAF]   = 
-	colorDistance[LBLUE_LEAF]   = 0;
-
-	leftX   =
-	topY    =
-	rightX  =
-	bottomY = 0;
+    colorDistance[LBLUE_LEAF]   = 0;
 
 	turnBenefit    = 0;
 	redraw.ClearRedraw();
@@ -467,6 +463,7 @@ int  nLastGene = -1;
     memset(stopPt,   0x00, sizeof(stopPt));
     memset(startPt,  0x00, sizeof(startPt));
     memset(nType,    0x00, sizeof(nType));
+    bShapeChanged = true;
 
 	for (int nLimb = 0; nLimb < trait.GetLines(); nLimb++)
 	{	
@@ -547,6 +544,21 @@ int  nLastGene = -1;
 		}
 	}
 
+    vector.setMass(0.0);
+
+    for (i = GREEN_LEAF; i <= WHITE_LEAF; i++)
+        vector.addMass(colorDistance[i] * env.options.leafMass[i]);
+
+    return dist;
+}
+
+void Biot::UpdateShapeRotation()
+{
+    leftX   =
+    topY    =
+    rightX  =
+    bottomY = 0;
+
     //Convert local non-rotated coordinates to rotated coordinates
     int rot = vector.getRotate();
     double rotSin = sin(deg2rad(rot));
@@ -559,7 +571,7 @@ int  nLastGene = -1;
 
             if (segment.IsVisible())
             {
-                nPeno = nLimb + nGene * MAX_SYMMETRY;
+                int nPeno = nLimb + nGene * MAX_SYMMETRY;
 
                 startPt[nPeno] = RotatePoint(startPtLocal[nPeno], rotCos, rotSin);
                 stopPt[nPeno] = RotatePoint(stopPtLocal[nPeno], rotCos, rotSin);
@@ -579,12 +591,7 @@ int  nLastGene = -1;
         }
     }
 
-    vector.setMass(0.0);
 
-	for (i = GREEN_LEAF; i <= WHITE_LEAF; i++)
-        vector.addMass(colorDistance[i] * env.options.leafMass[i]);
-
-	return dist;
 }
 
 //***********************************************************************
@@ -638,20 +645,10 @@ double d = double(((start.x() - stop.x()) * (start.x() - stop.x())) +
 }
 
 // ////////////////////////////////////////////////////////////////////
-// EraseAndDraw - draws the biot
+// Prepare
 //
 //
-void Biot::EraseAndDraw(int operation)
-{
-    PrepareErase(operation);
-
-}
-
-// ////////////////////////////////////////////////////////////////////
-// PrepareErase
-//
-//
-void Biot::PrepareErase(int operation)
+void Biot::Prepare(int operation)
 {
 	switch (operation)
 	{
@@ -659,7 +656,7 @@ void Biot::PrepareErase(int operation)
 		{
 			ratio--;
 			stepEnergy = ((2 * adultBaseEnergy) / BaseRatio());
-			totalDistance   = Symmetric(ratio);
+            totalDistance   = UpdateShape(ratio);
 			for (int i = 0; i < MAX_GENES; i++)
 				state[i] = distance[i];
 			childBaseEnergy = totalDistance * env.options.startEnergy;
@@ -669,7 +666,7 @@ void Biot::PrepareErase(int operation)
 		}
 
 		case RECALCULATE:
-		    Symmetric(ratio);
+            UpdateShape(ratio);
 			SetScreenRect();
 			SetBonus();
 			break;
@@ -677,17 +674,6 @@ void Biot::PrepareErase(int operation)
 		default:
 			break;
 	}
-}
-
-// ////////////////////////////////////////////////////////////////////
-// SetErasePosition
-//
-// Remembers where we are so we can erase it.
-//
-void Biot::SetErasePosition(void)
-{
-	lastLeft = m_left;
-	lastTop  = m_top;
 }
 
 
@@ -706,7 +692,7 @@ void Biot::UpdateGraphics()
     QPen whitePen(QColor(255,255,255));
 
     if (env.BiotShouldBox(m_Id))
-	{
+    {
         if (boundingRect == nullptr)
         {
             boundingRect = new QGraphicsRectItem(rc, graphicsRect);
@@ -721,46 +707,51 @@ void Biot::UpdateGraphics()
         boundingRect = nullptr;
     }
 
-    size_t lineCount = 0;
-
-    for (int i = 0; i < genes; i++)
+    if(bShapeChanged)
     {
-        if (state[i] > 0)
+        size_t lineCount = 0;
+
+        for (int i = 0; i < genes; i++)
         {
-            short aPen = nType[i];
-
-            if (state[i] != distance[i]) //Injured or incomplete sections are drawn in dimmer color
-                aPen += DIM_COLOR;
-
-            if (m_nSick)
-                aPen = PURPLE_LEAF;
-
-            QGraphicsLineItem *line = nullptr;
-            if(lineCount >= lines.size())
+            if (state[i] > 0)
             {
-                line = new QGraphicsLineItem(startPtLocal[i].x(), startPtLocal[i].y(), stopPtLocal[i].x(), stopPtLocal[i].y(), graphics);
-                lines.append(line);
+                short aPen = nType[i];
+
+                if (state[i] != distance[i]) //Injured or incomplete sections are drawn in dimmer color
+                    aPen += DIM_COLOR;
+
+                if (m_nSick)
+                    aPen = PURPLE_LEAF;
+
+                QGraphicsLineItem *line = nullptr;
+                if(lineCount >= lines.size())
+                {
+                    line = new QGraphicsLineItem(startPtLocal[i].x(), startPtLocal[i].y(), stopPtLocal[i].x(), stopPtLocal[i].y(), graphics);
+                    lines.append(line);
+                }
+                else
+                {
+                    line = lines[lineCount];
+                    line->setLine(startPtLocal[i].x(), startPtLocal[i].y(), stopPtLocal[i].x(), stopPtLocal[i].y());
+                }
+                line->setPen(env.options.pens[aPen]);
+                lineCount += 1;
             }
-            else
-            {
-                line = lines[lineCount];
-                line->setLine(startPtLocal[i].x(), startPtLocal[i].y(), stopPtLocal[i].x(), stopPtLocal[i].y());
-            }
-            line->setPen(env.options.pens[aPen]);
-            lineCount += 1;
         }
-    }
 
-    for(size_t i = lineCount; i < lines.size(); i ++)
-    {
-        //Remove unneeded line
-        env.m_scene->removeItem(lines[i]);
-        lines[i] = nullptr;
-    }
-    size_t originalNumLines = lines.size();
-    for(size_t i = lineCount; i < originalNumLines; i ++)
-    {
-        lines.removeLast();
+        for(size_t i = lineCount; i < lines.size(); i ++)
+        {
+            //Remove unneeded line
+            env.m_scene->removeItem(lines[i]);
+            lines[i] = nullptr;
+        }
+        size_t originalNumLines = lines.size();
+        for(size_t i = lineCount; i < originalNumLines; i ++)
+        {
+            lines.removeLast();
+        }
+
+        bShapeChanged = false;
     }
 
 }
@@ -898,10 +889,10 @@ void Biot::Motion(const double deltaX, const double deltaY, double Vx, double Vy
 //
 bool Biot::Move(void)
 {
-Biot* enemy;
-int i;
-BRect lineRect;
-CLine cLine;
+    Biot* enemy = nullptr;
+    int i = 0;
+    BRect lineRect;
+    CLine cLine;
 
 	m_age++;
 
@@ -988,7 +979,7 @@ CLine cLine;
 
 	// Does this biot's gross rectangular region cross anothers?
 	i = 0;
-	int x, y;
+    int x = 0, y = 0;
 	BRectSortPos pos;
 	pos.FindRectsIntersecting(*this);
 
@@ -1127,10 +1118,6 @@ CLine cLine;
 			env.PlayResource("PL.TooOld");
             //Erase();
 
-            //UpdateGraphics();
-            //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
-            //this->graphics->setRotation(this->vector.GetR()+rotOffset);
-
             return false;
 		}
         bChangeSize = true;
@@ -1150,33 +1137,16 @@ CLine cLine;
 	}
 
 	// Should we recalculate (top priority)
-	if (redraw.ShouldRedraw() || dr)
+    if (redraw.ShouldRedraw() || bChangeSize || lastType != newType)
 	{
-        EraseAndDraw(RECALCULATE);
+        Prepare(RECALCULATE);
+        UpdateShapeRotation();
 	}
-	else
-	{
-		if (bChangeSize)
-		{
-            EraseAndDraw(REFORM);
-		}
-		else
-		{
-			// Do we just need to reform the bitmap?
-			if (lastType != newType || lastType != -1)
-			{
-                EraseAndDraw(REFORM);
-			}
-			else
-			{
-				if (dx || dy)
-				{
-                    EraseAndDraw(NORMAL);
-				}
-			}
-		}
-	}
-
+    else
+    {
+        if(dr)
+            UpdateShapeRotation();
+    }
 
 	if (m_nSick)
 	{
@@ -1206,9 +1176,6 @@ CLine cLine;
 			env.PlayResource("PL.NoEnergy");
 
         //Erase();
-        //UpdateGraphics();
-        //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
-        //this->graphics->setRotation(this->vector.GetR()+rotOffset);
 
         return false;
 	}
@@ -1222,7 +1189,7 @@ CLine cLine;
 		if (ratio > trait.GetAdultRatio() && 
 			energy > stepEnergy)
 		{
-            EraseAndDraw(GROW);
+            Prepare(GROW);
 		}
 
 		if (m_maxAge < m_age)
@@ -1276,7 +1243,7 @@ CLine cLine;
 		}
 	}
 
-    //UpdateGraphics();
+    UpdateGraphics();
 
     return true;
 }
@@ -1899,9 +1866,10 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
 
 bool Biot::OnOpen()
 {
-	adultBaseEnergy = Symmetric(trait.GetAdultRatio()) * env.options.startEnergy;
+    adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.options.startEnergy;
 
-	totalDistance   = Symmetric(ratio);
+    totalDistance   = UpdateShape(ratio);
+    UpdateShapeRotation();
 	childBaseEnergy = totalDistance * env.options.startEnergy;
 
 	// Lets assume injury
@@ -1913,15 +1881,9 @@ bool Biot::OnOpen()
 	m_Id     = env.GetID();
 	m_maxAge = trait.GetMaxAge();
 
-//	if (env.WithinBorders(*this))
-//	{
-    //this->graphics->setPos(this->vector.GetX(), this->vector.GetY());
-    //this->graphics->setRotation(this->vector.GetR()+rotOffset);
-    //UpdateGraphics();
+    bShapeChanged = true;
+    UpdateGraphics();
 
-    SetErasePosition();
-//		return true;
-//	}
     return false;
 }
 
