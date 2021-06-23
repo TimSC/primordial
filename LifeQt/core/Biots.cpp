@@ -23,6 +23,8 @@ Biot::Biot(Environment& environment) : env(environment)
   max_genes = 1;
   ClearSettings();
   graphics = new QGraphicsItemGroup();
+  graphics->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+
   boundingRect = nullptr;
   assert(env.m_scene != nullptr);
   env.m_scene->addItem(graphics);
@@ -686,7 +688,8 @@ void Biot::UpdateGraphics()
 {
     this->graphicsRect->setPos(CenterX(), CenterY());
     this->graphics->setPos(origin);
-    this->graphics->setRotation(vector.getRotate());
+    if (vector.getRotate() != this->graphics->rotation())
+        this->graphics->setRotation(vector.getRotate());
 
     QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
     QPen whitePen(QColor(255,255,255));
@@ -713,6 +716,7 @@ void Biot::UpdateGraphics()
 
         for (int i = 0; i < genes; i++)
         {
+
             if (state[i] > 0)
             {
                 short aPen = nType[i];
@@ -727,6 +731,7 @@ void Biot::UpdateGraphics()
                 if(lineCount >= lines.size())
                 {
                     line = new QGraphicsLineItem(startPtLocal[i].x(), startPtLocal[i].y(), stopPtLocal[i].x(), stopPtLocal[i].y(), graphics);
+                    line->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
                     lines.append(line);
                 }
                 else
