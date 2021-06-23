@@ -287,10 +287,7 @@ class Biot: public BRectItem
 
 private:
     Environment& env;
-    QGraphicsItemGroup *graphics;
-    QGraphicsItemGroup *graphicsRect;
-    QGraphicsRectItem *boundingRect;
-    QList<QGraphicsLineItem *> lines;
+
 
 public:
 	// Do not save these variables

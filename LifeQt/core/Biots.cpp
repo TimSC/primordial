@@ -22,29 +22,12 @@ Biot::Biot(Environment& environment) : env(environment)
 {
   max_genes = 1;
   ClearSettings();
-  graphics = new QGraphicsItemGroup();
-  graphics->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
 
-  boundingRect = nullptr;
-  assert(env.m_scene != nullptr);
-  env.m_scene->addItem(graphics);
-
-  graphicsRect = new QGraphicsItemGroup();
-  env.m_scene->addItem(graphicsRect);
 }
 
 Biot::~Biot(void)
 {
-    for(size_t i = 0; i < lines.size(); i ++)
-    {
-        //Remove unneeded line
-        env.m_scene->removeItem(lines[i]);
-        lines[i] = nullptr;
-    }
-    lines.clear();
 
-    env.m_scene->removeItem(graphics);
-    env.m_scene->removeItem(graphicsRect);
 //	FreeBitmaps();
 }
 
@@ -686,15 +669,12 @@ void Biot::Prepare(int operation)
 
 void Biot::UpdateGraphics()
 {
-    this->graphicsRect->setPos(CenterX(), CenterY());
-    this->graphics->setPos(origin);
-    if (vector.getRotate() != this->graphics->rotation())
-        this->graphics->setRotation(vector.getRotate());
+
 
     QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
     QPen whitePen(QColor(255,255,255));
 
-    if (env.BiotShouldBox(m_Id))
+    /*if (env.BiotShouldBox(m_Id))
     {
         if (boundingRect == nullptr)
         {
@@ -708,11 +688,11 @@ void Biot::UpdateGraphics()
     {
         env.m_scene->removeItem(boundingRect);
         boundingRect = nullptr;
-    }
+    }*/
 
     if(bShapeChanged)
     {
-        size_t lineCount = 0;
+        /*size_t lineCount = 0;
 
         for (int i = 0; i < genes; i++)
         {
@@ -747,7 +727,7 @@ void Biot::UpdateGraphics()
         for(size_t i = lineCount; i < lines.size(); i ++)
         {
             //Remove unneeded line
-            env.m_scene->removeItem(lines[i]);
+            //env.m_scene->removeItem(lines[i]);
             lines[i] = nullptr;
         }
         size_t originalNumLines = lines.size();
@@ -756,7 +736,7 @@ void Biot::UpdateGraphics()
             lines.removeLast();
         }
 
-        bShapeChanged = false;
+        bShapeChanged = false;*/
     }
 
 }

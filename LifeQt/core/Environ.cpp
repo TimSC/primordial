@@ -717,12 +717,12 @@ void Environment::OnOpen()
 //
 
 
-void Environment::OnNew(QGraphicsScene &scene,
+void Environment::OnNew(QOpenGLWidget &scene,
                         QRect worldRect, int population, int seed,
 						int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 {
     m_scene = &scene;
-    m_scene->setBackgroundBrush(QBrush(QColor(0,0,0)));
+    //m_scene->setBackgroundBrush(QBrush(QColor(0,0,0)));
 	Clear();
 
 	options.startNew = 1;

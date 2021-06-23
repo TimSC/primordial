@@ -11,7 +11,7 @@
 
 #include <string>
 #include <QDataStream>
-#include <QGraphicsScene>
+#include <QOpenGLWidget>
 #include "Etools.h"
 #include "Connect.h"
 #include "Genotype.h"
@@ -181,7 +181,7 @@ public:
 
     bool WithinBorders(BRect& rect);
 
-    void OnNew(QGraphicsScene &scene, QRect worldRect, int population, int seed,
+    void OnNew(QOpenGLWidget &scene, QRect worldRect, int population, int seed,
                int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
 	void OnRestart();
     void OnOpen();
@@ -189,7 +189,7 @@ public:
 
 public:
 
-    QGraphicsScene *  m_scene;
+    QOpenGLWidget *  m_scene;
 	BRectSort         m_sort;
 
 	CEnvStats         m_stats;

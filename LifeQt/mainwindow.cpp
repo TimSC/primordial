@@ -20,31 +20,19 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    if(1)
-    {
-        QOpenGLWidget *gl = new QOpenGLWidget();
-        QSurfaceFormat format;
-        //format.setSamples(16);
-        gl->setFormat(format);
-        this->ui->graphicsView->setViewport(gl);
-    }
-
     QRect rect(0, 0, 800, 600);
     QPen whitePen(QColor(255,255,255));
     QGraphicsRectItem *gri = new QGraphicsRectItem(rect);
 
     gri->setPen(whitePen);
-    this->scene.addItem(gri);
 
     this->env.options.Reset(rect.x(), rect.y());
 
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
     //qint64 seed = 100;
     int numBiots = 20;
-    this->env.OnNew(this->scene, rect, numBiots, seed,
+    this->env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
                 0, 1, 10);
-
-    this->ui->graphicsView->setScene(&this->scene);
 
     startTimer(1);     // 1-millisecond timer
 }
@@ -109,7 +97,7 @@ void MainWindow::on_actionNew_triggered()
     int numBiots = 20;
 
     this->env.DeleteContents();
-    this->env.OnNew(this->scene, rect, numBiots, seed,
+    this->env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
                                   0, 1, 10);
 }
 

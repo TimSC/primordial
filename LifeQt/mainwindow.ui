@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QGraphicsView" name="graphicsView"/>
+     <widget class="EnvironmentArea" name="openGLWidget"/>
     </item>
    </layout>
   </widget>
@@ -190,6 +190,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>EnvironmentArea</class>
+   <extends>QOpenGLWidget</extends>
+   <header>environmentarea.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

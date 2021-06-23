@@ -26,6 +26,7 @@ SOURCES += \
     core/Settings.cpp \
     core/SoundRegistry.cpp \
     core/vector.cpp \
+    environmentarea.cpp \
     main.cpp \
     mainwindow.cpp
 
@@ -40,6 +41,7 @@ HEADERS += \
     core/Settings.h \
     core/SoundRegistry.h \
     core/vector.h \
+    environmentarea.h \
     mainwindow.h
 
 FORMS += \

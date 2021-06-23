@@ -43,6 +43,5 @@ private:
     class Environment env;
     std::string currentFilename;
 
-    QGraphicsScene scene;
 };
 #endif // MAINWINDOW_H
