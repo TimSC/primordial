@@ -191,7 +191,8 @@ class Biot: public BRectItem
     bool AdjustState(int index, short delta);
     bool OnOpen();
   
-	short Translate(double radius, double& newX, double& newY, int degrees, int aRatio);
+    short Translate(double radius, double& newX, double& newY, int degrees, int aRatio);
+    inline QPointF RotatePoint(const QPointF &pt, double rotCos, double rotSin);
     
     Biot& operator=(Biot& copyMe);
 
@@ -270,8 +271,10 @@ class Biot: public BRectItem
 
 	CRedraw redraw;
 
-    QPoint     startPt[MAX_GENES];
-    QPoint     stopPt[MAX_GENES];
+    QPointF     startPtLocal[MAX_GENES];
+    QPointF     stopPtLocal[MAX_GENES];
+    QPointF     startPt[MAX_GENES];
+    QPointF     stopPt[MAX_GENES];
     short     distance[MAX_GENES];
     GeneTrait trait;
 
@@ -425,7 +428,7 @@ inline void Biot::MoveBiot(int x, int y)
 }
 
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // PrepareDraw
 //
 // For a new bitmap if required.
@@ -434,6 +437,15 @@ inline void Biot::PrepareDraw(int operation)
 {
 	if (operation != NORMAL)
         UpdateGraphics();
+}
+
+// ////////////////////////////////////////////////////////////////////
+/// \brief deg2rad
+/// \param degrees
+/// \return
+///
+inline double deg2rad (double deg) {
+    return deg * M_PI / 180.0;
 }
 
 #endif

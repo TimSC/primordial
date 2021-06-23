@@ -441,8 +441,8 @@ static int side[8][2] = {
 int64_t Biot::Symmetric(int aRatio)
 {
 int64_t  dist    = 0;
-double X,Y;
-int i, nPeno;
+double X = 0.0, Y = 0.0;
+int i = 0, nPeno = 0;
 //int nSet = 0;
 //bool bFirstLine = true;
 int  nLastGene = -1;
@@ -462,6 +462,8 @@ int  nLastGene = -1;
 	redraw.ClearRedraw();
 
     memset(distance, 0x00, sizeof(distance));
+    memset(stopPtLocal,   0x00, sizeof(stopPtLocal));
+    memset(startPtLocal,  0x00, sizeof(startPtLocal));
     memset(stopPt,   0x00, sizeof(stopPt));
     memset(startPt,  0x00, sizeof(startPt));
     memset(nType,    0x00, sizeof(nType));
@@ -476,14 +478,10 @@ int  nLastGene = -1;
 		m_angleLimbTypeDrawn[lineType] = nTypeAngle;
 		m_angleLimbDrawn[nLimb]        = nLineAngle;
 
-		X = 0.0;
-		Y = 0.0;
-
         for (int nGene = 0; nGene < MAX_SEGMENTS; nGene++)
 		{
 			m_angleLimbTypeSegmentDrawn[lineType][nGene] = m_angleLimbTypeSegment[lineType][nGene];
-
-			GeneSegment& segment = trait.GetSegment(nLimb, nGene);
+            GeneSegment& segment = trait.GetSegment(nLimb, nGene);
 
 			if (segment.IsVisible())
 			{
@@ -492,19 +490,18 @@ int  nLastGene = -1;
 
 				if (nLastGene < 0)
 				{
-                    startPt[nPeno].setX(0);
-                    startPt[nPeno].setY(0);
+                    startPtLocal[nPeno].setX(0);
+                    startPtLocal[nPeno].setY(0);
 				}
 				else
 				{
 					//TODO: Branching involves setting new start points
-//					startPt[nPeno] = stopPt[nPeno - ((nGene - nLastGene) * MAX_SYMMETRY)];
+//					startPtLocal[nPeno] = stopPtLocal[nPeno - ((nGene - nLastGene) * MAX_SYMMETRY)];
 					if (segment.GetStart() < nGene &&
 						trait.GetSegment(nLimb, segment.GetStart()).IsVisible())
-						startPt[nPeno] = stopPt[nPeno - ((nGene - segment.GetStart()) * MAX_SYMMETRY)];
+                        startPtLocal[nPeno] = stopPtLocal[nPeno - ((nGene - segment.GetStart()) * MAX_SYMMETRY)];
 					else
-						startPt[nPeno] = stopPt[nPeno - ((nGene - nLastGene) * MAX_SYMMETRY)];
-
+                        startPtLocal[nPeno] = stopPtLocal[nPeno - ((nGene - nLastGene) * MAX_SYMMETRY)];
 
 				}
 				nLastGene = nGene;
@@ -517,9 +514,12 @@ int  nLastGene = -1;
 					m_retractDrawn[nLimb] = m_retractRadius[nLimb];
 				}
 
+                X = 0.0;
+                Y = 0.0;
+
 				distance[nPeno] = Translate(segment.GetRadius(), X, Y,
 					trait.GetAngle(nLimb, nGene) + 
-					vector.getRotate()           + 
+                    //vector.getRotate()           +
 					m_angleDrawn[nPeno]            +
 					trait.GetCompressedToggle(nTypeAngle, nLimb, nGene) +
 					nLineAngle +
@@ -529,23 +529,8 @@ int  nLastGene = -1;
 				// Pass doubles in and out to keep track of the fractional portion
 				// We are getting lots of jitter during rotation.  To smooth it out
 				// we must pass on the fraction portion for each limb
-                stopPt[nPeno].setX(startPt[nPeno].x() + int(X));
-                stopPt[nPeno].setY(startPt[nPeno].y() + int(Y));
-
-				X -= int(X);
-				Y -= int(Y);
-
-                if (stopPt[nPeno].x() < leftX)
-                    leftX = stopPt[nPeno].x();
-
-                if (stopPt[nPeno].x() > rightX)
-                    rightX = stopPt[nPeno].x();
-
-                if (stopPt[nPeno].y() < topY)
-                    topY = stopPt[nPeno].y();
-
-                if (stopPt[nPeno].y() > bottomY)
-                    bottomY = stopPt[nPeno].y();
+                stopPtLocal[nPeno].setX(startPtLocal[nPeno].x() + X);
+                stopPtLocal[nPeno].setY(startPtLocal[nPeno].y() + Y);
 
 				dist += distance[nPeno];
 
@@ -561,6 +546,38 @@ int  nLastGene = -1;
  			}
 		}
 	}
+
+    //Convert local non-rotated coordinates to rotated coordinates
+    int rot = vector.getRotate();
+    double rotSin = sin(deg2rad(rot));
+    double rotCos = cos(deg2rad(rot));
+    for (int nLimb = 0; nLimb < trait.GetLines(); nLimb++)
+    {
+        for (int nGene = 0; nGene < MAX_SEGMENTS; nGene++)
+        {
+            GeneSegment& segment = trait.GetSegment(nLimb, nGene);
+
+            if (segment.IsVisible())
+            {
+                nPeno = nLimb + nGene * MAX_SYMMETRY;
+
+                startPt[nPeno] = RotatePoint(startPtLocal[nPeno], rotCos, rotSin);
+                stopPt[nPeno] = RotatePoint(stopPtLocal[nPeno], rotCos, rotSin);
+
+                if (stopPt[nPeno].x() < leftX)
+                    leftX = stopPt[nPeno].x();
+
+                if (stopPt[nPeno].x() > rightX)
+                    rightX = stopPt[nPeno].x();
+
+                if (stopPt[nPeno].y() < topY)
+                    topY = stopPt[nPeno].y();
+
+                if (stopPt[nPeno].y() > bottomY)
+                    bottomY = stopPt[nPeno].y();
+            }
+        }
+    }
 
     vector.setMass(0.0);
 
@@ -598,7 +615,15 @@ static double scale[MAX_RATIO] = {0.70, 0.76, 0.84, 0.92,
 	return (short) (radius + .5);
 }
 
+// *******************************************************************
 
+inline QPointF Biot::RotatePoint(const QPointF &pt, double rotCos, double rotSin)
+{
+    QPointF out;
+    out.setX(pt.x() * rotCos - pt.y() * rotSin);
+    out.setY(pt.x() * rotSin + pt.y() * rotCos);
+    return out;
+}
 
 // ///////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 // Distance                                                           
@@ -674,8 +699,8 @@ void Biot::SetErasePosition(void)
 void Biot::UpdateGraphics()
 {
     this->graphicsRect->setPos(CenterX(), CenterY());
-    //this->graphicsRect->setRotation(vector.GetR());
     this->graphics->setPos(origin);
+    this->graphics->setRotation(vector.getRotate());
 
     QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
     QPen whitePen(QColor(255,255,255));
@@ -704,7 +729,7 @@ void Biot::UpdateGraphics()
         {
             short aPen = nType[i];
 
-            if (state[i] != distance[i])
+            if (state[i] != distance[i]) //Injured or incomplete sections are drawn in dimmer color
                 aPen += DIM_COLOR;
 
             if (m_nSick)
@@ -713,19 +738,18 @@ void Biot::UpdateGraphics()
             QGraphicsLineItem *line = nullptr;
             if(lineCount >= lines.size())
             {
-                line = new QGraphicsLineItem(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y(), graphics);
+                line = new QGraphicsLineItem(startPtLocal[i].x(), startPtLocal[i].y(), stopPtLocal[i].x(), stopPtLocal[i].y(), graphics);
                 lines.append(line);
             }
             else
             {
                 line = lines[lineCount];
-                line->setLine(startPt[i].x(), startPt[i].y(), stopPt[i].x(), stopPt[i].y());
+                line->setLine(startPtLocal[i].x(), startPtLocal[i].y(), stopPtLocal[i].x(), stopPtLocal[i].y());
             }
             line->setPen(env.options.pens[aPen]);
             lineCount += 1;
         }
     }
-
 
     for(size_t i = lineCount; i < lines.size(); i ++)
     {

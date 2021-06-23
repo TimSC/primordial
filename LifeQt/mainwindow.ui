@@ -82,8 +82,11 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionStart_Simulation">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Start Simulation</string>
+    <string>Run Simulation</string>
    </property>
   </action>
   <action name="actionSettings">

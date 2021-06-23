@@ -33,9 +33,9 @@ private slots:
 
     void on_actionStart_Simulation_triggered();
 
-    void on_actionSettings_triggered();
-
     void on_actionLearn_about_Primordial_Life_triggered();
+
+    void on_actionStart_Simulation_triggered(bool checked);
 
 private:
     Ui::MainWindow *ui;

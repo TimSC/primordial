@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent)
         this->ui->graphicsView->setViewport(gl);
     }
 
-    QRect rect(0, 0, 2000, 1500);
+    QRect rect(0, 0, 800, 600);
     QPen whitePen(QColor(255,255,255));
     QGraphicsRectItem *gri = new QGraphicsRectItem(rect);
 
@@ -56,8 +56,9 @@ MainWindow::~MainWindow()
 
 void MainWindow::timerEvent(QTimerEvent *event)
 {
-    //cout << this->env.GetPopulation() << endl;
-    this->env.Skip();
+    //cout << this->env.GetPopulation() << end
+    if(this->ui->actionStart_Simulation->isChecked())
+        this->env.Skip();
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -141,12 +142,12 @@ void MainWindow::on_actionStart_Simulation_triggered()
 
 }
 
-void MainWindow::on_actionSettings_triggered()
+void MainWindow::on_actionLearn_about_Primordial_Life_triggered()
 {
 
 }
 
-void MainWindow::on_actionLearn_about_Primordial_Life_triggered()
+void MainWindow::on_actionStart_Simulation_triggered(bool checked)
 {
 
 }
