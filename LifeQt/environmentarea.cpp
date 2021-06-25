@@ -5,7 +5,12 @@ using namespace std;
 
 EnvironmentArea::EnvironmentArea(QWidget *central) : QOpenGLWidget(central)
 {
+    this->env = nullptr;
+}
 
+void EnvironmentArea::SetEnvironment(class Environment *envIn)
+{
+    this->env = envIn;
 }
 
 void EnvironmentArea::paintEvent(QPaintEvent* event)
@@ -24,14 +29,6 @@ void EnvironmentArea::resizeEvent(QResizeEvent* event)
 void EnvironmentArea::paintGL()
 {
     QPainter painter(this);
-    painter.setPen(QPen(Qt::blue));
 
-    painter.drawLine(QPointF(0,0), QPointF(100, 50));
-
-    QPainterPath path;
-    path.moveTo(20, 80);
-    path.lineTo(20, 30);
-    path.cubicTo(80, 0, 50, 50, 80, 80);
-
-    painter.drawPath(path);
+    this->env->paintGL(painter);
 }

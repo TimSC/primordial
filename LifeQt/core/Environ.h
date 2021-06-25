@@ -187,6 +187,8 @@ public:
     void OnOpen();
 	void OnStop();
 
+    void paintGL(QPainter &painter);
+
 public:
 
     QOpenGLWidget *  m_scene;

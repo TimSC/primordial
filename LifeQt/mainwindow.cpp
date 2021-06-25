@@ -34,6 +34,8 @@ MainWindow::MainWindow(QWidget *parent)
     this->env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
                 0, 1, 10);
 
+    this->ui->openGLWidget->SetEnvironment(&this->env);
+
     startTimer(1);     // 1-millisecond timer
 }
 
@@ -46,7 +48,10 @@ void MainWindow::timerEvent(QTimerEvent *event)
 {
     //cout << this->env.GetPopulation() << end
     if(this->ui->actionStart_Simulation->isChecked())
+    {
         this->env.Skip();
+        this->ui->openGLWidget->update();
+    }
 }
 
 void MainWindow::on_actionOpen_triggered()

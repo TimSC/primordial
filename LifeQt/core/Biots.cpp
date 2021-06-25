@@ -8,6 +8,7 @@
 #include "Environ.h"
 #include "Biots.h"
 #include <iostream>
+#include <QPainter>
 
 using namespace rapidjson;
 
@@ -2353,4 +2354,45 @@ short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 	return nRate;
 }
 
+// ///////////////////////////////////////////////////////////////////
+// paintGL
+//
+//
+//
 
+void Biot::paintGL(QPainter &painter)
+{
+
+    QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
+    QPen whitePen(QColor(255,255,255));
+
+    if (env.BiotShouldBox(m_Id))
+    {
+        painter.setPen(whitePen);
+        painter.drawRect(rc);
+    }
+
+
+    for (int i = 0; i < genes; i++)
+    {
+
+        if (state[i] > 0)
+        {
+            short aPen = nType[i];
+
+            if (state[i] != distance[i]) //Injured or incomplete sections are drawn in dimmer color
+                aPen += DIM_COLOR;
+
+            if (m_nSick)
+                aPen = PURPLE_LEAF;
+
+            painter.setPen(env.options.pens[aPen]);
+
+            painter.drawLine(startPt[i].x()+origin.x(), startPt[i].y()+origin.y(), stopPt[i].x()+origin.x(), stopPt[i].y()+origin.y());
+
+        }
+    }
+
+
+
+}
