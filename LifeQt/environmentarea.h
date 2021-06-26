@@ -16,6 +16,9 @@ public:
     void resizeEvent(QResizeEvent* event) override;
     void paintGL() override;
 
+    void mousePressEvent(QMouseEvent * event) override;
+    void mouseReleaseEvent(QMouseEvent * event) override;
+
 private:
     class Environment *env;
 

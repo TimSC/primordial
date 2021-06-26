@@ -47,12 +47,24 @@ void EnvironmentArea::paintGL()
     QPainter painter(this);
     painter.setPen(QPen(Qt::blue));
 
-    /*QPainterPath path;
-    path.moveTo(20, 80);
-    path.lineTo(20, 30);
-    path.cubicTo(80, 0, 50, 50, 80, 80);
-
-    painter.drawPath(path);*/
-
     this->env->paintGL(painter);
+}
+
+void EnvironmentArea::mousePressEvent(QMouseEvent * event)
+{
+
+
+
+}
+
+void EnvironmentArea::mouseReleaseEvent(QMouseEvent * event)
+{
+    int x = event->x();
+    int y = event->y();
+    std::cout << x <<"," << y << std::endl;
+    int boitId = this->env->FindBiotByPoint(x, y);
+    if(boitId > 0)
+        this->env->SetSelectedBiot(boitId);
+
+
 }

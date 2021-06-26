@@ -71,9 +71,9 @@ Biot* CBiotList::FindBiotByID(uint32_t id)
 //
 int CBiotList::FindBiotByPoint(int x, int y)
 {
-int minDist = 30000;
-int minBiot = -1;
-int distance;
+    int minDist = 30000;
+    int minBiot = -1;
+    int distance = 0;
 
     for (int i = 0; i < size(); i++)
 	{
@@ -338,7 +338,7 @@ void CEnvStats::NewSample()
 // GetDays
 // 
 //
-std::string CEnvStats::GetDaysStr()
+std::string CEnvStats::GetDaysStr() const
 {
     QString sString = QString::asprintf("%6.2f", m_days);
     return sString.toStdString();
@@ -349,7 +349,7 @@ std::string CEnvStats::GetDaysStr()
 // GetPopulationStr
 // 
 //
-std::string CEnvStats::GetPopulationStr()
+std::string CEnvStats::GetPopulationStr() const
 {
     QString sString = QString::asprintf("%lu/%lu", m_population, m_peakPopulation);
     return sString.toStdString();
@@ -360,7 +360,7 @@ std::string CEnvStats::GetPopulationStr()
 // GetExtinctionsStr
 // 
 //
-std::string CEnvStats::GetExtinctionsStr()
+std::string CEnvStats::GetExtinctionsStr() const
 {
     QString sString = QString::asprintf("%lu", m_extinctions);
     return sString.toStdString();
@@ -1129,5 +1129,14 @@ void Environment::paintGL(QPainter &painter)
     for(int i=0; i<this->m_biotList.size(); i++)
     {
         m_biotList[i]->paintGL(painter);
+    }
+}
+
+void Environment::SetSelectedBiot(uint32_t biotId)
+{
+    if(biotId < m_biotList.size())
+    {
+        m_selectedId = biotId;
+        m_bIsSelected = true;
     }
 }

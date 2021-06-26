@@ -37,9 +37,9 @@ public:
 	void Sample(Environment& env);
 	void NewSample();
 	
-    std::string GetDaysStr();
-    std::string GetPopulationStr();
-    std::string GetExtinctionsStr();
+    std::string GetDaysStr() const;
+    std::string GetPopulationStr() const;
+    std::string GetExtinctionsStr() const;
     static std::string ToDays(uint32_t dwAge);
     static uint32_t   ToGenerations(const std::string &szDays);
 
@@ -147,6 +147,7 @@ public:
 	Biot* HitCheck(Biot *me, BRectSortPos& pos);
 //	Biot* HitCheck(Biot *me, int* pStart = NULL); { return m_biotList.HitCheck(me, pStart); }
     Biot* FindBiotByID(uint32_t id) { return m_biotList.FindBiotByID(id); }
+    int  FindBiotByPoint(int x, int y) { return m_biotList.FindBiotByPoint(x, y); };
 
 	void  AddBiot(Biot* newBiot);
 
@@ -160,7 +161,6 @@ public:
 
     uint32_t	GetID(void){return ++m_uniqueID; }
 
-	int  FindBiot(int x, int y);
 	void MoveBiot(Biot* pBiot) { m_sort.Move((BRectItem*) pBiot); }
 	void MoveBiot(Biot* pBiot, BRect* pOrigRect) { m_sort.Move((BRectItem*) pBiot, pOrigRect); }
 		
@@ -170,6 +170,7 @@ public:
 
     bool  BiotShouldBox(uint32_t biotId) { return (biotId == m_selectedId && m_bIsSelected); }
 	Biot* GetSelectedBiot()           { return m_biotList.FindBiotByID(m_selectedId); }
+    void SetSelectedBiot(uint32_t biotId);
 
     bool IsIntersect(CLine& bLine, int& x, int& y)
     {

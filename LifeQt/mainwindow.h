@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QGraphicsScene>
+#include <QLineEdit>
 #include "core/Environ.h"
 #include "rapidjson/document.h"
 
@@ -39,12 +40,15 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    QLineEdit *statusDay, *statusPopulation, *statusExtinctions;
 
     class Environment env;
     std::string currentFilename;
+    std::string currentTool;
 
     int64_t lastSimUpdate;
     int64_t lastGraphicsUpdate;
+    int64_t lastStatsUpdate;
 
 };
 #endif // MAINWINDOW_H

@@ -2362,16 +2362,15 @@ short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 
 void Biot::paintGL(QPainter &painter)
 {
-
-    QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
-    QPen whitePen(QColor(255,255,255));
-
     if (env.BiotShouldBox(m_Id))
     {
+        QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
+        QPen whitePen(QColor(255,255,255));
+        rc.translate(CenterX(), CenterY());
+
         painter.setPen(whitePen);
         painter.drawRect(rc);
     }
-
 
     for (int i = 0; i < genes; i++)
     {

@@ -7,6 +7,8 @@
 #include <QDateTime>
 #include <QFileDialog>
 #include <QOpenGLWidget>
+#include <QScreen>
+#include <QLabel>
 #include "core/Biots.h"
 #include "rapidjson/writer.h"
 #include <rapidjson/ostreamwrapper.h>
@@ -20,7 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    QRect rect(0, 0, 800, 600);
+    QSize size = qApp->screens()[0]->size();
+
+    QRect rect(0, 0, size.width(), size.height());
     QPen whitePen(QColor(255,255,255));
     QGraphicsRectItem *gri = new QGraphicsRectItem(rect);
 
@@ -42,8 +46,26 @@ MainWindow::MainWindow(QWidget *parent)
 
     lastSimUpdate = 0;
     lastGraphicsUpdate = 0;
+    lastStatsUpdate = 0;
+    currentTool = "examine";
 
-    startTimer(5);     // 1-millisecond timer
+    this->ui->statusbar->addWidget(new QLabel("Day", nullptr));
+    statusDay = new QLineEdit();
+    statusDay->setReadOnly(true);
+    statusDay->setFixedWidth(50);
+    this->ui->statusbar->addWidget(statusDay);
+    this->ui->statusbar->addWidget(new QLabel("Population", nullptr));
+    statusPopulation = new QLineEdit();
+    statusPopulation->setReadOnly(true);
+    statusPopulation->setFixedWidth(80);
+    this->ui->statusbar->addWidget(statusPopulation);
+    this->ui->statusbar->addWidget(new QLabel("Extinctions", nullptr));
+    statusExtinctions = new QLineEdit();
+    statusExtinctions->setReadOnly(true);
+    statusExtinctions->setFixedWidth(50);
+    this->ui->statusbar->addWidget(statusExtinctions);
+
+    startTimer(10);     // 5-millisecond timer
 }
 
 MainWindow::~MainWindow()
@@ -55,7 +77,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
 {
     int64_t now = QDateTime::currentMSecsSinceEpoch();
 
-    //cout << this->env.GetPopulation() << end
+
     if(this->ui->actionStart_Simulation->isChecked())
     {
         uint64_t elapsed = now - lastSimUpdate;
@@ -67,10 +89,21 @@ void MainWindow::timerEvent(QTimerEvent *event)
     }
 
     int64_t elapsed = now - lastGraphicsUpdate;
-    if(elapsed > 20)
+    if(elapsed > 40)
     {
         lastGraphicsUpdate = now;
         this->ui->openGLWidget->update();
+    }
+
+    elapsed = now - lastStatsUpdate;
+    if(env.m_statsList.size() > 0 and elapsed > 500)
+    {
+        lastStatsUpdate = now;
+
+        const CEnvStats &stats = env.m_statsList.last();
+        statusDay->setText(stats.GetDaysStr().c_str());
+        statusPopulation->setText(stats.GetPopulationStr().c_str());
+        statusExtinctions->setText(stats.GetExtinctionsStr().c_str());
     }
 }
 
