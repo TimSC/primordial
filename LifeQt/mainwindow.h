@@ -43,5 +43,8 @@ private:
     class Environment env;
     std::string currentFilename;
 
+    int64_t lastSimUpdate;
+    int64_t lastGraphicsUpdate;
+
 };
 #endif // MAINWINDOW_H

@@ -197,7 +197,6 @@ public:
 	CEnvStats         m_stats;
 	CEnvStatsList     m_statsList;
 
-    bool m_bBlocked;
 	CSettings options; //The optins: Fox
 
     LeftSide   leftSide;
@@ -231,8 +230,8 @@ public:
     int     m_maxBitPadWidth;
     int     m_maxBitPadHeight;
 
-	// Should we sleep between loops to slow things down?
-    uint64_t   m_dwTicks;
+    uint64_t tickStart, tickCount;
+    double ticksPerSec;
 };
 
 

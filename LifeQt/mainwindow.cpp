@@ -24,6 +24,10 @@ MainWindow::MainWindow(QWidget *parent)
     QPen whitePen(QColor(255,255,255));
     QGraphicsRectItem *gri = new QGraphicsRectItem(rect);
 
+    QSurfaceFormat fmt;
+    fmt.setSwapInterval(0);
+    this->ui->openGLWidget->setFormat(fmt);
+
     gri->setPen(whitePen);
 
     this->env.options.Reset(rect.x(), rect.y());
@@ -36,7 +40,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->ui->openGLWidget->SetEnvironment(&this->env);
 
-    startTimer(1);     // 1-millisecond timer
+    lastSimUpdate = 0;
+    lastGraphicsUpdate = 0;
+
+    startTimer(5);     // 1-millisecond timer
 }
 
 MainWindow::~MainWindow()
@@ -46,10 +53,23 @@ MainWindow::~MainWindow()
 
 void MainWindow::timerEvent(QTimerEvent *event)
 {
+    int64_t now = QDateTime::currentMSecsSinceEpoch();
+
     //cout << this->env.GetPopulation() << end
     if(this->ui->actionStart_Simulation->isChecked())
     {
-        this->env.Skip();
+        uint64_t elapsed = now - lastSimUpdate;
+        if(elapsed > 20)
+        {
+            lastSimUpdate = now;
+            this->env.Skip();
+        }
+    }
+
+    int64_t elapsed = now - lastGraphicsUpdate;
+    if(elapsed > 20)
+    {
+        lastGraphicsUpdate = now;
         this->ui->openGLWidget->update();
     }
 }

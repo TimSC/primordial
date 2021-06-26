@@ -185,11 +185,10 @@ void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value
     Biot* pBiot = nullptr;
 
     const Value &biotsJson = v["biots"];
-    m_nBiot = biotsJson.Size();
+    m_nBiot = -1;
+    m_bLooped = false;
 
-    m_bLooped = v["m_bLooped"].GetBool();
-
-    for (int i = 0; i < m_nBiot; i++)
+    for (int i = 0; i < biotsJson.Size(); i++)
     {
         if ((pBiot = new Biot(env)) != NULL)
         {
@@ -509,6 +508,10 @@ Environment::Environment()
     options.pens[BLACK_LEAF]      = QPen(QColor(0,0,0));
     options.pens[PURPLE_LEAF]     = QPen(QColor(255,0,255));
 
+    tickStart = QDateTime::currentMSecsSinceEpoch();
+    tickCount = 0;
+    ticksPerSec = 0.0;
+
 	Clear();
 
 }
@@ -612,9 +615,6 @@ void Environment::Clear()
     m_maxBitPadWidth  = 0;
 	m_maxBitPadHeight = 0;
 
-	// We are not blocked to start with
-    m_bBlocked = false;
-
 	options.m_sound.SetScheme("PL", "Primordial Life");
 
 	options.m_nSick = 200;
@@ -624,7 +624,6 @@ void Environment::Clear()
 	m_stats.Clear();
     m_statsList.clear();
 
-    m_dwTicks      = QDateTime::currentMSecsSinceEpoch();
 
 }
 //Fox END
@@ -764,7 +763,6 @@ void Environment::OnNew(QOpenGLWidget &scene,
 	m_stats.NewSample();
 }
 
-
 //////////////////////////////////////////////////////////////////////
 // Skip
 //
@@ -776,13 +774,18 @@ void Environment::Skip()
     int i = 0;
     Biot* pBiot = nullptr;
 
-	if (m_bBlocked)
-		return;
+    uint64_t tickNow = QDateTime::currentMSecsSinceEpoch();
+    uint64_t elapse = tickNow - tickStart;
+    if(elapse > 1000)
+    {
+        ticksPerSec = ((double)tickCount / (double)elapse) * 1000.0;
+        //std::cout <<ticksPerSec << std::endl;
+        tickStart = tickNow;
+        tickCount = 0;
+    }
+    tickCount ++;
 
 //	bool bSample = ((options.m_generation & 0x000001FF) == 0x00000000);
-
-    m_bBlocked = true;
-
 
 /*	if ((generation & 0x000001FF) == 0x00000000)
 	{
@@ -836,91 +839,82 @@ void Environment::Skip()
 	}
 */
 
-    int64_t dwTicks = QDateTime::currentMSecsSinceEpoch();
-	// Process all the biots now
-    if ((QDateTime::currentMSecsSinceEpoch() - dwTicks) < 200)
-	{
-		pBiot = m_biotList.NextBiot();
+    // Process all the biots now
+    while (true)
+    {
+        pBiot = m_biotList.NextBiot();
 
-		if (m_biotList.Looped())
-		{
-			// Another approach would store the delta time between each loop
-			// and if it was under a certain threshold, it would add a sleep
-			// statement.
-            if ((QDateTime::currentMSecsSinceEpoch() - m_dwTicks) < 25)
-                QThread::msleep(8);
+        // Is the biot present?
+        if (m_biotList.Looped()) break;
+        if (pBiot == nullptr) continue;
 
-            m_dwTicks = QDateTime::currentMSecsSinceEpoch();
+        BRect origPos(pBiot);
 
-			if ((options.m_generation & CEnvStats::SAMPLE_TIME) == CEnvStats::SAMPLE_TIME)
-			{
-				m_stats.Sample(*this);
-                m_statsList.append(m_stats);
-				m_stats.NewSample();
-                if (m_statsList.size() > 100)
-                    m_statsList.removeFirst();
+        if (!pBiot->Move())
+        {
+            m_sort.Remove(pBiot);
+            m_biotList.RemoveBiot();
+            m_stats.m_deaths++;
+        }
+        else
+        {
+            m_sort.Move(pBiot, &origPos);
+            for (i = 0; i < 4; i++)
+            {
+                /*if (pBiot->IsContainedBy(*side[i]))
+                {
+                    sock.LockAll();
+                    if (side[i]->Export(pBiot))
+                    {
+                        pBiot->Erase();
+                        m_sort.Remove(pBiot);
+                        m_biotList.RemoveBiot();
+                    }
+                    else
+                    {
+                        pBiot->Reject(i);
+                    }
+                    sock.UnlockAll();
+                    i = 4;
+                }*/
+            }
+        }
+    }
+
+    //Check if we should update stats
+    if ((options.m_generation & CEnvStats::SAMPLE_TIME) == CEnvStats::SAMPLE_TIME)
+    {
+        m_stats.Sample(*this);
+        m_statsList.append(m_stats);
+        m_stats.NewSample();
+        if (m_statsList.size() > 100)
+            m_statsList.removeFirst();
 /*
-                AfxMainFrame().UpdateStatusBar();
+        AfxMainFrame().UpdateStatusBar();
 
-				if (m_pEnvStatsWnd)
-					m_pEnvStatsWnd->PaintNow();
+        if (m_pEnvStatsWnd)
+            m_pEnvStatsWnd->PaintNow();
 */
-				if (m_stats.PercentUncoveredByBiots() < 0.50)
-				{
-                    m_biotList[Integer(m_biotList.size())]->m_nSick = options.m_nSick;
-				}
+        if (m_stats.PercentUncoveredByBiots() < 0.50)
+        {
+            m_biotList[Integer(m_biotList.size())]->m_nSick = options.m_nSick;
+        }
 
-			}
+    }
 
-			options.m_generation++;
+    options.m_generation++;
 
-			if (m_bIsSelected)
-			{
-                /*Biot* pBiot = GetSelectedBiot();
-				if (m_pMagnifyWnd)
-					m_pMagnifyWnd->PaintNow(pBiot);
-				m_editor.UpdateBiot(pBiot);
+    if (m_bIsSelected)
+    {
+        Biot* pBiot = GetSelectedBiot();
+        /*if (m_pMagnifyWnd)
+            m_pMagnifyWnd->PaintNow(pBiot);
+        m_editor.UpdateBiot(pBiot);
 */
-                m_bIsSelected = (pBiot != NULL);
-			}
-		}
+        m_bIsSelected = (pBiot != NULL);
+    }
 
-		// Is the biot present?
-		if (pBiot)
-		{
-			BRect origPos(pBiot);
 
-			if (!pBiot->Move())
-			{
-				m_sort.Remove(pBiot);
-				m_biotList.RemoveBiot();
-				m_stats.m_deaths++;
-			}
-			else
-			{
-				m_sort.Move(pBiot, &origPos);
-				for (i = 0; i < 4; i++)
-				{
-                    /*if (pBiot->IsContainedBy(*side[i]))
-					{
-                        sock.LockAll();
-						if (side[i]->Export(pBiot))
-						{
-							pBiot->Erase();
-							m_sort.Remove(pBiot);
-							m_biotList.RemoveBiot();
-						}
-						else
-						{	
-							pBiot->Reject(i);
-						}
-						sock.UnlockAll();
-						i = 4;
-                    }*/
-				}
-			}
-		}
-	}
 /*
 	if (m_biotList.GetSize() < 4)
 	{
@@ -937,10 +931,6 @@ void Environment::Skip()
 
 */
 
-    for(int i=0; i<m_biotList.size(); i++)
-        m_biotList[i]->UpdateGraphics();
-
-    m_bBlocked = false;
 }
 
  
@@ -979,7 +969,6 @@ void Environment::AddBiot(Biot* pNewBiot)
 }
 
 /*
-
 
 /////////////////////////////////////////////////////////////////////
 // MagnifyBiot
@@ -1134,6 +1123,9 @@ void Environment::SerializeJsonLoad(const rapidjson::Value& v)
 
 void Environment::paintGL(QPainter &painter)
 {
+    for(int i=0; i<m_biotList.size(); i++)
+        m_biotList[i]->UpdateGraphics();
+
     for(int i=0; i<this->m_biotList.size(); i++)
     {
         m_biotList[i]->paintGL(painter);

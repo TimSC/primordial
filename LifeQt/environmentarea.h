@@ -18,6 +18,9 @@ public:
 
 private:
     class Environment *env;
+
+    uint64_t tickStart, tickCount;
+    double ticksPerSec;
 };
 
 #endif // ENVIRONMENTAREA_H
