@@ -331,7 +331,7 @@ int Biot::Initialize(bool bRandom)
 //
 int Biot::PlaceRandom(void)
 {
-	int i;
+    int i = 0, x = 0, y = 0;
 
 	Randomizer rand;
 
@@ -353,15 +353,22 @@ int Biot::PlaceRandom(void)
 		// TODO:  Are we even sorted at this time?
 	}
        
-  if (i > 8)
+    if (i > 8)
     env.NoRoomToGiveBirth();
+    Place(origin.x(), origin.y());
+    return i;
+}
 
-  vector.setX(origin.x());
-  vector.setY(origin.y());
+void Biot::Place(int x, int y)
+{
+    origin.setX(x);
+    origin.setY(y);
 
-  bShapeChanged = true;
-  UpdateGraphics();
-  return i;
+    vector.setX(origin.x());
+    vector.setY(origin.y());
+
+    bShapeChanged = true;
+    UpdateGraphics();
 }
 
 

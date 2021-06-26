@@ -342,6 +342,8 @@ public:
     int64_t     stepEnergy;
     int  PlaceRandom(void);
     bool PlaceNear(Biot& parent);
+    void Place(int x, int y);
+
     bool ChangeDirection(Biot* enemy, int dx, int dy);
     void SetRatio(void);
     void SetSymmetry(void);

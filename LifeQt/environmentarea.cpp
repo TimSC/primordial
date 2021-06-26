@@ -2,8 +2,15 @@
 #include "core/Biots.h"
 #include <QPainter>
 #include <QDateTime>
+#include <QFileDialog>
 #include <iostream>
+#include <fstream>
+#include "rapidjson/writer.h"
+#include <rapidjson/ostreamwrapper.h>
+#include <rapidjson/istreamwrapper.h>
+
 using namespace std;
+using namespace rapidjson;
 
 EnvironmentArea::EnvironmentArea(QWidget *central) : QOpenGLWidget(central)
 {
@@ -56,7 +63,7 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
     int x = event->x();
     int y = event->y();
     Biot *pBiot = this->env->FindBiotByPoint(x, y);
-    if(pBiot == nullptr) return;
+    if(pBiot == nullptr and currentTool != "open") return;
 
     if(currentTool == "cure-sicken")
     {
@@ -92,7 +99,24 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
     }
     else if (currentTool == "open")
     {
+        QString fileName = QFileDialog::getOpenFileName(this,
+            tr("Open Address Book"), "",
+            tr("Primordial Life Files (*.plfj);;All Files (*)"));
 
+        if (fileName.isEmpty())
+                return;
+
+        Document d;
+
+        ifstream ifs(fileName.toStdString().c_str());
+        IStreamWrapper isw(ifs);
+
+        d.ParseStream(isw);
+        pBiot = new Biot(*env);
+        pBiot->SerializeJsonLoad(d["biot"]);
+        pBiot->Place(x, y);
+        pBiot->OnOpen();
+        env->AddBiot(pBiot);
     }
     else if (currentTool == "relocate")
     {
@@ -100,7 +124,22 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
     }
     else if (currentTool == "save")
     {
+        QString fileName = QFileDialog::getSaveFileName(this,
+            tr("Save As"), "",
+            tr("Primordial Life Files (*.plfj);;All Files (*)"));
 
+        if (fileName.isEmpty())
+                return;
+
+        Document d;
+        d.SetObject();
+        Value biotJson(kObjectType);
+        pBiot->SerializeJson(d, biotJson);
+        d.AddMember("biot", biotJson, d.GetAllocator());
+        ofstream myfile(fileName.toStdString().c_str());
+        OStreamWrapper osw(myfile);
+        Writer<OStreamWrapper> writer(osw);
+        d.Accept(writer);
     }
     else if (currentTool == "terminate")
     {
