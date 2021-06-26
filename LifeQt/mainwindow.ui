@@ -51,9 +51,9 @@
     <addaction name="actionExamine"/>
     <addaction name="actionFeed"/>
     <addaction name="actionMutate"/>
-    <addaction name="actionOpen_2"/>
+    <addaction name="actionOpenSingle"/>
     <addaction name="actionRelocate"/>
-    <addaction name="actionSave_2"/>
+    <addaction name="actionSaveSingle"/>
     <addaction name="actionTerminate"/>
    </widget>
    <widget class="QMenu" name="menuView">
@@ -154,7 +154,7 @@
     <string>Mutate</string>
    </property>
   </action>
-  <action name="actionOpen_2">
+  <action name="actionOpenSingle">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -170,7 +170,7 @@
     <string>Relocate</string>
    </property>
   </action>
-  <action name="actionSave_2">
+  <action name="actionSaveSingle">
    <property name="checkable">
     <bool>true</bool>
    </property>

@@ -53,8 +53,61 @@ void EnvironmentArea::paintGL()
 
 void EnvironmentArea::mousePressEvent(QMouseEvent * event)
 {
+    int x = event->x();
+    int y = event->y();
+    Biot *pBiot = this->env->FindBiotByPoint(x, y);
+    if(pBiot == nullptr) return;
 
+    if(currentTool == "cure-sicken")
+    {
+        if (pBiot->m_nSick == 0)
+        {
+            //PlayResource("PL.TooOld");
+            pBiot->newType = PURPLE_LEAF;
+            pBiot->m_nSick = 200;
+        }
+        else
+        {
+            pBiot->newType = -1;
+            pBiot->m_nSick = 0;
+        }
+    }
+    else if (currentTool == "examine")
+    {
+        this->env->SetSelectedBiot(pBiot->m_Id);
+    }
+    else if (currentTool == "feed")
+    {
+        //PlayResource("PL.Feed");
+        pBiot->energy += pBiot->childBaseEnergy;
+        pBiot->newType = GREEN_LEAF;
+    }
+    else if (currentTool == "mutate")
+    {
+        //PlayResource("PL.Edit");
 
+        pBiot->Mutate(100);
+        pBiot->newType = WHITE_LEAF;
+        //m_sort.Move(pBiot);
+    }
+    else if (currentTool == "open")
+    {
+
+    }
+    else if (currentTool == "relocate")
+    {
+
+    }
+    else if (currentTool == "save")
+    {
+
+    }
+    else if (currentTool == "terminate")
+    {
+        //PlayResource("PL.Terminate");
+        pBiot->newType = YELLOW_LEAF;
+        pBiot->m_age = pBiot->m_maxAge;
+    }
 
 }
 
@@ -63,10 +116,9 @@ void EnvironmentArea::mouseReleaseEvent(QMouseEvent * event)
     int x = event->x();
     int y = event->y();
 
-    Biot *biot = this->env->FindBiotByPoint(x, y);
-    if(biot)
-    {
-        this->env->SetSelectedBiot(biot->m_Id);
-    }
+}
 
+void EnvironmentArea::setCurrentTool(const std::string &tool)
+{
+    currentTool = tool;
 }

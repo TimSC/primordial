@@ -167,8 +167,6 @@ void CBiotList::SerializeJson(class Environment &env, rapidjson::Document &d, ra
 {
     Document::AllocatorType& allocator = d.GetAllocator();
 
-    v.AddMember("m_bLooped", m_bLooped, allocator);
-
     Value biotsJson(kArrayType);
     for(int i=0; i<env.m_biotList.size(); i++)
     {

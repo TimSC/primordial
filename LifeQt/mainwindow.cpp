@@ -125,6 +125,8 @@ void MainWindow::on_actionOpen_triggered()
     this->env.SerializeJsonLoad(d["environment"]);
     this->env.OnOpen();
 
+    this->currentFilename = fileName.toStdString();
+
 }
 
 void MainWindow::on_actionSave_As_triggered()
@@ -196,4 +198,74 @@ void MainWindow::on_actionLearn_about_Primordial_Life_triggered()
 void MainWindow::on_actionStart_Simulation_triggered(bool checked)
 {
 
+}
+
+void MainWindow::on_actionCure_Sicken_triggered(bool checked)
+{
+    if (checked)
+        currentTool = "cure-sicken";
+    updateToolMenu();
+}
+
+void MainWindow::on_actionExamine_triggered(bool checked)
+{
+    if (checked)
+        currentTool = "examine";
+    updateToolMenu();
+}
+
+void MainWindow::on_actionFeed_triggered(bool checked)
+{
+    if (checked)
+        currentTool = "feed";
+    updateToolMenu();
+}
+
+void MainWindow::on_actionMutate_triggered(bool checked)
+{
+    if (checked)
+        currentTool = "mutate";
+    updateToolMenu();
+}
+
+void MainWindow::on_actionOpenSingle_triggered(bool checked)
+{
+    if (checked)
+        currentTool = "open";
+    updateToolMenu();
+}
+
+void MainWindow::on_actionRelocate_triggered(bool checked)
+{
+    if (checked)
+        currentTool = "relocate";
+    updateToolMenu();
+}
+
+void MainWindow::on_actionSaveSingle_triggered(bool checked)
+{
+    if (checked)
+        currentTool = "save";
+    updateToolMenu();
+}
+
+void MainWindow::on_actionTerminate_triggered(bool checked)
+{
+    if (checked)
+        currentTool = "terminate";
+    updateToolMenu();
+}
+
+void MainWindow::updateToolMenu()
+{
+    this->ui->actionCure_Sicken->setChecked(currentTool == "cure-sicken");
+    this->ui->actionExamine->setChecked(currentTool == "examine");
+    this->ui->actionFeed->setChecked(currentTool == "feed");
+    this->ui->actionMutate->setChecked(currentTool == "mutate");
+    this->ui->actionOpenSingle->setChecked(currentTool == "open");
+    this->ui->actionRelocate->setChecked(currentTool == "relocate");
+    this->ui->actionSaveSingle->setChecked(currentTool == "save");
+    this->ui->actionTerminate->setChecked(currentTool == "terminate");
+
+    this->ui->openGLWidget->setCurrentTool(currentTool);
 }

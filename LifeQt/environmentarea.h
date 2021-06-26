@@ -18,12 +18,14 @@ public:
 
     void mousePressEvent(QMouseEvent * event) override;
     void mouseReleaseEvent(QMouseEvent * event) override;
+    void setCurrentTool(const std::string &tool);
 
 private:
     class Environment *env;
 
     uint64_t tickStart, tickCount;
     double ticksPerSec;
+    std::string currentTool;
 };
 
 #endif // ENVIRONMENTAREA_H

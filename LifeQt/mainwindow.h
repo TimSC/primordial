@@ -21,6 +21,8 @@ public:
 
     void timerEvent(QTimerEvent *event);
 
+    void updateToolMenu();
+
 private slots:
     void on_actionOpen_triggered();
 
@@ -37,6 +39,22 @@ private slots:
     void on_actionLearn_about_Primordial_Life_triggered();
 
     void on_actionStart_Simulation_triggered(bool checked);
+
+    void on_actionCure_Sicken_triggered(bool checked);
+
+    void on_actionExamine_triggered(bool checked);
+
+    void on_actionFeed_triggered(bool checked);
+
+    void on_actionMutate_triggered(bool checked);
+
+    void on_actionOpenSingle_triggered(bool checked);
+
+    void on_actionRelocate_triggered(bool checked);
+
+    void on_actionSaveSingle_triggered(bool checked);
+
+    void on_actionTerminate_triggered(bool checked);
 
 private:
     Ui::MainWindow *ui;
