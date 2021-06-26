@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
     //qint64 seed = 100;
-    int numBiots = 20;
+    int numBiots = 40;
     this->env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
                 0, 1, 10);
 

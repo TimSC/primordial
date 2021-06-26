@@ -1,4 +1,5 @@
 #include "environmentarea.h"
+#include "core/Biots.h"
 #include <QPainter>
 #include <QDateTime>
 #include <iostream>
@@ -61,10 +62,11 @@ void EnvironmentArea::mouseReleaseEvent(QMouseEvent * event)
 {
     int x = event->x();
     int y = event->y();
-    std::cout << x <<"," << y << std::endl;
-    int boitId = this->env->FindBiotByPoint(x, y);
-    if(boitId > 0)
-        this->env->SetSelectedBiot(boitId);
 
+    Biot *biot = this->env->FindBiotByPoint(x, y);
+    if(biot)
+    {
+        this->env->SetSelectedBiot(biot->m_Id);
+    }
 
 }

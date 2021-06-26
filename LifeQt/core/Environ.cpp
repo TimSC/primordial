@@ -69,23 +69,25 @@ Biot* CBiotList::FindBiotByID(uint32_t id)
 // FindBiotByPoint
 //
 //
-int CBiotList::FindBiotByPoint(int x, int y)
+Biot* CBiotList::FindBiotByPoint(int x, int y)
 {
     int minDist = 30000;
     int minBiot = -1;
-    int distance = 0;
+    Biot *bestBiot = nullptr;
 
     for (int i = 0; i < size(); i++)
 	{
-        distance = this->at(i)->Contains(x, y);
+        int distance = this->at(i)->Contains(x, y);
 		if (distance >= 0 &&
 			distance < minDist)
 		{
 			minDist = distance;
 			minBiot = i;
+            bestBiot = this->at(i);
 		}
-	}
-	return minBiot;
+    }
+
+    return bestBiot;
 }
 
 
@@ -1134,9 +1136,6 @@ void Environment::paintGL(QPainter &painter)
 
 void Environment::SetSelectedBiot(uint32_t biotId)
 {
-    if(biotId < m_biotList.size())
-    {
-        m_selectedId = biotId;
-        m_bIsSelected = true;
-    }
+    m_selectedId = biotId;
+    m_bIsSelected = true;
 }

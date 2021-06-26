@@ -113,7 +113,7 @@ class CBiotList : public QList<Biot*>
 public:
     CBiotList();
     Biot* FindBiotByID(uint32_t id);
-	int  FindBiotByPoint(int x, int y);
+    Biot* FindBiotByPoint(int x, int y);
 
 	Biot* HitCheck(Biot *me, int* pStart);
 	Biot* NextBiot();
@@ -147,7 +147,7 @@ public:
 	Biot* HitCheck(Biot *me, BRectSortPos& pos);
 //	Biot* HitCheck(Biot *me, int* pStart = NULL); { return m_biotList.HitCheck(me, pStart); }
     Biot* FindBiotByID(uint32_t id) { return m_biotList.FindBiotByID(id); }
-    int  FindBiotByPoint(int x, int y) { return m_biotList.FindBiotByPoint(x, y); };
+    Biot* FindBiotByPoint(int x, int y) { return m_biotList.FindBiotByPoint(x, y); };
 
 	void  AddBiot(Biot* newBiot);
 

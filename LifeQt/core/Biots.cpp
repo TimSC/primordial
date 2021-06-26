@@ -1130,7 +1130,7 @@ bool Biot::Move(void)
 	}
     else
     {
-        if(dr)
+        //if(dr)
             UpdateShapeRotation();
     }
 
