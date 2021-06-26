@@ -273,7 +273,7 @@ void CommandArgument::Randomize(void)
 	m_command    = rand.Integer(COMMAND_MAX_TYPES);
 	m_rate       = rand.Byte();
 	m_degrees    = rand.Byte();
-	m_limb       = rand.Byte(MAX_SYMMETRY);
+    m_limb       = rand.Byte(MAX_LIMBS);
 	m_segment    = rand.Byte(MAX_SEGMENTS);
 }
 
@@ -291,7 +291,7 @@ void CommandArgument::Mutate(int chance)
 		m_degrees    = rand.Byte();
 
 	if (rand.Int1024() < chance)
-		m_limb       = rand.Byte(MAX_SYMMETRY);
+        m_limb       = rand.Byte(MAX_LIMBS);
 
 	if (rand.Int1024() < chance)
 		m_segment    = rand.Byte(MAX_SEGMENTS);
@@ -300,11 +300,11 @@ void CommandArgument::Mutate(int chance)
 
 int CommandArgument::GetLimb(int actualLimb)
 { 
-	if (m_limb == MAX_SYMMETRY)
+    if (m_limb == MAX_LIMBS)
 		return (int) m_limb;
 
-	if ((int) m_limb + actualLimb >= MAX_SYMMETRY)
-		return (int) m_limb + actualLimb - MAX_SYMMETRY;
+    if ((int) m_limb + actualLimb >= MAX_LIMBS)
+        return (int) m_limb + actualLimb - MAX_LIMBS;
 	 else
 		return (int) m_limb + actualLimb;
 }
@@ -771,7 +771,7 @@ void CommandFlapLimbTypeSegment::Initialize(CommandLimbStore& store)
 	}
 
 	// How far are we going to move it?
-	m_nMaxDegrees     = store.m_pArg->GetDegrees();
+    m_nMaxDegrees     = store.m_pArg->GetDegrees() % 80 + 10;
 
 	// How far have we moved it thus far?
 	m_nAppliedDegrees = 0; 
@@ -847,7 +847,7 @@ void CommandFlapLimbTypeSegment::FlapLimbTypeSegments(Biot& biot)
 	{
 		if (m_nLimbType == biot.trait.GetLineTypeIndex(i))
 		{
-			int nPeno = m_nSegment * MAX_SYMMETRY + i;
+            int nPeno = m_nSegment * MAX_LIMBS + i;
 			Flap(biot, nPeno);
 		}
 	}
@@ -925,12 +925,12 @@ void CommandFlapLimbSegment::Initialize(CommandLimbStore& store)
 		!store.m_pBiot->trait.GetLineType(store.m_pBiot->trait.GetLineTypeIndex(m_nLimb)).GetSegment(m_nSegment).IsVisible())
 	{
 		// Record we should ignore this command
-		m_nLimb = MAX_SYMMETRY;
+        m_nLimb = MAX_LIMBS;
 		return;
 	}
 
 	// How far are we going to move it?
-	m_nMaxDegrees     = store.m_pArg->GetDegrees();
+    m_nMaxDegrees     = store.m_pArg->GetDegrees() % 80 + 10;
 
 	// How far have we moved it thus far?
 	m_nAppliedDegrees = 0; 
@@ -943,7 +943,7 @@ void CommandFlapLimbSegment::Initialize(CommandLimbStore& store)
 
 void CommandFlapLimbSegment::Execute(CommandLimbStore& store)
 {
-	if (m_nLimb == MAX_SYMMETRY)
+    if (m_nLimb == MAX_LIMBS)
 		return;
 
 	if (store.IsSensorTrue())
@@ -1002,7 +1002,7 @@ void CommandFlapLimbSegment::Execute(CommandLimbStore& store)
 
 void CommandFlapLimbSegment::Flap(Biot& biot)
 {
-	int nPeno = m_nSegment * MAX_SYMMETRY + m_nLimb;
+    int nPeno = m_nSegment * MAX_LIMBS + m_nLimb;
 
 	// If we are damaged, we don't get a boost from flapping
 	if (!biot.IsSegmentMissing(nPeno))
@@ -1075,7 +1075,7 @@ void CommandMoveLimbSegment::Initialize(CommandLimbStore& store)
 		!store.m_pBiot->trait.GetLineType(store.m_pBiot->trait.GetLineTypeIndex(m_nLimb)).GetSegment(m_nSegment).IsVisible())
 	{
 		// Record we should ignore this command
-		m_nLimb = MAX_SYMMETRY;
+        m_nLimb = MAX_LIMBS;
 		return;
 	}
 
@@ -1091,7 +1091,7 @@ void CommandMoveLimbSegment::Initialize(CommandLimbStore& store)
 
 void CommandMoveLimbSegment::Execute(CommandLimbStore& store)
 {
-	if (m_nLimb == MAX_SYMMETRY)
+    if (m_nLimb == MAX_LIMBS)
 		return;
 
 	if (store.IsSensorTrue())
@@ -1216,7 +1216,7 @@ void CommandMoveLimbSegments::Initialize(CommandLimbStore& store)
 	if (m_nLimb >= store.m_pBiot->trait.GetLines())
 	{
 		// Record we should ignore this command
-		m_nLimb = MAX_SYMMETRY;
+        m_nLimb = MAX_LIMBS;
 		return;
 	}
 
@@ -1233,7 +1233,7 @@ void CommandMoveLimbSegments::Initialize(CommandLimbStore& store)
 
 void CommandMoveLimbSegments::Execute(CommandLimbStore& store)
 {
-	if (m_nLimb == MAX_SYMMETRY)
+    if (m_nLimb == MAX_LIMBS)
 		return;
 
 	if (store.IsSensorTrue())

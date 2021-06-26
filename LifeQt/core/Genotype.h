@@ -18,8 +18,8 @@ union CSTATE;
 const int MAX_RATIO      = 20;
 const int UNI_RATIO      = 5;
 const int MAX_SEGMENTS   = 10;  // The number of segments which can make up a line
-const int MAX_SYMMETRY   = 8;   // The number of lines allowed
-const int MAX_GENES      = MAX_SYMMETRY * MAX_SEGMENTS; // Maximum number of line segments
+const int MAX_LIMBS   = 8;   // The number of lines allowed
+const int MAX_GENES      = MAX_LIMBS * MAX_SEGMENTS; // Maximum number of line segments
 const int MAX_LIMB_TYPES = 4;   // The number of distinct limb types allowed
 
 
@@ -177,7 +177,7 @@ class GeneTrait : Randomizer
     uint8_t  m_species;         // What species is this (0 - 15)
     uint8_t  m_adultRatio[2];   // How large does this adult get
     uint8_t  m_lineCount;      // How many lines
-    uint8_t  m_lineRef[MAX_SYMMETRY];
+    uint8_t  m_lineRef[MAX_LIMBS];
     uint8_t  m_mirrored;        // Are the lines mirrored
     uint8_t  m_sex;             // male(1) or female(0)
     uint8_t  m_asexual;         // yes or no
@@ -187,12 +187,12 @@ class GeneTrait : Randomizer
 	GeneLimb m_geneLine[MAX_LIMB_TYPES]; 
 
 	//Not part of genetic code - just a cache of angles
-	short m_angle[MAX_SYMMETRY][MAX_SEGMENTS];
+    short m_angle[MAX_LIMBS][MAX_SEGMENTS];
 	
 
-    static const int mirrorCoef[MAX_SYMMETRY];
-    static const int mirrorAngle[MAX_SYMMETRY];
-    static const int mirrorSix[MAX_SYMMETRY];
+    static const int mirrorCoef[MAX_LIMBS];
+    static const int mirrorAngle[MAX_LIMBS];
+    static const int mirrorSix[MAX_LIMBS];
 
   public:
     void Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
@@ -233,7 +233,7 @@ class GeneTrait : Randomizer
 
 	GeneSegment& GetSegment(int line, int segment)
 	{
-        assert(line < MAX_SYMMETRY);
+        assert(line < MAX_LIMBS);
 		return m_geneLine[m_lineRef[line]].GetSegment(segment);
 	}
 

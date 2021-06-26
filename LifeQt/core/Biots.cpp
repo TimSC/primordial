@@ -141,7 +141,7 @@ float Biot::PercentEnergy()
 void Biot::ClearSettings(void)
 {
     bDie             = false;
-	genes            = MAX_SYMMETRY; // We start out showing a little
+    genes            = MAX_LIMBS; // We start out showing a little
 	genes2           = 0;
 	m_fatherId       = 0;
 	m_mateId         = 0;
@@ -176,7 +176,7 @@ void Biot::ClearSettings(void)
     memset(m_retractDrawn,               0x00, sizeof(m_retractDrawn));
     memset(m_retractRadius,              0x00, sizeof(m_retractRadius));
 
-	for (int i = 0; i < MAX_SYMMETRY; i++)
+    for (int i = 0; i < MAX_LIMBS; i++)
 		m_retractSegment[i] = -1;
 
     memset(state,    0x00, sizeof(state));
@@ -187,7 +187,7 @@ void Biot::ClearSettings(void)
 
 	int nPeno = 0;
 	for (int nGene = 0; nGene < MAX_SEGMENTS; nGene++)
-		for (int nLine = 0; nLine < MAX_SYMMETRY; nLine++)
+        for (int nLine = 0; nLine < MAX_LIMBS; nLine++)
 		{
             geneNo[nPeno]   = (uint8_t) nGene;
             lineNo[nPeno++] = (uint8_t) nLine;
@@ -313,7 +313,7 @@ int Biot::Initialize(bool bRandom)
     for (int i = 0; i < MAX_GENES; i++)
 		state[i] = distance[i];
 
-    for (int i = 0; i < MAX_SYMMETRY; i++)
+    for (int i = 0; i < MAX_LIMBS; i++)
     {
         int nLimbType = trait.GetLineTypeIndex(i);
         assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
@@ -475,7 +475,7 @@ int64_t Biot::UpdateShape(int aRatio)
 
 			if (segment.IsVisible())
 			{
-				nPeno = nLimb + nGene * MAX_SYMMETRY;
+                nPeno = nLimb + nGene * MAX_LIMBS;
 				m_angleDrawn[nPeno] = m_angle[nPeno];
 
 				if (nLastGene < 0)
@@ -486,12 +486,12 @@ int64_t Biot::UpdateShape(int aRatio)
 				else
 				{
 					//TODO: Branching involves setting new start points
-//					startPtLocal[nPeno] = stopPtLocal[nPeno - ((nGene - nLastGene) * MAX_SYMMETRY)];
+//					startPtLocal[nPeno] = stopPtLocal[nPeno - ((nGene - nLastGene) * MAX_LIMBS)];
 					if (segment.GetStart() < nGene &&
 						trait.GetSegment(nLimb, segment.GetStart()).IsVisible())
-                        startPtLocal[nPeno] = stopPtLocal[nPeno - ((nGene - segment.GetStart()) * MAX_SYMMETRY)];
+                        startPtLocal[nPeno] = stopPtLocal[nPeno - ((nGene - segment.GetStart()) * MAX_LIMBS)];
 					else
-                        startPtLocal[nPeno] = stopPtLocal[nPeno - ((nGene - nLastGene) * MAX_SYMMETRY)];
+                        startPtLocal[nPeno] = stopPtLocal[nPeno - ((nGene - nLastGene) * MAX_LIMBS)];
 
 				}
 				nLastGene = nGene;
@@ -564,7 +564,7 @@ void Biot::UpdateShapeRotation()
 
             if (segment.IsVisible())
             {
-                int nPeno = nLimb + nGene * MAX_SYMMETRY;
+                int nPeno = nLimb + nGene * MAX_LIMBS;
 
                 startPt[nPeno] = RotatePoint(startPtLocal[nPeno], rotCos, rotSin);
                 stopPt[nPeno] = RotatePoint(stopPtLocal[nPeno], rotCos, rotSin);
@@ -1095,7 +1095,7 @@ bool Biot::Move(void)
 //	vector.friction(env.options.friction);
 
 	// Time to behave
-	for (i = 0; i < MAX_SYMMETRY; i++)
+    for (i = 0; i < MAX_LIMBS; i++)
 		m_store[i].Execute(*this, 0xFFFFFFFF);
 
     bool bChangeSize = false;
@@ -1199,7 +1199,7 @@ bool Biot::Move(void)
             bInjured = false;
 
 			// Regenerate leaves
-			for (i = 0; i < MAX_SYMMETRY && energy > regenEnergy; i++)
+            for (i = 0; i < MAX_LIMBS && energy > regenEnergy; i++)
 			{ 
 				int j = i;
 				while (j < genes)
@@ -1230,7 +1230,7 @@ bool Biot::Move(void)
 							//!! We should change mass here
 						}
 					}
-					j += MAX_SYMMETRY;
+                    j += MAX_LIMBS;
 				}
 			}
 		}
@@ -1617,7 +1617,7 @@ bool Biot::AdjustState(int nPeno, short delta)
 	if (state[nPeno] <= 0)
 	{
 		state[nPeno] = -distance[nPeno];
-		nPeno += MAX_SYMMETRY;
+        nPeno += MAX_LIMBS;
 		while (nPeno < max_genes)
 		{
 			if (state[nPeno] > 0)
@@ -1629,7 +1629,7 @@ bool Biot::AdjustState(int nPeno, short delta)
 				colorDistance[nType[nPeno]] -= state[nPeno];
 			}
 			state[nPeno] = -distance[nPeno];
-			nPeno += MAX_SYMMETRY;
+            nPeno += MAX_LIMBS;
 		}
         return true;
 	}
@@ -1651,13 +1651,13 @@ short Biot::LengthLoss(int nPeno, short delta)
 
 	if (loss == state[nPeno])
 	{
-		nPeno += MAX_SYMMETRY;
+        nPeno += MAX_LIMBS;
 		while (nPeno < genes)
 		{
 			if (state[nPeno] > 0)
 				loss += state[nPeno];
 
-			nPeno += MAX_SYMMETRY;
+            nPeno += MAX_LIMBS;
 		}
 	}
 	return loss;
@@ -1726,7 +1726,7 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("m_commandArray", commJson, allocator);
 
     Value storeArrJson(kArrayType);
-    for (int i = 0; i < MAX_SYMMETRY; i++)
+    for (int i = 0; i < MAX_LIMBS; i++)
     {
         Value storeJson(kObjectType);
         m_store[i].SerializeJson(d, storeJson, *this);
@@ -1755,7 +1755,7 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     Value m_retractDrawnArray(kArrayType);
     Value m_retractRadiusArray(kArrayType);
     Value m_retractSegmentArray(kArrayType);
-    for(int i=0; i<MAX_SYMMETRY; i++)
+    for(int i=0; i<MAX_LIMBS; i++)
     {
         m_retractDrawnArray.PushBack(m_retractDrawn[i], allocator);
         m_retractRadiusArray.PushBack(m_retractRadius[i], allocator);
@@ -1889,7 +1889,7 @@ bool Biot::OnOpen()
 //
 void Biot::MoveArm(int nPeno, short degree)
 {
-	for (int i = nPeno; i < MAX_GENES; i += MAX_SYMMETRY)
+    for (int i = nPeno; i < MAX_GENES; i += MAX_LIMBS)
 	{
 		IncreaseAngle(i, degree);
 	}
@@ -1963,7 +1963,7 @@ bool Biot::MoveLineType(int nLineType, short rate, short offset)
 //
 bool Biot::MoveLine(int nLine, short rate, short offset)
 {
-    assert(nLine < MAX_SYMMETRY && nLine >= 0);
+    assert(nLine < MAX_LIMBS && nLine >= 0);
 
 	short& nAngle = m_angleLimb[nLine];
 	if (offset != nAngle)
@@ -2300,7 +2300,7 @@ short Biot::MoveLimbTypeSegments(int nLimbType, int nRate)
 short Biot::MoveLimbSegments(int nLimb, int nRate)
 {
 	static const short maxRate = 3;
-    assert(nLimb < MAX_SYMMETRY && nLimb >= 0);
+    assert(nLimb < MAX_LIMBS && nLimb >= 0);
     assert(nRate <= maxRate && nRate >= -maxRate);
 
 	short delta = m_angleLimb[nLimb] - m_angleLimbDrawn[nLimb];
@@ -2334,11 +2334,11 @@ short Biot::MoveLimbSegments(int nLimb, int nRate)
 short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 {
 	static const short maxRate = 3;
-    assert(nLimb < MAX_SYMMETRY && nLimb >= 0);
+    assert(nLimb < MAX_LIMBS && nLimb >= 0);
     assert(nSegment < MAX_SEGMENTS && nSegment >= 0);
     assert(nRate <= maxRate && nRate >= -maxRate);
 
-	int nPeno = nLimb + nSegment * MAX_SYMMETRY;
+    int nPeno = nLimb + nSegment * MAX_LIMBS;
 	short delta = m_angle[nPeno] - m_angleDrawn[nPeno];
 
 	if (nRate < 0)

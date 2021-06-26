@@ -273,9 +273,9 @@ void GeneLimb::ToggleSegments()
 //
 // Contains GeneLines plus overall biot genes
 //
-const int GeneTrait::mirrorAngle[MAX_SYMMETRY] = { 0, 180,  0,  180,  90, 90, 270, 270 };
-const int GeneTrait::mirrorCoef[MAX_SYMMETRY]  = { 1,  -1, -1,    1,  -1,  1,  -1,   1 };
-const int GeneTrait::mirrorSix[MAX_SYMMETRY]   = { 0, 120,  0,  120, 240, 240,  0,   0 };
+const int GeneTrait::mirrorAngle[MAX_LIMBS] = { 0, 180,  0,  180,  90, 90, 270, 270 };
+const int GeneTrait::mirrorCoef[MAX_LIMBS]  = { 1,  -1, -1,    1,  -1,  1,  -1,   1 };
+const int GeneTrait::mirrorSix[MAX_LIMBS]   = { 0, 120,  0,  120, 240, 240,  0,   0 };
 
 GeneTrait::GeneTrait()
 {
@@ -313,7 +313,7 @@ void GeneTrait::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("m_offset", m_offset, allocator);
 
     Value linesJson(kArrayType);
-    for(int i=0; i<MAX_SYMMETRY; i++)
+    for(int i=0; i<MAX_LIMBS; i++)
         linesJson.PushBack(m_lineRef[i], allocator);
     v.AddMember("m_lineRef", linesJson, allocator);
 
@@ -371,7 +371,7 @@ void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
     if (m_asexual > 1)
         m_asexual = 1;
 
-    for (int i = 0; i < MAX_SYMMETRY; i++)
+    for (int i = 0; i < MAX_LIMBS; i++)
         if (m_lineRef[i] >= MAX_LIMB_TYPES)
             m_lineRef[i] = 0;
 
@@ -381,7 +381,7 @@ void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
 
 int GeneTrait::GetCompressedToggle(int nAngle, int nLine, int nSegment)
 {
-    assert(nLine < MAX_SYMMETRY);
+    assert(nLine < MAX_LIMBS);
     assert(nSegment < MAX_SEGMENTS);
 
 	if (IsMirrored())
@@ -443,7 +443,7 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
 	{
 	default:
 	case 0:
-        m_lineCount  = (uint8_t) (Integer(MAX_SYMMETRY) + 1);
+        m_lineCount  = (uint8_t) (Integer(MAX_LIMBS) + 1);
 		break;
 
 	case 1:
@@ -478,7 +478,7 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
 	m_maxAge     = (short) Int256();
 
 	// We start out with uniform appearance
-	for (i = 0; i < MAX_SYMMETRY; i++)
+    for (i = 0; i < MAX_LIMBS; i++)
     {
         m_lineRef[i] = Byte(nTypesPerBiot + 1);
         assert(m_lineRef[i] < MAX_LIMB_TYPES && m_lineRef[i] >= 0);
@@ -501,12 +501,12 @@ void GeneTrait::Debug(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
     m_adultRatio[1]  = (uint8_t) 1;
     m_mirrored       = (uint8_t) true;
 
-    m_lineCount  = 1;//(uint8_t) MAX_SYMMETRY;
+    m_lineCount  = 1;//(uint8_t) MAX_LIMBS;
 /*	switch(nArmsPerBiot)
 	{
 	default:
 	case 0:
-        m_lineCount  = (uint8_t) MAX_SYMMETRY;
+        m_lineCount  = (uint8_t) MAX_LIMBS;
 		break;
 
 	case 1:
@@ -541,7 +541,7 @@ void GeneTrait::Debug(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 	m_maxAge     = (short) 255;
 
 	// We start out with uniform appearance
-	for (i = 0; i < MAX_SYMMETRY; i++)
+    for (i = 0; i < MAX_LIMBS; i++)
 	{
 		m_lineRef[i] = 0;
 	}
@@ -604,7 +604,7 @@ void GeneTrait::Mutate(int chance)
 	if (Int1024() < chance)
 		m_maxAge = (short) Int256();
 
-	for (i = 0; i < MAX_SYMMETRY; i++)
+    for (i = 0; i < MAX_LIMBS; i++)
 		if (Int1024() < chance)
             m_lineRef[i] = Byte(MAX_LIMB_TYPES);
 
@@ -619,7 +619,7 @@ void GeneTrait::Crossover(GeneTrait&  gTrait)
 	for (i = 0; i < MAX_LIMB_TYPES; i++)
 		m_geneLine[i].Crossover(gTrait.m_geneLine[i]);
 
-	for (i = 0; i < MAX_SYMMETRY; i++)
+    for (i = 0; i < MAX_LIMBS; i++)
         if (Bool())
         {
 			m_lineRef[i] = gTrait.m_lineRef[i];

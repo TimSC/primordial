@@ -697,7 +697,7 @@ void Environment::OnOpen()
 	topSide.SetSide(this);
 	bottomSide.SetSide(this);
 
-	options.maxLineSegments      = (MAX_GENES / MAX_SYMMETRY);
+    options.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
 
 //	sock.StartSession(pView->GetSafeHwnd(), this);
 //	sock.Listen();
@@ -728,7 +728,7 @@ void Environment::OnNew(QOpenGLWidget &scene,
 	Set(&worldRect);
 
 	options.m_initialPopulation  = population;
-	options.maxLineSegments      = (MAX_GENES / MAX_SYMMETRY);
+    options.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
 
 	m_orginalSeed = seed;
 

@@ -215,8 +215,8 @@ class Biot: public BRectItem
 	short    m_angleLimbType[MAX_LIMB_TYPES];
 	short    m_angleLimbTypeDrawn[MAX_LIMB_TYPES];
 
-	short    m_angleLimb[MAX_SYMMETRY];
-	short    m_angleLimbDrawn[MAX_SYMMETRY];
+    short    m_angleLimb[MAX_LIMBS];
+    short    m_angleLimbDrawn[MAX_LIMBS];
 
 	short    m_angleLimbTypeSegment[MAX_LIMB_TYPES][MAX_SEGMENTS];
 	short    m_angleLimbTypeSegmentDrawn[MAX_LIMB_TYPES][MAX_SEGMENTS];
@@ -229,9 +229,9 @@ class Biot: public BRectItem
 	// The retraction actually drawn
 	// The retraction requested
 	// The segment being retracted
-	short   m_retractDrawn[MAX_SYMMETRY];
-	short   m_retractRadius[MAX_SYMMETRY];
-	short   m_retractSegment[MAX_SYMMETRY];
+    short   m_retractDrawn[MAX_LIMBS];
+    short   m_retractRadius[MAX_LIMBS];
+    short   m_retractSegment[MAX_LIMBS];
 
 	// Retract or extend the tip of a limb
     uint8_t    RetractLine(int nSegment, int nLimb, int maxRadius);
@@ -240,7 +240,7 @@ class Biot: public BRectItem
     uint8_t    ExtendLimbType(int nSegment, int nLimbType);
 
 
-	CommandLimbStore m_store[MAX_SYMMETRY];
+    CommandLimbStore m_store[MAX_LIMBS];
 
 	CommandArray m_commandArray;
 	CommandArray m_commandArray2;
