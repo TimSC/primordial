@@ -11,11 +11,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <fstream>
 #include "LoadBitmap.h"
 #include "MainFrm.h"
 #include "evolve.h"
 #include "environ.h"
 #include "biots.h"
+
+#include "rapidjson/writer.h"
+#include <rapidjson/ostreamwrapper.h>
+#include <rapidjson/istreamwrapper.h>
+
+using namespace rapidjson;
 
 // from evolve.cpp
 extern char szFile[];
@@ -713,6 +720,27 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 //	pNew = new Biot(*this);
 //	pNew = m_biotList[0];
 //	m_sort.Add(pNew);
+
+	if (1)
+	{
+
+		Document d;
+		d.SetObject();
+		Value biotsJson(kArrayType);
+		for (int i = 0; i < this->m_biotList.GetSize(); i++)
+		{
+			Value biotJson(kObjectType);
+			Biot* biot = this->m_biotList[i];
+			biot->SerializeJson(d, biotJson);
+			biotsJson.PushBack(biotJson, d.GetAllocator());
+		}
+		d.AddMember("biots", biotsJson, d.GetAllocator());
+		std::ofstream myfile("example.json");
+		OStreamWrapper osw(myfile);
+		Writer<OStreamWrapper> writer(osw);
+		d.Accept(writer);
+
+	}
 
 }
      
