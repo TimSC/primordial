@@ -679,74 +679,6 @@ void Biot::UpdateGraphics()
 {
 
 
-    QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
-    QPen whitePen(QColor(255,255,255));
-
-    /*if (env.BiotShouldBox(m_Id))
-    {
-        if (boundingRect == nullptr)
-        {
-            boundingRect = new QGraphicsRectItem(rc, graphicsRect);
-            boundingRect->setPen(whitePen);
-        }
-        else
-            boundingRect->setRect(rc);
-    }
-    else if (boundingRect != nullptr)
-    {
-        env.m_scene->removeItem(boundingRect);
-        boundingRect = nullptr;
-    }*/
-
-    if(bShapeChanged)
-    {
-        /*size_t lineCount = 0;
-
-        for (int i = 0; i < genes; i++)
-        {
-
-            if (state[i] > 0)
-            {
-                short aPen = nType[i];
-
-                if (state[i] != distance[i]) //Injured or incomplete sections are drawn in dimmer color
-                    aPen += DIM_COLOR;
-
-                if (m_nSick)
-                    aPen = PURPLE_LEAF;
-
-                QGraphicsLineItem *line = nullptr;
-                if(lineCount >= lines.size())
-                {
-                    line = new QGraphicsLineItem(startPtLocal[i].x(), startPtLocal[i].y(), stopPtLocal[i].x(), stopPtLocal[i].y(), graphics);
-                    line->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
-                    lines.append(line);
-                }
-                else
-                {
-                    line = lines[lineCount];
-                    line->setLine(startPtLocal[i].x(), startPtLocal[i].y(), stopPtLocal[i].x(), stopPtLocal[i].y());
-                }
-                line->setPen(env.options.pens[aPen]);
-                lineCount += 1;
-            }
-        }
-
-        for(size_t i = lineCount; i < lines.size(); i ++)
-        {
-            //Remove unneeded line
-            //env.m_scene->removeItem(lines[i]);
-            lines[i] = nullptr;
-        }
-        size_t originalNumLines = lines.size();
-        for(size_t i = lineCount; i < originalNumLines; i ++)
-        {
-            lines.removeLast();
-        }
-
-        bShapeChanged = false;*/
-    }
-
 }
 
 
@@ -1144,9 +1076,9 @@ bool Biot::Move(void)
 	if (m_nSick)
 	{
 		energy -= 2000;
-        m_nSick = 0;
+        m_nSick --;
 
-		if (!m_nSick)
+        if (m_nSick <= 0)
 			newType = -2;
 	}
 	else
@@ -2390,7 +2322,7 @@ void Biot::paintGL(QPainter &painter)
             if (state[i] != distance[i]) //Injured or incomplete sections are drawn in dimmer color
                 aPen += DIM_COLOR;
 
-            if (m_nSick)
+            if (m_nSick > 0)
                 aPen = PURPLE_LEAF;
 
             if (flashCol)

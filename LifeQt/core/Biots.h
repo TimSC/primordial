@@ -252,7 +252,7 @@ class Biot: public BRectItem
     bool     bTerminateEvent;
 
 
-    bool     m_nSick;
+    int      m_nSick; //Time until cured
     bool     m_bDrawn;
     bool     m_bSelected;
 
