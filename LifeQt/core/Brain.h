@@ -304,7 +304,7 @@ public:
 	void Randomize();
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
-	void Crossover(CommandArray& commandArray);
+    void Crossover(CommandArray& commandArray);
 	CommandArray& operator=(CommandArray& commandArray);
 	CommandArgument& GetCommandArgument(int nLimbType, int nCommand);
     bool IsTrue(int nLimbType, int nCommand, uint32_t dwSensor);
@@ -351,8 +351,6 @@ public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 	void Flap(Biot& biot);
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
-    void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
 	int   m_nLimb;
@@ -374,8 +372,6 @@ public:
 	void Execute(CommandLimbStore& store);
 	void Flap(Biot& biot, int nPeno);
 	void FlapLimbTypeSegments(Biot& biot);
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
-    void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
 	int   m_nLimbType;
@@ -410,8 +406,6 @@ class CommandMoveLimbSegments
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
-    void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
 	int   m_nLimb;
@@ -426,8 +420,6 @@ class CommandMoveLimbTypeSegment
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
-    void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
 	int   m_nLimbType;
@@ -444,8 +436,6 @@ class CommandMoveLimbTypeSegments
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
-    void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
 	int   m_nLimbType;
@@ -460,8 +450,6 @@ class CommandRetractLimbType
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
-    void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
 	int   m_nSegment;
@@ -477,8 +465,6 @@ class CommandRetractLimb
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
-    void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
 	int   m_nSegment;
@@ -493,8 +479,6 @@ class CommandNOP
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
-    void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
 };
@@ -506,8 +490,6 @@ class CommandMemory
 public:
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
-    void SerializeJsonLoad(const rapidjson::Value& v);
 
 	enum {
 		WAIT_FOR_TRUE_SET = 0,
@@ -546,8 +528,6 @@ union CommandType {
 class CommandLimbStore
 {
 public:
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v, Biot& biot);
-    void SerializeJsonLoad(const rapidjson::Value& v, Biot& biot);
 	void Initialize(int nLimbType, int nLimb, Biot& biot);
     void Execute(Biot& biot, uint32_t dwSensor);
 

@@ -1725,15 +1725,6 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     m_commandArray.SerializeJson(d, commJson);
     v.AddMember("m_commandArray", commJson, allocator);
 
-    Value storeArrJson(kArrayType);
-    for (int i = 0; i < MAX_LIMBS; i++)
-    {
-        Value storeJson(kObjectType);
-        m_store[i].SerializeJson(d, storeJson, *this);
-        storeArrJson.PushBack(storeJson, allocator);
-    }
-    v.AddMember("m_store", storeArrJson, allocator);
-
     Value trait2Json(kObjectType);
     trait2.SerializeJson(d, trait2Json);
     v.AddMember("trait2", trait2Json, allocator);
@@ -1793,10 +1784,6 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
     trait.SerializeJsonLoad(v["trait"]);
 
     m_commandArray.SerializeJsonLoad(v["m_commandArray"]);
-
-    const Value &st = v["m_store"];
-    for (int i = 0; i < st.Size() and i < MAX_LIMBS; i++)
-        m_store[i].SerializeJsonLoad(st[i], *this);
 
     trait2.SerializeJsonLoad(v["trait2"]);
 
@@ -1876,6 +1863,13 @@ bool Biot::OnOpen()
 
     bShapeChanged = true;
     UpdateGraphics();
+
+    for (int i = 0; i < MAX_LIMBS; i++)
+    {
+        int nLimbType = trait.GetLineTypeIndex(i);
+        assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
+        m_store[i].Initialize(nLimbType, i, *this);
+    }
 
     return false;
 }
