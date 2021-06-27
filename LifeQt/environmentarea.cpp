@@ -95,7 +95,7 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
 
         pBiot->Mutate(100);
         pBiot->newType = WHITE_LEAF;
-        //m_sort.Move(pBiot);
+        pBiot->Initialize();
     }
     else if (currentTool == "open")
     {

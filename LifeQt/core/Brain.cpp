@@ -7,6 +7,7 @@
 #include "Brain.h"
 #include "Environ.h"
 #include "Biots.h"
+#include <iostream>
 
 using namespace rapidjson;
 
@@ -295,6 +296,8 @@ void CommandArgument::Mutate(int chance)
 
 	if (rand.Int1024() < chance)
 		m_segment    = rand.Byte(MAX_SEGMENTS);
+
+
 }
 
 
@@ -421,9 +424,7 @@ void CommandLimbType::Mutate(int nChance)
 		if (rand.Int1024() < nChance)
 		{
 			m_comref[i] = rand.Byte(CommandArray::MAX_COMMANDS);
-            assert(m_comref[i] < 64);
 		}
-
 		if (rand.Int1024() < nChance)
 			m_sumref[i] = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
 	}
@@ -436,7 +437,7 @@ void CommandLimbType::Randomize()
 	for (int i = 0; i < GetCount(); i++)
 	{
 		m_comref[i] = rand.Byte(CommandArray::MAX_COMMANDS);
-        assert(m_comref[i] < 64);
+
 		m_sumref[i]    = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
 	}
 }
@@ -1235,6 +1236,7 @@ void CommandMoveLimbSegments::Execute(CommandLimbStore& store)
 {
     if (m_nLimb == MAX_LIMBS)
 		return;
+    assert (m_nLimb < MAX_LIMBS && m_nLimb >= 0);
 
 	if (store.IsSensorTrue())
 	{
@@ -1304,6 +1306,7 @@ void CommandMoveLimbTypeSegments::Execute(CommandLimbStore& store)
 {
 	if (m_nLimbType == MAX_LIMB_TYPES)
 		return;
+    assert (m_nLimbType < MAX_LIMB_TYPES && MAX_LIMB_TYPES >= 0);
 
 	if (store.IsSensorTrue())
 	{
