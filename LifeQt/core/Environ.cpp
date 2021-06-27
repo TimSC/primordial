@@ -577,11 +577,11 @@ void Environment::Clear()
 	options.leafMass[GREEN_LEAF]  = 4;
 	options.leafMass[LBLUE_LEAF]  = 1;
 
-	options.newType[RED_LEAF]    = RED_LEAF;
-	options.newType[BLUE_LEAF]   = BLUE_LEAF;
-	options.newType[WHITE_LEAF]  = WHITE_LEAF;
-	options.newType[GREEN_LEAF]  = YELLOW_LEAF;
-	options.newType[LBLUE_LEAF]  = LBLUE_LEAF;
+    options.newType[RED_LEAF]    = RED_LEAF;
+    options.newType[BLUE_LEAF]   = BLUE_LEAF;
+    options.newType[WHITE_LEAF]  = WHITE_LEAF;
+    options.newType[GREEN_LEAF]  = YELLOW_LEAF;
+    options.newType[LBLUE_LEAF]  = LBLUE_LEAF;
 
 	options.m_leafEnergy = 2;
 	options.regenCost  = 200;

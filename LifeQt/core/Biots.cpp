@@ -2379,6 +2379,13 @@ void Biot::paintGL(QPainter &painter)
         painter.drawRect(rc);
     }
 
+    bool flashCol = false;
+    if(newType != lastType and newType > -1)
+    {
+        lastType = newType;
+        flashCol = true;
+    }
+
     for (int i = 0; i < genes; i++)
     {
 
@@ -2391,6 +2398,9 @@ void Biot::paintGL(QPainter &painter)
 
             if (m_nSick)
                 aPen = PURPLE_LEAF;
+
+            if (flashCol)
+                aPen = newType;
 
             painter.setPen(env.options.pens[aPen]);
 
