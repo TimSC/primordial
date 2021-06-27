@@ -63,10 +63,11 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
     int x = event->x();
     int y = event->y();
     Biot *pBiot = this->env->FindBiotByPoint(x, y);
-    if(pBiot == nullptr and currentTool != "open") return;
+    Biot *selectedBiot = this->env->GetSelectedBiot();
 
     if(currentTool == "cure-sicken")
     {
+        if(pBiot == nullptr) return;
         if (pBiot->m_nSick == 0)
         {
             //PlayResource("PL.TooOld");
@@ -81,16 +82,19 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
     }
     else if (currentTool == "examine")
     {
+        if(pBiot == nullptr) return;
         this->env->SetSelectedBiot(pBiot->m_Id);
     }
     else if (currentTool == "feed")
     {
+        if(pBiot == nullptr) return;
         //PlayResource("PL.Feed");
         pBiot->energy += pBiot->childBaseEnergy;
         pBiot->newType = GREEN_LEAF;
     }
     else if (currentTool == "mutate")
     {
+        if(pBiot == nullptr) return;
         //PlayResource("PL.Edit");
 
         pBiot->Mutate(100);
@@ -120,10 +124,20 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
     }
     else if (currentTool == "relocate")
     {
-
+        if(!selectedBiot)
+        {
+            if(pBiot != nullptr)
+                this->env->SetSelectedBiot(pBiot->m_Id);
+        }
+        else
+        {
+            selectedBiot->Place(x, y);
+            this->env->SetSelectedBiot(0);
+        }
     }
     else if (currentTool == "save")
     {
+        if(pBiot == nullptr) return;
         QString fileName = QFileDialog::getSaveFileName(this,
             tr("Save As"), "",
             tr("Primordial Life Files (*.plfj);;All Files (*)"));
@@ -143,6 +157,7 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
     }
     else if (currentTool == "terminate")
     {
+        if(pBiot == nullptr) return;
         //PlayResource("PL.Terminate");
         pBiot->newType = YELLOW_LEAF;
         pBiot->m_age = pBiot->m_maxAge;

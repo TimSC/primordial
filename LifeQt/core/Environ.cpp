@@ -1135,5 +1135,5 @@ void Environment::paintGL(QPainter &painter)
 void Environment::SetSelectedBiot(uint32_t biotId)
 {
     m_selectedId = biotId;
-    m_bIsSelected = true;
+    m_bIsSelected = biotId != 0;
 }
