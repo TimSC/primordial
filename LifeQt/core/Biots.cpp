@@ -1795,7 +1795,7 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
     m_commandArray.SerializeJsonLoad(v["m_commandArray"]);
 
     const Value &st = v["m_store"];
-    for (int i = 0; i < st.Size(); i++)
+    for (int i = 0; i < st.Size() and i < MAX_LIMBS; i++)
         m_store[i].SerializeJsonLoad(st[i], *this);
 
     trait2.SerializeJsonLoad(v["trait2"]);
@@ -1806,18 +1806,18 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
 
     // Now handle biot level variables
     const Value &stateJson = v["state"];
-    for(int i=0; i<stateJson.Size(); i++)
+    for(int i=0; i<stateJson.Size() and i < MAX_GENES; i++)
         state[i] = stateJson[i].GetInt();
 
     const Value &retractDrawn = v["m_retractDrawn"];
     const Value &retractRadius = v["m_retractRadius"];
     const Value &retractSegment = v["m_retractSegment"];
 
-    for(int i=0; i<retractDrawn.Size(); i++)
+    for(int i=0; i<retractDrawn.Size() and i < MAX_LIMBS; i++)
         m_retractDrawn[i] = retractDrawn[i].GetInt();
-    for(int i=0; i<retractRadius.Size(); i++)
+    for(int i=0; i<retractRadius.Size() and i < MAX_LIMBS; i++)
         m_retractRadius[i] = retractRadius[i].GetInt();
-    for(int i=0; i<retractSegment.Size(); i++)
+    for(int i=0; i<retractSegment.Size() and i < MAX_LIMBS; i++)
         m_retractSegment[i] = retractSegment[i].GetInt();
 
     max_genes = v["max_genes"].GetInt();

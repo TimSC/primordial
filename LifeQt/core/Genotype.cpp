@@ -232,7 +232,7 @@ void GeneLimb::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 void GeneLimb::SerializeJsonLoad(const rapidjson::Value& v)
 {
     const Value &seg = v["m_segment"];
-    for (int i = 0; i < seg.Size(); i++)
+    for (int i = 0; i < seg.Size() and i<MAX_SEGMENTS; i++)
         m_segment[i].SerializeJsonLoad(seg[i]);
 
     ToggleSegments();
@@ -327,7 +327,7 @@ void GeneTrait::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
 {
     const Value &gl = v["m_geneLine"];
-    for (int i = 0; i < gl.Size(); i++)
+    for (int i = 0; i < gl.Size() and i<MAX_LIMB_TYPES; i++)
             m_geneLine[i].SerializeJsonLoad(gl[i]);
 
     m_disperse = v["m_disperse"].GetUint();
@@ -341,7 +341,7 @@ void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
     m_offset = v["m_offset"].GetInt();
 
     const Value &lr = v["m_lineRef"];
-    for(int i=0; i<lr.Size(); i++)
+    for(int i=0; i<lr.Size() and i<MAX_LIMBS; i++)
         m_lineRef[i] = lr[i].GetUint();
 
     m_mirrored = v["m_mirrored"].GetUint();

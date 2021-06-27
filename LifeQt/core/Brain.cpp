@@ -114,11 +114,11 @@ void ProductArray::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 void ProductArray::SerializeJsonLoad(const rapidjson::Value& v)
 {
     const Value &pt = v["m_productTerm"];
-    for (int i = 0; i < pt.Size(); i++)
+    for (int i = 0; i < pt.Size() and i < MAX_PRODUCT_TERMS; i++)
         m_productTerm[i].SerializeJsonLoad(pt[i]);
 
     const Value &ps = v["m_productSum"];
-    for (int i = 0; i < ps.Size(); i++)
+    for (int i = 0; i < ps.Size() and i < MAX_PRODUCT_SUMS; i++)
         m_productSum[i].SerializeJsonLoad(ps[i]);
 }
 
@@ -197,7 +197,7 @@ void ProductSum::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 void ProductSum::SerializeJsonLoad(const rapidjson::Value& v)
 {
     const Value &ref = v["m_reference"];
-    for (int i = 0; i < ref.Size(); i++)
+    for (int i = 0; i < ref.Size() and i < MAX_PRODUCT_SUM_TERMS; i++)
          m_reference[i] = ref[i].GetUint();
 
     m_bTrue = v["m_bTrue"].GetBool();
@@ -366,13 +366,13 @@ void CommandArray::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 void CommandArray::SerializeJsonLoad(const rapidjson::Value& v)
 {
     const Value &commArrJson = v["m_command"];
-    for (int i = 0; i < commArrJson.Size(); i++)
+    for (int i = 0; i < commArrJson.Size() and i < MAX_COMMANDS; i++)
         m_command[i].SerializeJsonLoad(commArrJson[i]);
 
     m_productArray.SerializeJsonLoad(v["m_productArray"]);
 
     const Value &commLimbArrJson = v["m_commandLimbType"];
-    for (int i = 0; i < commLimbArrJson.Size(); i++)
+    for (int i = 0; i < commLimbArrJson.Size() and i < MAX_LIMB_TYPES; i++)
         m_commandLimbType[i].SerializeJsonLoad(commLimbArrJson[i]);
 
 }
@@ -459,11 +459,11 @@ void CommandLimbType::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 void CommandLimbType::SerializeJsonLoad(const rapidjson::Value& v)
 {
     const Value &cr = v["m_comref"];
-    for(int i=0; i<cr.Size(); i++)
+    for(int i=0; i<cr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
         m_comref[i] = cr[i].GetUint();
 
     const Value &sr = v["m_sumref"];
-    for(int i=0; i<sr.Size(); i++)
+    for(int i=0; i<sr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
         m_sumref[i] = sr[i].GetUint();
 
 }
@@ -571,7 +571,7 @@ void CommandLimbStore::SerializeJsonLoad(const rapidjson::Value& v, Biot& biot)
     m_nLimb = v["m_nLimb"].GetInt();
 
     const Value &comm = v["command"];
-    for(int m_index=0; m_index<comm.Size(); m_index++)
+    for(int m_index=0; m_index<comm.Size() and m_index<CommandLimbType::MAX_COMMANDS_PER_LIMB; m_index++)
     {
         m_pArg = &biot.m_commandArray.GetCommandArgument(m_nLimbType, m_index);
         Value commandJson(kObjectType);
