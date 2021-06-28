@@ -58,8 +58,10 @@ void CSettings::Serialize(QDataStream& a)
 */
 void CSettings::SanityCheck()
 {
-	if (m_nStartingPopulation > 50)
-		m_nStartingPopulation = 50;
+    if (this->m_initialPopulation > 50)
+        this->m_initialPopulation = 50;
+    if (this->m_initialPopulation < 1)
+        this->m_initialPopulation = 1;
 
 	for (int i = 0; i < SIDES; i++)
 	{
@@ -107,7 +109,6 @@ CSettings& CSettings::operator=(CSettings& s)
     regenTime             = s.regenTime;
 
   	m_nSeed                 = s.m_nSeed;                
-	m_nStartingPopulation   = s.m_nStartingPopulation;  
 	m_nArmTypesPerBiot      = s.m_nArmTypesPerBiot;     
 	m_nSegmentsPerArm       = s.m_nSegmentsPerArm;      
 	m_nArmsPerBiot          = s.m_nArmsPerBiot;         
@@ -129,7 +130,6 @@ CSettings& CSettings::operator=(CSettings& s)
 void CSettings::Reset(int nWidth, int nHeight)
 {
     m_nSeed                 = QDateTime::currentMSecsSinceEpoch();
-	m_nStartingPopulation   = 20;
 	m_nArmTypesPerBiot      = 1;
 	m_nSegmentsPerArm       = 10;
 	m_nArmsPerBiot          = 0;

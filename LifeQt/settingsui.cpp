@@ -10,6 +10,7 @@ SettingsUi::SettingsUi(class CSettings &settingsIn, QWidget *parent) :
     ui->setupUi(this);
 
     ui->biotTab->Init(settingsIn);
+    ui->habitatTab->Init(settingsIn);
 }
 
 SettingsUi::~SettingsUi()
@@ -20,6 +21,7 @@ SettingsUi::~SettingsUi()
 void SettingsUi::accept()
 {
     this->ui->biotTab->Accept(settings);
+    this->ui->habitatTab->Accept(settings);
     QDialog::accept();
 }
 

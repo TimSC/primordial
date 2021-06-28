@@ -50,7 +50,7 @@ public:
 public: //Fox BEGIN
     int m_nSick;
 	int m_initialPopulation;		//Population used on restart/new
-	int     m_leafEnergy;
+    int     m_leafEnergy; //Solar energy collected per time
 	CSoundRegistry m_sound;
     QList<QPen> pens;
     int     startNew;    // Should we use the old population, or the new?
@@ -74,7 +74,6 @@ public: //Fox BEGIN
     int64_t    regenCost;
     uint32_t   regenTime;
 	int  	m_nSeed;
-	int		m_nStartingPopulation;
 	int		m_nArmTypesPerBiot;
 	int		m_nSegmentsPerArm;
 	int		m_nArmsPerBiot;

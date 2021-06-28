@@ -2,6 +2,7 @@
 #define SETTINGSHABITAT_H
 
 #include <QWidget>
+#include "core/Settings.h"
 
 namespace Ui {
 class SettingsHabitat;
@@ -15,6 +16,9 @@ class SettingsHabitat : public QWidget
 public:
     explicit SettingsHabitat(QWidget *parent = nullptr);
     ~SettingsHabitat();
+
+    void Init(class CSettings &settingsIn);
+    void Accept(class CSettings &settingsIn);
 
 private:
     Ui::SettingsHabitat *ui;

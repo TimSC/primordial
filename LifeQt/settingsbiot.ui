@@ -126,7 +126,7 @@
        </item>
        <item>
         <property name="text">
-         <string>Very quickly</string>
+         <string>Very quick</string>
         </property>
        </item>
        <item>
@@ -146,12 +146,12 @@
        </item>
        <item>
         <property name="text">
-         <string>Very slowly</string>
+         <string>Very slow</string>
         </property>
        </item>
        <item>
         <property name="text">
-         <string>Too slowly</string>
+         <string>Too slow</string>
         </property>
        </item>
       </widget>
