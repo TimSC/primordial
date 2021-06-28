@@ -19,6 +19,9 @@ EnvironmentArea::EnvironmentArea(QWidget *central) : QOpenGLWidget(central)
     tickStart = QDateTime::currentMSecsSinceEpoch();
     tickCount = 0;
     ticksPerSec = 0.0;
+
+    backgroundTop.load(":/res/top.png");
+    backgroundBottom.load(":/res/bottom.png");
 }
 
 void EnvironmentArea::SetEnvironment(class Environment *envIn)
@@ -66,7 +69,8 @@ void EnvironmentArea::paintBackground(QPainter &painter)
     background.setColorAt(1, Qt::black);
     painter.fillRect(this->rect(), background);
 
-
+    painter.drawPixmap(0, 0, this->width(), 16, backgroundTop);
+    painter.drawPixmap(0, this->height()-16, this->width(), 16, backgroundBottom);
 }
 
 void EnvironmentArea::mousePressEvent(QMouseEvent * event)

@@ -26,6 +26,7 @@ private:
     uint64_t tickStart, tickCount;
     double ticksPerSec;
     std::string currentTool;
+    QPixmap backgroundTop, backgroundBottom;
 
     void paintBackground(QPainter &painter);
 };
