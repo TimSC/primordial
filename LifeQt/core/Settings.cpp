@@ -101,7 +101,6 @@ CSettings& CSettings::operator=(CSettings& s)
     bParentAttack         = s.bParentAttack;
     bSiblingsAttack       = s.bSiblingsAttack;    
 
-    bNoFlickerSet         = s.bNoFlickerSet;
     friction              = s.friction;    
     maxLineSegments       = s.maxLineSegments;
     regenCost             = s.regenCost;
@@ -146,4 +145,103 @@ void CSettings::Reset(int nWidth, int nHeight)
 	m_nWidth      = nHeight;
 	m_nSizeChoice = 1;
 
+}
+
+// ************************************
+
+const int REGENCOST_OPTIONS=5;
+const ListEntry regenCostList[REGENCOST_OPTIONS] = {
+  {"Nothing",  0},
+  {"Cheap", 100},
+  {"Normal", 200},
+  {"Expensive", 300},
+  {"Too expensive", 400}
+};
+
+const int REGENTIME_OPTIONS=7;
+const ListEntry regenTimeList[REGENTIME_OPTIONS] = {
+  {"Immediate",    0x0000},
+  {"Very quick", 0x0001},
+  {"Quickly",      0x0003},
+  {"Normal",       0x0007},
+  {"Slowly",       0x000F},
+  {"Very slow",    0x001F},
+  {"Too slow",    0x003F},
+};
+
+const int BENEFIT_OPTIONS=5;
+const ListEntry benefitList[BENEFIT_OPTIONS] = {
+  {"Too low", 2},
+  {"Low", 3},
+  {"Normal", 4},
+  {"High", 5},
+  {"High noon", 6}
+};
+
+const int LIFESPAN_OPTIONS=6;
+const ListEntry lifeSpanList[LIFESPAN_OPTIONS] = {
+  {"Ephemeral", 3500},
+  {"Transitory", 7000},
+  {"Moderate", 9000},
+  {"Long", 12000},
+  {"Very Long", 15000},
+  {"Immortal", 0}
+};
+
+const int MUTATION_OPTIONS=8;
+const ListEntry mutationList[MUTATION_OPTIONS] = {
+  {"None",         0},
+  {"Nearly none",  1},
+  {"Very slight",  3},
+  {"Slight",       8},
+  {"Moderate",    12},
+  {"High",        24},
+  {"Very high",   48},
+  {"Too high",    80}
+};
+
+
+const int FRICTION_OPTIONS=5;
+const ListEntry frictionList[FRICTION_OPTIONS] = {
+  { "None",      0},
+  { "Slight",    2},
+  { "Moderate",  5},
+  { "High",      20},
+  { "Rigid",     50}
+};
+
+const int SETTINGS_SEXUAL_OPTIONS=3;
+const ListEntry settingsSexualList[SETTINGS_SEXUAL_OPTIONS] = {
+  { "Asexual",                  0},
+  { "Sexual",                   1},
+  { "Both asexual and sexual",  2}
+};
+
+QString SettingFindClosestTextByValue(const ListEntry *list, int listSize, int value)
+{
+    int bestIndex = -1;
+    int bestDist = 0;
+    for(int i=0; i<listSize; i++)
+    {
+        int dist = abs(list[i].second - value);
+        if(bestIndex < 0 or dist < bestDist)
+        {
+            bestDist = dist;
+            bestIndex = i;
+        }
+    }
+    return list[bestIndex].first;
+}
+
+int SettingFindValueByText(const ListEntry *list, int listSize, const QString &text)
+{
+    for(int i=0; i<listSize; i++)
+    {
+        if(list[i].first == text)
+        {
+            return list[i].second;
+        }
+    }
+    assert(0); //Setting text not known
+    return list[0].second;
 }

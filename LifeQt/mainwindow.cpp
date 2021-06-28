@@ -273,6 +273,11 @@ void MainWindow::updateToolMenu()
 
 void MainWindow::on_actionSettings_triggered()
 {
-    class SettingsUi settingsUi;
+    class SettingsUi settingsUi(env.options);
     settingsUi.exec();
+    int ret = settingsUi.result();
+    if(ret == QDialog::Accepted)
+    {
+
+    }
 }

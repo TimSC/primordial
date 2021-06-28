@@ -9,6 +9,7 @@ class SettingsHabitat;
 
 class SettingsHabitat : public QWidget
 {
+    friend class SettingsUi;
     Q_OBJECT
 
 public:

@@ -5,7 +5,8 @@
 // Math functions associated with motion and acceleration
 //
 
-#pragma once
+#ifndef _VECTOR_H
+#define _VECTOR_H
 #include "Etools.h"
 #include "rapidjson/document.h"
 
@@ -278,3 +279,5 @@ inline void Vector::makeStep(void)
 			r += 360.0;
 	}
 }
+
+#endif //_VECTOR_H

@@ -4,7 +4,8 @@
 // Implemented by Jason Spofford
 //
 //
-#pragma once
+#ifndef _BRAIN_H
+#define _BRAIN_H
 #include <stdint.h>
 #include <QDataStream>
 #include "Genotype.h"
@@ -550,3 +551,4 @@ protected:
 };
 
 
+#endif //_BRAIN_H
