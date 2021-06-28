@@ -149,9 +149,6 @@ void Biot::ClearSettings(void)
 	m_totalChildren  = 0;
 	m_generation     = 0;
 
-//	m_hBitmap        = NULL;
-	m_bitmapWidth  = 0;
-	m_bitmapHeight = 0;
 	m_nSick        = 0;
 	lastType       = BLACK_LEAF;
 	newType        = -2;

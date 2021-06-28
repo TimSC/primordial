@@ -105,10 +105,6 @@ class Biot: public BRectItem
   public:
 	Biot(Environment& environment);
     virtual ~Biot(void);
-	
-	int m_bitmapWidth;
-	int m_bitmapHeight;
-	void CheckBitmapSize(int width, int height);
 
 	enum {
 		IS_HUNGRY = 0,  // Histeresis
