@@ -26,6 +26,8 @@ private:
     uint64_t tickStart, tickCount;
     double ticksPerSec;
     std::string currentTool;
+
+    void paintBackground(QPainter &painter);
 };
 
 #endif // ENVIRONMENTAREA_H

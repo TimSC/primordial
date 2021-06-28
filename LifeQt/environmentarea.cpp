@@ -53,9 +53,20 @@ void EnvironmentArea::paintGL()
     tickCount ++;
 
     QPainter painter(this);
-    painter.setPen(QPen(Qt::blue));
+    this->paintBackground(painter);
+
 
     this->env->paintGL(painter);
+}
+
+void EnvironmentArea::paintBackground(QPainter &painter)
+{
+    QLinearGradient background(0, 0, 0, this->height());
+    background.setColorAt(0, QColor(0,0,100));
+    background.setColorAt(1, Qt::black);
+    painter.fillRect(this->rect(), background);
+
+
 }
 
 void EnvironmentArea::mousePressEvent(QMouseEvent * event)

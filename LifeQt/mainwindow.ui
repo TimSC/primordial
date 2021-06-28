@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Primordial Life</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>res/icon.png</normaloff>res/icon.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
