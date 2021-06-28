@@ -22,6 +22,7 @@ EnvironmentArea::EnvironmentArea(QWidget *central) : QOpenGLWidget(central)
 
     backgroundTop.load(":/res/top.png");
     backgroundBottom.load(":/res/bottom.png");
+    currentTool = "examine";
 }
 
 void EnvironmentArea::SetEnvironment(class Environment *envIn)
@@ -64,13 +65,23 @@ void EnvironmentArea::paintGL()
 
 void EnvironmentArea::paintBackground(QPainter &painter)
 {
+    painter.save();
+
     QLinearGradient background(0, 0, 0, this->height());
     background.setColorAt(0, QColor(0,0,100));
     background.setColorAt(1, Qt::black);
     painter.fillRect(this->rect(), background);
 
-    painter.drawPixmap(0, 0, this->width(), 16, backgroundTop);
-    painter.drawPixmap(0, this->height()-16, this->width(), 16, backgroundBottom);
+    //Repeat texture https://stackoverflow.com/a/64805500/4288232
+    painter.setBrush(backgroundTop);
+    painter.setBrushOrigin(0, 0);
+    painter.drawRect(QRect(0, 0, this->width(), 16));
+
+    painter.setBrush(backgroundBottom);
+    painter.setBrushOrigin(0, this->height()-16);
+    painter.drawRect(QRect(0, this->height()-16, this->width(), 16));
+
+    painter.restore();
 }
 
 void EnvironmentArea::mousePressEvent(QMouseEvent * event)

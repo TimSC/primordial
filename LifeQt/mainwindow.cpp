@@ -11,6 +11,7 @@
 #include <QLabel>
 #include "core/Biots.h"
 #include "settingsui.h"
+#include "aboutui.h"
 #include "rapidjson/writer.h"
 #include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/istreamwrapper.h>
@@ -281,4 +282,15 @@ void MainWindow::on_actionSettings_triggered()
     {
 
     }
+}
+
+void MainWindow::on_actionStatus_Bar_triggered(bool checked)
+{
+    this->ui->statusbar->setVisible(checked);
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+    AboutUi aboutUi;
+    aboutUi.exec();
 }

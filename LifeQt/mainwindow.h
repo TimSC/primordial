@@ -58,6 +58,10 @@ private slots:
 
     void on_actionSettings_triggered();
 
+    void on_actionStatus_Bar_triggered(bool checked);
+
+    void on_actionAbout_triggered();
+
 private:
     Ui::MainWindow *ui;
     QLineEdit *statusDay, *statusPopulation, *statusExtinctions;

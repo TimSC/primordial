@@ -2,6 +2,8 @@
 
 Copyright (C) 1996-1998 Jason Spofford
 
+Ported to QT5 by Tim Sheerman-Chase 2021
+
 Primordial Life presents an environment filled with artificially living creatures called biots. Like their biological counterparts, each biot has a genetic code that serves as a blueprint for constructing it. It is this blueprint which lays the foundation for their evolution.
 
 You will see biots battle to dominate the environment. Over time, new species will emerge while others may die out. It’s a tough life, but some "biots" got to do it.

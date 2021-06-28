@@ -16,6 +16,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    aboutui.cpp \
     core/Biots.cpp \
     core/Brain.cpp \
     core/Connect.cpp \
@@ -34,6 +35,7 @@ SOURCES += \
     settingsui.cpp
 
 HEADERS += \
+    aboutui.h \
     core/Biots.h \
     core/Brain.h \
     core/Connect.h \
@@ -51,6 +53,7 @@ HEADERS += \
     settingsui.h
 
 FORMS += \
+    aboutui.ui \
     mainwindow.ui \
     settingsbiot.ui \
     settingshabitat.ui \
