@@ -56,6 +56,8 @@ private slots:
 
     void on_actionTerminate_triggered(bool checked);
 
+    void on_actionSettings_triggered();
+
 private:
     Ui::MainWindow *ui;
     QLineEdit *statusDay, *statusPopulation, *statusExtinctions;

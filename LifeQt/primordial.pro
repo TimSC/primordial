@@ -28,7 +28,10 @@ SOURCES += \
     core/vector.cpp \
     environmentarea.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    settingsbiot.cpp \
+    settingshabitat.cpp \
+    settingsui.cpp
 
 HEADERS += \
     core/Biots.h \
@@ -42,10 +45,16 @@ HEADERS += \
     core/SoundRegistry.h \
     core/vector.h \
     environmentarea.h \
-    mainwindow.h
+    mainwindow.h \
+    settingsbiot.h \
+    settingshabitat.h \
+    settingsui.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    settingsbiot.ui \
+    settingshabitat.ui \
+    settingsui.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

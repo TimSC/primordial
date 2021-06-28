@@ -10,6 +10,7 @@
 #include <QScreen>
 #include <QLabel>
 #include "core/Biots.h"
+#include "settingsui.h"
 #include "rapidjson/writer.h"
 #include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/istreamwrapper.h>
@@ -268,4 +269,10 @@ void MainWindow::updateToolMenu()
     this->ui->actionTerminate->setChecked(currentTool == "terminate");
 
     this->ui->openGLWidget->setCurrentTool(currentTool);
+}
+
+void MainWindow::on_actionSettings_triggered()
+{
+    class SettingsUi settingsUi;
+    settingsUi.exec();
 }
