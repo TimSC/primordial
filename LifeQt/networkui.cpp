@@ -9,26 +9,15 @@ NetworkUi::NetworkUi(SidesManager &sidesManagerIn, QWidget *parent) :
 {
     ui->setupUi(this);
 
+    connect(&sidesManager, SIGNAL(sideConnecting(int)), this, SLOT(sideChangedStatus(int)));
     connect(&sidesManager, SIGNAL(sideConnected(int)), this, SLOT(sideChangedStatus(int)));
     connect(&sidesManager, SIGNAL(sideAssigned(int)), this, SLOT(sideChangedStatus(int)));
     connect(&sidesManager, SIGNAL(sideDisconnected(int)), this, SLOT(sideChangedStatus(int)));
 
-    QString addr, status;
-    sidesManager.getSideStatus(0, addr, status);
-    this->ui->addressEdit->setText(addr);
-    this->ui->status->setText(status);
-
-    sidesManager.getSideStatus(1, addr, status);
-    this->ui->addressEdit_2->setText(addr);
-    this->ui->status_2->setText(status);
-
-    sidesManager.getSideStatus(2, addr, status);
-    this->ui->addressEdit_3->setText(addr);
-    this->ui->status_3->setText(status);
-
-    sidesManager.getSideStatus(3, addr, status);
-    this->ui->addressEdit_4->setText(addr);
-    this->ui->status_4->setText(status);
+    UpdateRow(0, this->ui->addressEdit, this->ui->status, this->ui->connectButton);
+    UpdateRow(1, this->ui->addressEdit_2, this->ui->status_2, this->ui->connectButton_2);
+    UpdateRow(2, this->ui->addressEdit_3, this->ui->status_3, this->ui->connectButton_3);
+    UpdateRow(3, this->ui->addressEdit_4, this->ui->status_4, this->ui->connectButton_4);
 }
 
 NetworkUi::~NetworkUi()
@@ -38,69 +27,62 @@ NetworkUi::~NetworkUi()
 
 void NetworkUi::on_connectButton_clicked()
 {
-    QString addr = this->ui->addressEdit->text();
-    QUrl addrParsed("tcp://"+addr);
-    int port = addrParsed.port();
-    if (port < 0) port = 56436;
-
-    sidesManager.connectToHost(0, addrParsed.host(), port);
+    ConnectRow(0, this->ui->connectButton, this->ui->addressEdit);
 }
 
 void NetworkUi::on_connectButton_2_clicked()
 {
-    QString addr = this->ui->addressEdit_2->text();
-    QUrl addrParsed("tcp://"+addr);
-    int port = addrParsed.port();
-    if (port < 0) port = 56436;
-
-    sidesManager.connectToHost(1, addrParsed.host(), port);
+    ConnectRow(1, this->ui->connectButton_2, this->ui->addressEdit_2);
 }
 
 void NetworkUi::on_connectButton_3_clicked()
 {
-    QString addr = this->ui->addressEdit_3->text();
-    QUrl addrParsed("tcp://"+addr);
-    int port = addrParsed.port();
-    if (port < 0) port = 56436;
-
-    sidesManager.connectToHost(2, addrParsed.host(), port);
+    ConnectRow(2, this->ui->connectButton_3, this->ui->addressEdit_3);
 }
 
 void NetworkUi::on_connectButton_4_clicked()
 {
-    QString addr = this->ui->addressEdit_4->text();
-    QUrl addrParsed("tcp://"+addr);
-    int port = addrParsed.port();
-    if (port < 0) port = 56436;
-
-    sidesManager.connectToHost(3, addrParsed.host(), port);
+    ConnectRow(3, this->ui->connectButton_4, this->ui->addressEdit_4);
 }
 
 void NetworkUi::sideChangedStatus(int side)
 {
     QString addr, status;
     if(side == 0)
-    {
-        sidesManager.getSideStatus(0, addr, status);
-        this->ui->addressEdit->setText(addr);
-        this->ui->status->setText(status);
-    }
+        UpdateRow(0, this->ui->addressEdit, this->ui->status, this->ui->connectButton);
     else if(side == 1)
-    {
-        sidesManager.getSideStatus(1, addr, status);
-        this->ui->addressEdit_2->setText(addr);
-        this->ui->status_2->setText(status);
-    }
+        UpdateRow(1, this->ui->addressEdit_2, this->ui->status_2, this->ui->connectButton_2);
     else if(side == 2)
-    {
-        sidesManager.getSideStatus(2, addr, status);
-        this->ui->addressEdit_3->setText(addr);
-        this->ui->status_3->setText(status);
-    }
+        UpdateRow(2, this->ui->addressEdit_3, this->ui->status_3, this->ui->connectButton_3);
     else if(side == 3)
+        UpdateRow(3, this->ui->addressEdit_4, this->ui->status_4, this->ui->connectButton_4);
+
+}
+
+void NetworkUi::UpdateRow(int side, QLineEdit *lineEdit, QLineEdit *statusEdit, QPushButton *button)
+{
+    QString addr, status;
+    bool enableConnect=0;
+    sidesManager.getSideStatus(side, addr, status, enableConnect);
+    lineEdit->setText(addr);
+    statusEdit->setText(status);
+    if(enableConnect)
+        button->setText("Connect");
+    else
+        button->setText("Disconnect");
+}
+
+void NetworkUi::ConnectRow(int side, QPushButton *button, QLineEdit *lineEdit)
+{
+    if(button->text() == "Connect")
     {
-        sidesManager.getSideStatus(3, addr, status);
-        this->ui->addressEdit_4->setText(addr);
-        this->ui->status_4->setText(status);
+        QString addr = lineEdit->text();
+        QUrl addrParsed("tcp://"+addr);
+        int port = addrParsed.port();
+        if (port < 0) port = 56436;
+
+        sidesManager.connectToHost(side, addrParsed.host(), port);
     }
+    else
+        sidesManager.disconnectSide(side);
 }

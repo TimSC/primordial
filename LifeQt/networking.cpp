@@ -136,13 +136,18 @@ SidesManager::~SidesManager()
 void SidesManager::connectToHost(int side, const QString &hostName, quint16 port)
 {
     if(sockets[side] != nullptr)
-    {
-        sockets[side]->disconnect();
-    }
+        sockets[side]->disconnectFromHost();
 
     QTcpSocket *socket = networking.connectToHost(hostName, port);
     sockets[side] = socket;
     status[side] = "connecting";
+    emit sideConnecting(side);
+}
+
+void SidesManager::disconnectSide(int side)
+{
+    if(sockets[side] != nullptr)
+        sockets[side]->disconnectFromHost();
 }
 
 void SidesManager::netConnected(QTcpSocket *client)
@@ -179,7 +184,7 @@ void SidesManager::netConnected(QTcpSocket *client)
     {
         QByteArray data("nofreeside{}");
         networking.sendPage(client, data.constData(), data.length());
-        //client->disconnect();
+        //client->disconnectFromHost();
     }
 }
 
@@ -218,11 +223,11 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
     }
     else if(rpcType == "nofreeside")
     {
-        client->disconnect();
+        client->disconnectFromHost();
     }
 }
 
-void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &statusOut)
+void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &statusOut, bool &enableConnect)
 {
     assert(side >= 0 and side <= 4);
     if(sockets[side] != nullptr)
@@ -233,4 +238,7 @@ void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &status
     else
         hostPortOut = "";
     statusOut = status[side];
+    enableConnect = true;
+    if(statusOut == "connecting" or statusOut == "connected" or statusOut == "assigned")
+        enableConnect = false;
 }

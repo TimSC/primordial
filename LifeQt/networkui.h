@@ -3,6 +3,8 @@
 
 #include "networking.h"
 #include <QDialog>
+#include <QLineEdit>
+#include <QPushButton>
 
 namespace Ui {
 class NetworkUi;
@@ -31,6 +33,8 @@ public slots:
 private:
     Ui::NetworkUi *ui;
     SidesManager &sidesManager;
+    void UpdateRow(int side, QLineEdit *lineEdit, QLineEdit *statusEdit, QPushButton *button);
+    void ConnectRow(int side, QPushButton *button, QLineEdit *lineEdit);
 };
 
 #endif // NETWORKUI_H

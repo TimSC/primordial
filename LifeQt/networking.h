@@ -45,7 +45,8 @@ public:
     virtual ~SidesManager();
 
     void connectToHost(int side, const QString &hostName, quint16 port);
-    void getSideStatus(int side, QString &hostPortOut, QString &statusOut);
+    void disconnectSide(int side);
+    void getSideStatus(int side, QString &hostPortOut, QString &statusOut, bool &enableConnect);
 
 public slots:
     void netConnected(QTcpSocket *client);
@@ -53,6 +54,7 @@ public slots:
     void netReceivedPage(QTcpSocket *client, const char *data, uint32_t size);
 
 signals:
+    void sideConnecting(int side);
     void sideConnected(int side);
     void sideAssigned(int side);
     void sideDisconnected(int side);
