@@ -226,8 +226,11 @@
    </property>
   </action>
   <action name="actionNetwork_Status">
-   <property name="enabled">
+   <property name="checkable">
     <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>Network Status...</string>

@@ -12,6 +12,7 @@
 #include "core/Biots.h"
 #include "settingsui.h"
 #include "aboutui.h"
+#include "networkui.h"
 #include "rapidjson/writer.h"
 #include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/istreamwrapper.h>
@@ -68,8 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
     statusExtinctions->setFixedWidth(50);
     this->ui->statusbar->addWidget(statusExtinctions);
 
-    server.listen(QHostAddress::Any);
-    std::cout << "listening on port " << server.serverPort() << std::endl;
+
 
     startTimer(10);     // 5-millisecond timer
 }
@@ -296,4 +296,10 @@ void MainWindow::on_actionAbout_triggered()
 {
     AboutUi aboutUi;
     aboutUi.exec();
+}
+
+void MainWindow::on_actionNetwork_Status_triggered()
+{
+    class NetworkUi networkUi(sidesManager);
+    networkUi.exec();
 }

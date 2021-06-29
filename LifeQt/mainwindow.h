@@ -63,10 +63,12 @@ private slots:
 
     void on_actionAbout_triggered();
 
+    void on_actionNetwork_Status_triggered();
+
 private:
     Ui::MainWindow *ui;
     QLineEdit *statusDay, *statusPopulation, *statusExtinctions;
-    class PrimordialServer server;
+    class SidesManager sidesManager;
 
     class Environment env;
     std::string currentFilename;

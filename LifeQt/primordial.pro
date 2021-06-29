@@ -31,6 +31,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     networking.cpp \
+    networkui.cpp \
     settingsbiot.cpp \
     settingshabitat.cpp \
     settingsui.cpp
@@ -50,6 +51,7 @@ HEADERS += \
     environmentarea.h \
     mainwindow.h \
     networking.h \
+    networkui.h \
     settingsbiot.h \
     settingshabitat.h \
     settingsui.h
@@ -57,6 +59,7 @@ HEADERS += \
 FORMS += \
     aboutui.ui \
     mainwindow.ui \
+    networkui.ui \
     settingsbiot.ui \
     settingshabitat.ui \
     settingsui.ui
