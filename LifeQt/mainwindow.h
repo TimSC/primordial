@@ -5,6 +5,7 @@
 #include <QGraphicsScene>
 #include <QLineEdit>
 #include "core/Environ.h"
+#include "networking.h"
 #include "rapidjson/document.h"
 
 QT_BEGIN_NAMESPACE
@@ -65,6 +66,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QLineEdit *statusDay, *statusPopulation, *statusExtinctions;
+    class PrimordialServer server;
 
     class Environment env;
     std::string currentFilename;

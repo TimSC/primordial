@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -30,6 +30,7 @@ SOURCES += \
     environmentarea.cpp \
     main.cpp \
     mainwindow.cpp \
+    networking.cpp \
     settingsbiot.cpp \
     settingshabitat.cpp \
     settingsui.cpp
@@ -48,6 +49,7 @@ HEADERS += \
     core/vector.h \
     environmentarea.h \
     mainwindow.h \
+    networking.h \
     settingsbiot.h \
     settingshabitat.h \
     settingsui.h

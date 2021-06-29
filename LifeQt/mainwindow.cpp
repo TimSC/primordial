@@ -68,6 +68,9 @@ MainWindow::MainWindow(QWidget *parent)
     statusExtinctions->setFixedWidth(50);
     this->ui->statusbar->addWidget(statusExtinctions);
 
+    server.listen(QHostAddress::Any);
+    std::cout << "listening on port " << server.serverPort() << std::endl;
+
     startTimer(10);     // 5-millisecond timer
 }
 
