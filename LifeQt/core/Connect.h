@@ -73,7 +73,7 @@ class Side : public BRect
     };
 
     void Clear(BRect* pEnvRect);
-    virtual void SetConnect(int width) = 0;
+    virtual void SetSize(int width) = 0;
 
     int IsIntersect(CLine& bLine, int& x, int& y)
     {
@@ -83,13 +83,16 @@ class Side : public BRect
     
       return false;
     }
-/*
-    bool Export(Biot* pBiot);
-    virtual CPostData* Import();
 
+    bool Export(Biot* pBiot);
+    virtual Biot* Import();
+/*
    void SendBiots(Side& otherSide);
     bool RecvBiot(CPostData* pData);*/
     Biot* GetBiot();
+
+    bool IsConnected();
+    void SetConnected(bool conn);
 
     virtual void AdjustBiot(Biot& biot) = 0;
     virtual void RejectBiot(Biot& biot) = 0;
@@ -102,6 +105,7 @@ class Side : public BRect
       BRect* m_pEnv;
       Fifo m_inComing;
       Fifo m_outGoing;
+      bool m_isConnected;
 };
 
 
@@ -109,7 +113,7 @@ class RightSide : public Side
 {
   public:
     void SetSide(BRect* pEnvRect);
-    void SetConnect(int width);
+    void SetSize(int width);
     void AdjustBiot(Biot& biot);
     void RejectBiot(Biot& biot);
     int  SideSize();
@@ -120,7 +124,7 @@ class LeftSide : public Side
 {
   public:
     void SetSide(BRect* pEnvRect);
-    void SetConnect(int width);
+    void SetSize(int width);
     void AdjustBiot(Biot& biot);
     void RejectBiot(Biot& biot);
     int  SideSize();
@@ -131,7 +135,7 @@ class TopSide : public Side
 {
   public:
     void SetSide(BRect* pEnvRect);
-    void SetConnect(int width);
+    void SetSize(int width);
     void AdjustBiot(Biot& biot);
     void RejectBiot(Biot& biot);
     int  SideSize();
@@ -142,7 +146,7 @@ class BottomSide : public Side
 {
   public:
     void SetSide(BRect* pEnvRect);
-    void SetConnect(int width);
+    void SetSize(int width);
     void AdjustBiot(Biot& biot);
     void RejectBiot(Biot& biot);
     int  SideSize();

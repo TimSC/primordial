@@ -84,6 +84,7 @@ Side::Side()
 {
 	m_lines = 0;
 	m_pEnv = NULL;
+    m_isConnected = false;
 }
 
 void Side::Clear(BRect* pEnvRect)
@@ -97,17 +98,19 @@ void Side::Clear(BRect* pEnvRect)
 	m_inComing.Empty();
 }
 
-/*
+
 bool Side::Export(Biot* pBiot)
 {
-  return m_outGoing.Put(pBiot);
+    //return false; //Disable for now
+    return m_outGoing.Put(pBiot);
 }
 
-CPostData* Side::Import()
+Biot*  Side::Import()
 {
-  return (CPostData*) m_inComing.Get();
+    //return nullptr;
+    return (Biot*)m_inComing.Get();
 }
-
+/*
 //Biot* Side::PeekBiot()
 //{
 //	return (Biot*) m_outGoing.Peek();
@@ -148,6 +151,18 @@ bool Side::RecvBiot(CPostData* pData)
 //{
 //	return (BYTE) m_inComing.FreeCount();
 //}
+
+bool Side::IsConnected()
+{
+    return m_isConnected;
+}
+
+void Side::SetConnected(bool conn)
+{
+    m_isConnected = conn;
+}
+
+// ************************************
 
 int RightSide::SideSize()
 {
@@ -244,7 +259,7 @@ int BottomSide::SideSize()
 //
 //
 //
-void RightSide::SetConnect(int width)
+void RightSide::SetSize(int width)
 {
   int right  = m_pEnv->Width() + RECT_WIDTH;
   int left   = m_pEnv->Width();
@@ -267,7 +282,7 @@ void RightSide::SetConnect(int width)
 //
 //
 //
-void LeftSide::SetConnect(int width)
+void LeftSide::SetSize(int width)
 {
   int right  = 0;
   int left   = -RECT_WIDTH;
@@ -290,7 +305,7 @@ void LeftSide::SetConnect(int width)
 //
 //
 //
-void TopSide::SetConnect(int width)
+void TopSide::SetSize(int width)
 {
   m_left   = (m_pEnv->Width() - width) / 2;
   m_right  = m_pEnv->Width() - m_left;
@@ -306,7 +321,7 @@ void TopSide::SetConnect(int width)
 }
 
 
-void BottomSide::SetConnect(int width)
+void BottomSide::SetSize(int width)
 {
   m_left   = (m_pEnv->Width() - width) / 2;
   m_right  = m_pEnv->Width() - m_left;

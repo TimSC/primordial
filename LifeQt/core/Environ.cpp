@@ -692,10 +692,12 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 void Environment::OnOpen()
 { 
 	// Establish our boundaries
-	leftSide.SetSide(this);
-	rightSide.SetSide(this);
-	topSide.SetSide(this);
-	bottomSide.SetSide(this);
+    for(int i=0; i<4; i++)
+        side[i]->Clear(this);
+    leftSide.SetSize(this->Height());
+    rightSide.SetSize(this->Height());
+    topSide.SetSize(this->Width());
+    bottomSide.SetSize(this->Width());
 
     options.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
 
@@ -735,10 +737,12 @@ void Environment::OnNew(QOpenGLWidget &scene,
 	RandSeed(m_orginalSeed);
 
 	// Establish our boundaries
-	leftSide.SetSide(this);
-	rightSide.SetSide(this);
-	topSide.SetSide(this);
-	bottomSide.SetSide(this);
+    for(int i=0; i<4; i++)
+        side[i]->Clear(this);
+    leftSide.SetSize(this->Height());
+    rightSide.SetSize(this->Height());
+    topSide.SetSize(this->Width());
+    bottomSide.SetSize(this->Width());
 /*
 	// Are we being displayed in the small window?
 	if (AfxGetPLife().IsSmall())
@@ -771,8 +775,6 @@ void Environment::OnNew(QOpenGLWidget &scene,
 void Environment::Skip()
 {
 //	ASSERT(0);
-    int i = 0;
-    Biot* pBiot = nullptr;
 
     uint64_t tickNow = QDateTime::currentMSecsSinceEpoch();
     uint64_t elapse = tickNow - tickStart;
@@ -806,43 +808,23 @@ void Environment::Skip()
 */
 
 
-	// Write a biot out if required
-/*	if (sock.WriteAll())
-	{
-		// Import biots
-        QDataStream* pPost;
-		sock.LockAll();
-		for (i = 0; i < 4; i++)
-		{
-			pPost = side[i]->Import();
-			while (pPost)
-			{
-				pBiot = new Biot(*this);
-				if (pBiot)
-				{
-					if (!pBiot->Serialize(*pPost))
-					{
-						delete pBiot;
-					}
-					else
-					{
-						AddBiot(pBiot);
-						side[i]->AdjustBiot(*pBiot);
-					}
+    // Handle arrival of biots from network
+    for (int i = 0; i < 4; i++)
+    {
+        Biot* pBiot = side[i]->Import();
+        while (pBiot)
+        {
+            AddBiot(pBiot);
+            side[i]->AdjustBiot(*pBiot);
 
-				}
-				delete pPost;
-				pPost = side[i]->Import();
-			}
-		}
-		sock.UnlockAll();
-	}
-*/
+            pBiot = side[i]->Import();
+        }
+    }
 
     // Process all the biots now
     while (true)
     {
-        pBiot = m_biotList.NextBiot();
+        Biot* pBiot = m_biotList.NextBiot();
 
         // Is the biot present?
         if (m_biotList.Looped()) break;
@@ -859,14 +841,14 @@ void Environment::Skip()
         else
         {
             m_sort.Move(pBiot, &origPos);
-            for (i = 0; i < 4; i++)
+
+            //Consider sending biot to remote network connection
+            for (int i = 0; i < 4; i++)
             {
-                /*if (pBiot->IsContainedBy(*side[i]))
+                if (side[i]->IsConnected() and pBiot->IsContainedBy(*side[i]))
                 {
-                    sock.LockAll();
                     if (side[i]->Export(pBiot))
                     {
-                        pBiot->Erase();
                         m_sort.Remove(pBiot);
                         m_biotList.RemoveBiot();
                     }
@@ -874,9 +856,8 @@ void Environment::Skip()
                     {
                         pBiot->Reject(i);
                     }
-                    sock.UnlockAll();
                     i = 4;
-                }*/
+                }
             }
         }
     }
@@ -889,12 +870,7 @@ void Environment::Skip()
         m_stats.NewSample();
         if (m_statsList.size() > 100)
             m_statsList.removeFirst();
-/*
-        AfxMainFrame().UpdateStatusBar();
 
-        if (m_pEnvStatsWnd)
-            m_pEnvStatsWnd->PaintNow();
-*/
         if (m_stats.PercentUncoveredByBiots() < 0.50)
         {
             m_biotList[Integer(m_biotList.size())]->m_nSick = options.m_nSick;
@@ -916,6 +892,7 @@ void Environment::Skip()
 
 
 /*
+    //Handle total extinction
 	if (m_biotList.GetSize() < 4)
 	{
 		if (m_biotList.GetSize() == 0 &&
