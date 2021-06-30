@@ -87,7 +87,7 @@ class Side : public BRect
     };
 
     void Clear(BRect* pEnvRect);
-    virtual void SetSize(int width) = 0;
+    virtual void SetSize(bool connected) = 0;
 
     int IsIntersect(CLine& bLine, int& x, int& y)
     {
@@ -111,7 +111,6 @@ class Side : public BRect
     virtual void AdjustBiot(Biot& biot) = 0;
     virtual void RejectBiot(Biot& biot) = 0;
     virtual int  SideSize() = 0;
-	virtual void SetSide(BRect* pEnvRect) = 0;
 
     protected:
       int m_sideId;
@@ -129,8 +128,7 @@ class RightSide : public Side
 {
   public:
     RightSide();
-    void SetSide(BRect* pEnvRect);
-    void SetSize(int width);
+    void SetSize(bool connected);
     void AdjustBiot(Biot& biot);
     void RejectBiot(Biot& biot);
     int  SideSize();
@@ -141,8 +139,7 @@ class LeftSide : public Side
 {
   public:
     LeftSide();
-    void SetSide(BRect* pEnvRect);
-    void SetSize(int width);
+    void SetSize(bool connected);
     void AdjustBiot(Biot& biot);
     void RejectBiot(Biot& biot);
     int  SideSize();
@@ -153,8 +150,7 @@ class TopSide : public Side
 {
   public:
     TopSide();
-    void SetSide(BRect* pEnvRect);
-    void SetSize(int width);
+    void SetSize(bool connected);
     void AdjustBiot(Biot& biot);
     void RejectBiot(Biot& biot);
     int  SideSize();
@@ -165,8 +161,7 @@ class BottomSide : public Side
 {
   public:
     BottomSide();
-    void SetSide(BRect* pEnvRect);
-    void SetSize(int width);
+    void SetSize(bool connected);
     void AdjustBiot(Biot& biot);
     void RejectBiot(Biot& biot);
     int  SideSize();

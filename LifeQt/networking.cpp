@@ -115,11 +115,6 @@ void Networking::clientBytesAvailable()
             {
                 pageComplete(client, &assemblyBuffer.constData()[magicCodeLen+sizeof(uint32_t)], expectSize);
                 QByteArray remains = assemblyBuffer.mid(entirePageSize);
-                if(remains.size()>0)
-                {
-                    int z=1+1;
-                }
-                //cout << "remains " << remains.size() << endl;
                 assembleBuffers[client] = remains;
             }
         }
@@ -225,6 +220,8 @@ void SidesManager::netConnected(QTcpSocket *client)
         QByteArray data("assignside{}");
         networking.sendPage(client, data.constData(), data.length());
         env.side[freeSide]->SetConnected(true);
+        env.side[freeSide]->Clear(&this->env);
+        env.side[freeSide]->SetSize(true);
 
         emit sideAssigned(freeSide);
     }
@@ -244,6 +241,8 @@ void SidesManager::netDisconnected(QTcpSocket *client)
             status[i] = "disconnected";
             sockets[i] = nullptr;
             env.side[i]->SetConnected(false);
+            env.side[i]->Clear(&this->env);
+            env.side[i]->SetSize(false);
             emit sideDisconnected(i);
         }
 }
@@ -268,6 +267,8 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
     {
         status[side] = "assigned";
         env.side[side]->SetConnected(true);
+        env.side[side]->Clear(&this->env);
+        env.side[side]->SetSize(true);
         emit sideAssigned(side);
     }
     else if(rpcType == "nofreeside")

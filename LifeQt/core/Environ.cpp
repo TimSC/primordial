@@ -694,10 +694,10 @@ void Environment::OnOpen()
 	// Establish our boundaries
     for(int i=0; i<4; i++)
         side[i]->Clear(this);
-    leftSide.SetSize(this->Height());
-    rightSide.SetSize(this->Height());
-    topSide.SetSize(this->Width());
-    bottomSide.SetSize(this->Width());
+    leftSide.SetSize(false);
+    rightSide.SetSize(false);
+    topSide.SetSize(false);
+    bottomSide.SetSize(false);
 
     options.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
 
@@ -739,10 +739,10 @@ void Environment::OnNew(QOpenGLWidget &scene,
 	// Establish our boundaries
     for(int i=0; i<4; i++)
         side[i]->Clear(this);
-    leftSide.SetSize(this->Height());
-    rightSide.SetSize(this->Height());
-    topSide.SetSize(this->Width());
-    bottomSide.SetSize(this->Width());
+    leftSide.SetSize(false);
+    rightSide.SetSize(false);
+    topSide.SetSize(false);
+    bottomSide.SetSize(false);
 /*
 	// Are we being displayed in the small window?
 	if (AfxGetPLife().IsSmall())

@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
     QSize size = qApp->screens()[0]->size();
 
     QRect rect(0, 0, size.width(), size.height());
+    //QRect rect(0, 0, 640, 480);
     QPen whitePen(QColor(255,255,255));
     QGraphicsRectItem *gri = new QGraphicsRectItem(rect);
 
