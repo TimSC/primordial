@@ -817,6 +817,7 @@ void Environment::Skip()
             side[i]->AdjustBiot(*pBiot);
 
             pBiot = side[i]->Import();
+
         }
     }
 
@@ -847,7 +848,7 @@ void Environment::Skip()
                 if (side[i]->IsConnected() and pBiot->IsContainedBy(*side[i]))
                 {
                     if (side[i]->Export(pBiot))
-                    {
+                    {                        
                         m_sort.Remove(pBiot);
                         m_biotList.RemoveBiot();
                     }

@@ -109,7 +109,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
         const CEnvStats &stats = env.m_statsList.last();
         statusDay->setText(stats.GetDaysStr().c_str());
-        statusPopulation->setText(stats.GetPopulationStr().c_str());
+        statusPopulation->setText(QString::asprintf("%d", env.GetPopulation()));
         statusExtinctions->setText(stats.GetExtinctionsStr().c_str());
     }
 }

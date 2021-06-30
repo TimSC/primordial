@@ -71,7 +71,7 @@ void Networking::sendPage(QTcpSocket *client, const char *data, uint32_t size)
     client->write(data, size);
 
     uint32_t expectSize=qFromBigEndian<uint32_t>(pageSize);
-    cout<< size << "," << pageSize << "," << expectSize << endl;
+    //cout<< "tx " << size << "," << pageSize << "," << expectSize << endl;
     assert(size == expectSize);
 }
 
@@ -96,7 +96,7 @@ void Networking::clientBytesAvailable()
 
         qint64 readBytes = client->read(rxBuffer, sizeof(rxBuffer));
 
-        std::cout << "rx" << readBytes << " " << (uint64_t)client << std::endl;
+        //std::cout << "rx0 " << readBytes << " " << (uint64_t)client << std::endl;
 
         QByteArray &assemblyBuffer = assembleBuffers[client];
         assemblyBuffer.append(rxBuffer, readBytes);
@@ -108,11 +108,19 @@ void Networking::clientBytesAvailable()
                 cout << "Error in page magic code" << endl;
 
             uint32_t expectSize=qFromBigEndian<uint32_t>(&assemblyBuffer.constData()[magicCodeLen]);
-            if(assemblyBuffer.size() >= magicCodeLen + sizeof(uint32_t) + expectSize)
+            //std::cout << "rx1 " << expectSize << " " << *(uint32_t *)&assemblyBuffer.constData()[magicCodeLen] << " " << assemblyBuffer.size() << std::endl;
+
+            int entirePageSize = magicCodeLen + sizeof(uint32_t) + expectSize;
+            if(assemblyBuffer.size() >= entirePageSize)
             {
                 pageComplete(client, &assemblyBuffer.constData()[magicCodeLen+sizeof(uint32_t)], expectSize);
-                QByteArray remains(&assemblyBuffer.constData()[magicCodeLen+sizeof(uint32_t) + expectSize]);
-                assemblyBuffer = remains;
+                QByteArray remains = assemblyBuffer.mid(entirePageSize);
+                if(remains.size()>0)
+                {
+                    int z=1+1;
+                }
+                //cout << "remains " << remains.size() << endl;
+                assembleBuffers[client] = remains;
             }
         }
     }
@@ -208,7 +216,7 @@ void SidesManager::netConnected(QTcpSocket *client)
             freeSide = i;
             break;
         }
-    std::cout << freeSide << std::endl;
+    //std::cout << freeSide << std::endl;
 
     if(freeSide >= 0)
     {
