@@ -66,7 +66,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QLineEdit *statusDay, *statusPopulation, *statusExtinctions;
-    class SidesManager sidesManager;
 
     class Environment env;
     std::string currentFilename;
@@ -76,5 +75,6 @@ private:
     int64_t lastGraphicsUpdate;
     int64_t lastStatsUpdate;
 
+    class SidesManager sidesManager;
 };
 #endif // MAINWINDOW_H

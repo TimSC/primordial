@@ -52,6 +52,20 @@ class Fifo
 
 //////////////////////////////////////////////////////////////////////
 //
+// SideListener
+//
+//
+class SideListener
+{
+public:
+    SideListener();
+    virtual ~SideListener();
+
+    virtual void BiotLeavingSide(int side, Biot *pBiot);
+};
+
+//////////////////////////////////////////////////////////////////////
+//
 // Side
 //
 //
@@ -86,13 +100,13 @@ class Side : public BRect
 
     bool Export(Biot* pBiot);
     virtual Biot* Import();
-/*
-   void SendBiots(Side& otherSide);
-    bool RecvBiot(CPostData* pData);*/
+
+    void ReceiveBiotFromNetwork(Biot *pBiot);
     Biot* GetBiot();
 
     bool IsConnected();
     void SetConnected(bool conn);
+    void SetListener(class SideListener *listenerIn);
 
     virtual void AdjustBiot(Biot& biot) = 0;
     virtual void RejectBiot(Biot& biot) = 0;
@@ -100,18 +114,21 @@ class Side : public BRect
 	virtual void SetSide(BRect* pEnvRect) = 0;
 
     protected:
+      int m_sideId;
       int m_lines;
       CLine m_line[4];
       BRect* m_pEnv;
       Fifo m_inComing;
       Fifo m_outGoing;
       bool m_isConnected;
+      class SideListener *m_listener;
 };
 
 
 class RightSide : public Side
 {
   public:
+    RightSide();
     void SetSide(BRect* pEnvRect);
     void SetSize(int width);
     void AdjustBiot(Biot& biot);
@@ -123,6 +140,7 @@ class RightSide : public Side
 class LeftSide : public Side
 {
   public:
+    LeftSide();
     void SetSide(BRect* pEnvRect);
     void SetSize(int width);
     void AdjustBiot(Biot& biot);
@@ -134,6 +152,7 @@ class LeftSide : public Side
 class TopSide : public Side
 {
   public:
+    TopSide();
     void SetSide(BRect* pEnvRect);
     void SetSize(int width);
     void AdjustBiot(Biot& biot);
@@ -145,6 +164,7 @@ class TopSide : public Side
 class BottomSide : public Side
 {
   public:
+    BottomSide();
     void SetSide(BRect* pEnvRect);
     void SetSize(int width);
     void AdjustBiot(Biot& biot);

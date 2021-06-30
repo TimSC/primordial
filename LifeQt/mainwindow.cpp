@@ -13,15 +13,16 @@
 #include "settingsui.h"
 #include "aboutui.h"
 #include "networkui.h"
-#include "rapidjson/writer.h"
+#include <rapidjson/writer.h>
 #include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/istreamwrapper.h>
 using namespace std;
 using namespace rapidjson;
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    : QMainWindow(parent),
+    ui(new Ui::MainWindow),
+    sidesManager(env)
 {
     ui->setupUi(this);
     this->setWindowIcon(QIcon(":/res/icon.ico"));

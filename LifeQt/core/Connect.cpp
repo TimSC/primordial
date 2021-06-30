@@ -73,8 +73,24 @@ void * Fifo::Get()
     return nullptr;
 }
 
+// //////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////
+SideListener::SideListener()
+{
+
+}
+
+SideListener::~SideListener()
+{
+
+}
+
+void SideListener::BiotLeavingSide(int side, Biot *pBiot)
+{
+
+}
+
+// //////////////////////////////////////////////////////////////////
 // Side
 //
 //
@@ -82,9 +98,11 @@ void * Fifo::Get()
 //
 Side::Side()
 {
+    m_sideId = -1;
 	m_lines = 0;
 	m_pEnv = NULL;
     m_isConnected = false;
+    m_listener = nullptr;
 }
 
 void Side::Clear(BRect* pEnvRect)
@@ -98,11 +116,16 @@ void Side::Clear(BRect* pEnvRect)
 	m_inComing.Empty();
 }
 
-
 bool Side::Export(Biot* pBiot)
 {
     //return false; //Disable for now
-    return m_outGoing.Put(pBiot);
+    //return m_outGoing.Put(pBiot);
+    if(m_listener)
+    {
+        m_listener->BiotLeavingSide(m_sideId, pBiot);
+        return true;
+    }
+    return false;
 }
 
 Biot*  Side::Import()
@@ -110,47 +133,11 @@ Biot*  Side::Import()
     //return nullptr;
     return (Biot*)m_inComing.Get();
 }
-/*
-//Biot* Side::PeekBiot()
-//{
-//	return (Biot*) m_outGoing.Peek();
-//}
 
-Biot* Side::GetBiot()
+void Side::ReceiveBiotFromNetwork(Biot *pBiot)
 {
-  return (Biot*) m_outGoing.Get();
+    m_inComing.Put(pBiot);
 }
-
-void Side::SendBiots(Side& otherSide)
-{
-  Biot* pBiot;
-  CPostData* pPostData;
-
-  pBiot = GetBiot();
-  while (pBiot)
-  {
-    pPostData = new CPostData;
-    if (pPostData)
-    {
-//!      pBiot->Save(*pPostData);
-      if (!otherSide.RecvBiot(pPostData))
-        delete pPostData;
-    }
-    delete pBiot;
-    pBiot = GetBiot();
-  }
-}
-
-
-bool Side::RecvBiot(CPostData* pData)
-{
-  return m_inComing.Put(pData);
-}
-*/
-//BYTE  Side::RecvSlots() 
-//{
-//	return (BYTE) m_inComing.FreeCount();
-//}
 
 bool Side::IsConnected()
 {
@@ -162,7 +149,17 @@ void Side::SetConnected(bool conn)
     m_isConnected = conn;
 }
 
+void Side::SetListener(class SideListener *listenerIn)
+{
+    m_listener = listenerIn;
+}
+
 // ************************************
+
+RightSide::RightSide() : Side()
+{
+    m_sideId = 1;
+}
 
 int RightSide::SideSize()
 {
@@ -183,6 +180,11 @@ void RightSide::AdjustBiot(Biot& biot)
 void RightSide::RejectBiot(Biot& biot)
 {
   biot.MoveBiot(m_left - biot.m_left - 1, m_top);
+}
+
+LeftSide::LeftSide() : Side()
+{
+    m_sideId = 0;
 }
 
 void LeftSide::SetSide(BRect* pEnvRect)
@@ -206,6 +208,11 @@ void LeftSide::RejectBiot(Biot& biot)
   biot.MoveBiot(m_right - biot.m_right  + 1, 0);
 }
 
+TopSide::TopSide() : Side()
+{
+    m_sideId = 2;
+}
+
 void TopSide::SetSide(BRect* pEnvRect)
 {
 	Clear(pEnvRect);
@@ -227,6 +234,19 @@ void TopSide::RejectBiot(Biot& biot)
   biot.MoveBiot(0, m_bottom - biot.m_bottom + 1);
 }
 
+
+////////////////////////////////////////////////////////////////////
+// BottomSide
+//
+//
+//
+//
+
+BottomSide::BottomSide() : Side()
+{
+    m_sideId = 3;
+}
+
 void BottomSide::AdjustBiot(Biot& biot)
 {
   biot.MoveBiot(m_left, m_top - biot.m_top - 1);
@@ -236,12 +256,7 @@ void BottomSide::RejectBiot(Biot& biot)
 {
   biot.MoveBiot(0, m_top - biot.m_top - 1);
 }
-////////////////////////////////////////////////////////////////////
-// BottomSide
-//
-//
-//
-//
+
 void BottomSide::SetSide(BRect* pEnvRect)
 {
   Clear(pEnvRect);

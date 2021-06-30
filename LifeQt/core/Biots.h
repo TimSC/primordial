@@ -281,9 +281,9 @@ class Biot: public BRectItem
 	// Bonus is related to your total size
 	void SetBonus() { m_dBonusRatio = ((double)Area()) / 40000.0; }
 
-private:
     Environment& env;
 
+private:
 
 public:
 	// Do not save these variables

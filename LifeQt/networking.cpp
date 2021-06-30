@@ -2,11 +2,19 @@
 #include <QIODevice>
 #include <QtEndian>
 #include <iostream>
+#include <sstream>
+#include <rapidjson/writer.h>
+#include <rapidjson/ostreamwrapper.h>
+#include <rapidjson/istreamwrapper.h>
+#include "core/Biots.h"
 using namespace std;
+using namespace rapidjson;
 
 Networking::Networking()
 {
     connect(this, &QTcpServer::newConnection, this, &Networking::acceptConnection);
+    magicCode = "primlife";
+    magicCodeLen = magicCode.size();
 }
 
 Networking::~Networking()
@@ -17,7 +25,6 @@ Networking::~Networking()
 QTcpSocket *Networking::connectToHost(const QString &hostName, quint16 port)
 {
     QTcpSocket *out = new QTcpSocket(this);
-    cout << (uint64_t)out << endl;
     connect(out, &QTcpSocket::connected, this, &Networking::connected);
     connect(out, &QTcpSocket::disconnected, this, &Networking::clientDisconnected);
     connect(out, &QTcpSocket::readyRead, this, &Networking::clientBytesAvailable);
@@ -42,8 +49,6 @@ void Networking::acceptConnection()
 
         client = nextPendingConnection();
     }
-
-
 }
 
 void Networking::connected()
@@ -60,10 +65,14 @@ void Networking::connected()
 
 void Networking::sendPage(QTcpSocket *client, const char *data, uint32_t size)
 {
-    uint32_t pageSize=0;
-    qToBigEndian<quint32>(size, &pageSize);
+    client->write(magicCode.c_str(), magicCodeLen);
+    uint32_t pageSize = qToBigEndian<uint32_t>(size);
     client->write((const char *)&pageSize, sizeof(uint32_t));
     client->write(data, size);
+
+    uint32_t expectSize=qFromBigEndian<uint32_t>(pageSize);
+    cout<< size << "," << pageSize << "," << expectSize << endl;
+    assert(size == expectSize);
 }
 
 void Networking::clientDisconnected()
@@ -92,13 +101,17 @@ void Networking::clientBytesAvailable()
         QByteArray &assemblyBuffer = assembleBuffers[client];
         assemblyBuffer.append(rxBuffer, readBytes);
 
-        if(assemblyBuffer.size() >= sizeof(uint32_t))
+        if(assemblyBuffer.size() >= sizeof(uint32_t)+magicCodeLen)
         {
-            uint32_t expectSize=qFromBigEndian<uint32_t>(assemblyBuffer.constData());
-            if(assemblyBuffer.size() >= sizeof(uint32_t) + expectSize)
+            QByteArray chkMagicCode = assemblyBuffer.left(magicCodeLen);
+            if(chkMagicCode != magicCode.c_str())
+                cout << "Error in page magic code" << endl;
+
+            uint32_t expectSize=qFromBigEndian<uint32_t>(&assemblyBuffer.constData()[magicCodeLen]);
+            if(assemblyBuffer.size() >= magicCodeLen + sizeof(uint32_t) + expectSize)
             {
-                pageComplete(client, &assemblyBuffer.constData()[sizeof(uint32_t)], expectSize);
-                QByteArray remains(&assemblyBuffer.constData()[sizeof(uint32_t) + expectSize]);
+                pageComplete(client, &assemblyBuffer.constData()[magicCodeLen+sizeof(uint32_t)], expectSize);
+                QByteArray remains(&assemblyBuffer.constData()[magicCodeLen+sizeof(uint32_t) + expectSize]);
                 assemblyBuffer = remains;
             }
         }
@@ -112,7 +125,28 @@ void Networking::pageComplete(QTcpSocket *client, const char *data, uint32_t siz
 
 // ***************
 
-SidesManager::SidesManager() : QObject()
+SidesManagerEventRx::SidesManagerEventRx(class SidesManager *managerIn):
+    SideListener(),
+    manager(managerIn)
+{
+
+
+}
+
+SidesManagerEventRx::~SidesManagerEventRx()
+{
+
+}
+
+void SidesManagerEventRx::BiotLeavingSide(int side, Biot *pBiot)
+{
+    manager->biotLeavingSide(side, pBiot);
+}
+
+// ***************
+
+SidesManager::SidesManager(class Environment &envIn) :
+    QObject(), env(envIn), eventRx(this)
 {
     for(int i=0;i<4; i++)
     {
@@ -126,6 +160,11 @@ SidesManager::SidesManager() : QObject()
 
     networking.listen(QHostAddress::Any);
     std::cout << "listening on port " << networking.serverPort() << std::endl;
+
+    envIn.side[0]->SetListener(&eventRx);
+    envIn.side[1]->SetListener(&eventRx);
+    envIn.side[2]->SetListener(&eventRx);
+    envIn.side[3]->SetListener(&eventRx);
 }
 
 SidesManager::~SidesManager()
@@ -177,6 +216,7 @@ void SidesManager::netConnected(QTcpSocket *client)
         status[freeSide] = "assigned";
         QByteArray data("assignside{}");
         networking.sendPage(client, data.constData(), data.length());
+        env.side[freeSide]->SetConnected(true);
 
         emit sideAssigned(freeSide);
     }
@@ -195,6 +235,7 @@ void SidesManager::netDisconnected(QTcpSocket *client)
         {
             status[i] = "disconnected";
             sockets[i] = nullptr;
+            env.side[i]->SetConnected(false);
             emit sideDisconnected(i);
         }
 }
@@ -202,7 +243,6 @@ void SidesManager::netDisconnected(QTcpSocket *client)
 void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_t size)
 {
     QByteArray d(data, size);
-    std::cout << "page" << d.constData() << std::endl;
 
     int side = -1;
     for(int i=0;i<4; i++)
@@ -219,11 +259,26 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
     if(rpcType == "assignside")
     {
         status[side] = "assigned";
+        env.side[side]->SetConnected(true);
         emit sideAssigned(side);
     }
     else if(rpcType == "nofreeside")
     {
         client->disconnectFromHost();
+    }
+    else if(rpcType == "transfbiot")
+    {
+        cout << "biot arriving " << side << endl;
+
+        Document doc;
+        stringstream ss(d.mid(10).constData());
+        IStreamWrapper isw(ss);
+
+        doc.ParseStream(isw);
+        Biot *pBiot = new Biot(env);
+        pBiot->SerializeJsonLoad(doc["biot"]);
+        pBiot->OnOpen();
+        env.side[side]->ReceiveBiotFromNetwork(pBiot);
     }
 }
 
@@ -241,4 +296,30 @@ void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &status
     enableConnect = true;
     if(statusOut == "connecting" or statusOut == "connected" or statusOut == "assigned")
         enableConnect = false;
+}
+
+void SidesManager::biotLeavingSide(int side, Biot *pBiot)
+{
+    cout << "biotLeavingSide " << side << endl;
+    //Serialize biot
+    Document d;
+    d.SetObject();
+    Value biotJson(kObjectType);
+    pBiot->SerializeJson(d, biotJson);
+    d.AddMember("biot", biotJson, d.GetAllocator());
+    stringstream ss;
+    OStreamWrapper osw(ss);
+    Writer<OStreamWrapper> writer(osw);
+    d.Accept(writer);
+
+    string serBiot = ss.str();
+
+    //Sent via socket
+    if(sockets[side] != nullptr)
+    {
+        QTcpSocket *sock = sockets[side];
+        QByteArray data("transfbiot");
+        data.append(serBiot.c_str(), serBiot.size());
+        networking.sendPage(sock, data.constData(), data.length());
+    }
 }

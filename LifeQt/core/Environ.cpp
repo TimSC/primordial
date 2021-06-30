@@ -807,7 +807,6 @@ void Environment::Skip()
 	}
 */
 
-
     // Handle arrival of biots from network
     for (int i = 0; i < 4; i++)
     {
