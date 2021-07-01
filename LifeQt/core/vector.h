@@ -8,6 +8,7 @@
 #ifndef _VECTOR_H
 #define _VECTOR_H
 #include "Etools.h"
+#include "json.h"
 #include "rapidjson/document.h"
 
 ////////////////////////////////////////////////////////////////////////////////////

@@ -9,6 +9,7 @@ rand.h: definitions for a random number generator
 #define RAND_H
 
 #include <stdint.h>
+#include "json.h"
 #include "rapidjson/document.h"
 
 typedef uint32_t  ub4;   /* unsigned 4-uint8_t quantities */

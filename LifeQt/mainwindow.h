@@ -6,6 +6,7 @@
 #include <QLineEdit>
 #include "core/Environ.h"
 #include "networking.h"
+#include "core/json.h"
 #include "rapidjson/document.h"
 
 QT_BEGIN_NAMESPACE

@@ -1711,7 +1711,8 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
     if (!v.HasMember("archiveVersion"))
         throw std::runtime_error("eror parsing json");
     const uint8_t archiveVersion = 11;
-    assert (v["archiveVersion"].GetInt() == archiveVersion);
+    if (v["archiveVersion"].GetInt() != archiveVersion)
+        throw std::runtime_error("eror parsing json");
 
     // Store or load other objects
     if (!v.HasMember("trait"))

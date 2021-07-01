@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <iostream>
 #include <fstream>
+#include "core/json.h"
 #include "rapidjson/writer.h"
 #include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/istreamwrapper.h>

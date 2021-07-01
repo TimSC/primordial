@@ -1107,7 +1107,8 @@ void Environment::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
     int32_t version = v["archiveVersion"].GetInt();
     // Check version
-    assert (version == archiveVersion);
+    if (version != archiveVersion)
+        throw std::runtime_error("eror parsing json");
 
     if (!v.HasMember("m_generation"))
         throw std::runtime_error("eror parsing json");

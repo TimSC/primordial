@@ -15,6 +15,7 @@
 #include <QPoint>
 #include <QDataStream>
 #include <QList>
+#include "json.h"
 #include "rapidjson/document.h"
 const double PI      = 3.1415926535898;
 

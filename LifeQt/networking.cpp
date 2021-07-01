@@ -3,6 +3,7 @@
 #include <QtEndian>
 #include <iostream>
 #include <sstream>
+#include "core/json.h"
 #include <rapidjson/writer.h>
 #include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/istreamwrapper.h>

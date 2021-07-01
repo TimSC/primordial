@@ -10,6 +10,7 @@
 #include "Genotype.h"
 #include "Brain.h"
 #include "Environ.h"
+#include "json.h"
 #include "rapidjson/document.h"
 
 // Sensor Definitions

@@ -47,6 +47,7 @@ HEADERS += \
     core/Rand.h \
     core/Settings.h \
     core/SoundRegistry.h \
+    core/json.h \
     core/vector.h \
     environmentarea.h \
     mainwindow.h \

@@ -13,6 +13,7 @@
 #include "settingsui.h"
 #include "aboutui.h"
 #include "networkui.h"
+#include "core/json.h"
 #include <rapidjson/writer.h>
 #include <rapidjson/ostreamwrapper.h>
 #include <rapidjson/istreamwrapper.h>
