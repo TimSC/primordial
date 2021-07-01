@@ -143,6 +143,8 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
 
         d.ParseStream(isw);
         pBiot = new Biot(*env);
+        if (!d.HasMember("biot"))
+            throw runtime_error("eror parsing json");
         pBiot->SerializeJsonLoad(d["biot"]);
         pBiot->Place(x, y);
         pBiot->OnOpen();

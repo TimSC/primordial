@@ -1706,51 +1706,109 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 void Biot::SerializeJsonLoad(const rapidjson::Value& v)
 {
 
+    if (!v.HasMember("archiveVersion"))
+        throw std::runtime_error("eror parsing json");
     const uint8_t archiveVersion = 11;
     assert (v["archiveVersion"].GetInt() == archiveVersion);
 
     // Store or load other objects
+    if (!v.HasMember("trait"))
+        throw std::runtime_error("eror parsing json");
     trait.SerializeJsonLoad(v["trait"]);
 
+    if (!v.HasMember("m_commandArray"))
+        throw std::runtime_error("eror parsing json");
     m_commandArray.SerializeJsonLoad(v["m_commandArray"]);
 
+    if (!v.HasMember("trait2"))
+        throw std::runtime_error("eror parsing json");
     trait2.SerializeJsonLoad(v["trait2"]);
 
+    if (!v.HasMember("m_commandArray2"))
+        throw std::runtime_error("eror parsing json");
     m_commandArray2.SerializeJsonLoad(v["m_commandArray2"]);
 
+    if (!v.HasMember("vector"))
+        throw std::runtime_error("eror parsing json");
     vector.SerializeJsonLoad(v["vector"]);
 
     // Now handle biot level variables
+    if (!v.HasMember("state"))
+        throw std::runtime_error("eror parsing json");
     const Value &stateJson = v["state"];
     for(int i=0; i<stateJson.Size() and i < MAX_GENES; i++)
         state[i] = stateJson[i].GetInt();
 
+    if (!v.HasMember("m_retractDrawn"))
+        throw std::runtime_error("eror parsing json");
     const Value &retractDrawn = v["m_retractDrawn"];
+    if (!v.HasMember("m_retractRadius"))
+        throw std::runtime_error("eror parsing json");
     const Value &retractRadius = v["m_retractRadius"];
+    if (!v.HasMember("m_retractSegment"))
+        throw std::runtime_error("eror parsing json");
     const Value &retractSegment = v["m_retractSegment"];
 
+    if(!retractDrawn.IsArray())
+        throw std::runtime_error("eror parsing json");
     for(int i=0; i<retractDrawn.Size() and i < MAX_LIMBS; i++)
         m_retractDrawn[i] = retractDrawn[i].GetInt();
+    if(!retractRadius.IsArray())
+        throw std::runtime_error("eror parsing json");
     for(int i=0; i<retractRadius.Size() and i < MAX_LIMBS; i++)
         m_retractRadius[i] = retractRadius[i].GetInt();
+    if(!retractSegment.IsArray())
+        throw std::runtime_error("eror parsing json");
     for(int i=0; i<retractSegment.Size() and i < MAX_LIMBS; i++)
         m_retractSegment[i] = retractSegment[i].GetInt();
 
+    if (!v.HasMember("max_genes"))
+        throw std::runtime_error("eror parsing json");
     max_genes = v["max_genes"].GetInt();
+    if (!v.HasMember("genes"))
+        throw std::runtime_error("eror parsing json");
     genes = v["genes"].GetInt();
+    if (!v.HasMember("origin_x"))
+        throw std::runtime_error("eror parsing json");
     origin.setX(v["origin_x"].GetInt());
+    if (!v.HasMember("origin_y"))
+        throw std::runtime_error("eror parsing json");
     origin.setY(v["origin_y"].GetInt());
+    if (!v.HasMember("energy"))
+        throw std::runtime_error("eror parsing json");
     energy = v["energy"].GetInt();
+    if (!v.HasMember("bDie"))
+        throw std::runtime_error("eror parsing json");
     bDie = v["bDie"].GetBool();
+    if (!v.HasMember("m_Id"))
+        throw std::runtime_error("eror parsing json");
     m_Id = v["m_Id"].GetInt();
+    if (!v.HasMember("m_motherId"))
+        throw std::runtime_error("eror parsing json");
     m_motherId = v["m_motherId"].GetInt();
+    if (!v.HasMember("genes2"))
+        throw std::runtime_error("eror parsing json");
     genes2 = v["genes2"].GetInt();
+    if (!v.HasMember("stepEnergy"))
+        throw std::runtime_error("eror parsing json");
     stepEnergy = v["stepEnergy"].GetInt();
+    if (!v.HasMember("ratio"))
+        throw std::runtime_error("eror parsing json");
     ratio = v["ratio"].GetInt();
+    if (!v.HasMember("m_age"))
+        throw std::runtime_error("eror parsing json");
     m_age = v["m_age"].GetInt();
+    if (!v.HasMember("m_sName"))
+        throw std::runtime_error("eror parsing json");
     m_sName = v["m_sName"].GetString();
+    if (!v.HasMember("m_sWorldName"))
+        throw std::runtime_error("eror parsing json");
     m_sWorldName = v["m_sWorldName"].GetString();
+    if (!v.HasMember("m_sFatherName"))
+        throw std::runtime_error("eror parsing json");
     m_sFatherName = v["m_sFatherName"].GetString();
+    if (!v.HasMember("m_sFatherWorldName"))
+        throw std::runtime_error("eror parsing json");
     m_sFatherWorldName = v["m_sFatherWorldName"].GetString();
 
     if (max_genes > MAX_GENES)

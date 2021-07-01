@@ -130,6 +130,8 @@ void MainWindow::on_actionOpen_triggered()
     IStreamWrapper isw(ifs);
 
     d.ParseStream(isw);
+    if (!d.HasMember("environment"))
+        throw runtime_error("eror parsing json");
     this->env.SerializeJsonLoad(d["environment"]);
     this->env.OnOpen();
 

@@ -10,6 +10,8 @@
 using namespace std;
 using namespace rapidjson;
 
+const uint32_t MAX_PAGE_SIZE = 1024*1024;
+
 Networking::Networking()
 {
     connect(this, &QTcpServer::newConnection, this, &Networking::acceptConnection);
@@ -65,6 +67,9 @@ void Networking::connected()
 
 void Networking::sendPage(QTcpSocket *client, const char *data, uint32_t size)
 {
+    if(size > MAX_PAGE_SIZE)
+        throw invalid_argument("Page too large");
+
     client->write(magicCode.c_str(), magicCodeLen);
     uint32_t pageSize = qToBigEndian<uint32_t>(size);
     client->write((const char *)&pageSize, sizeof(uint32_t));
@@ -99,6 +104,7 @@ void Networking::clientBytesAvailable()
         //std::cout << "rx0 " << readBytes << " " << (uint64_t)client << std::endl;
 
         QByteArray &assemblyBuffer = assembleBuffers[client];
+
         assemblyBuffer.append(rxBuffer, readBytes);
 
         if(assemblyBuffer.size() >= sizeof(uint32_t)+magicCodeLen)
@@ -108,6 +114,11 @@ void Networking::clientBytesAvailable()
                 cout << "Error in page magic code" << endl;
 
             uint32_t expectSize=qFromBigEndian<uint32_t>(&assemblyBuffer.constData()[magicCodeLen]);
+            if(expectSize > MAX_PAGE_SIZE)
+            {
+                //Prevent a client using all our memory
+                client->disconnectFromHost();
+            }
             //std::cout << "rx1 " << expectSize << " " << *(uint32_t *)&assemblyBuffer.constData()[magicCodeLen] << " " << assemblyBuffer.size() << std::endl;
 
             int entirePageSize = magicCodeLen + sizeof(uint32_t) + expectSize;
@@ -123,7 +134,21 @@ void Networking::clientBytesAvailable()
 
 void Networking::pageComplete(QTcpSocket *client, const char *data, uint32_t size)
 {
-    emit netReceivedPage(client, data, size);
+    if(0)
+    {
+        //Fuzz the input for testing
+        QByteArray tmp(data, size);
+        for(int i=0; i<rand() % 3; i++)
+        {
+            char *data2 = &tmp.data()[rand() % size];
+            *data2 = rand() % 256;
+        }
+        emit netReceivedPage(client, tmp.data(), size);
+    }
+    else
+    {
+        emit netReceivedPage(client, data, size);
+    }
 }
 
 // ***************
@@ -285,6 +310,8 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
 
         doc.ParseStream(isw);
         Biot *pBiot = new Biot(env);
+        if (!doc.HasMember("biot"))
+            throw runtime_error("eror parsing json");
         pBiot->SerializeJsonLoad(doc["biot"]);
         pBiot->OnOpen();
         env.side[side]->ReceiveBiotFromNetwork(pBiot);
