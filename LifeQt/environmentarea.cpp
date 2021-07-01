@@ -141,11 +141,23 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
         ifstream ifs(fileName.toStdString().c_str());
         IStreamWrapper isw(ifs);
 
-        d.ParseStream(isw);
-        pBiot = new Biot(*env);
-        if (!d.HasMember("biot"))
-            throw runtime_error("eror parsing json");
-        pBiot->SerializeJsonLoad(d["biot"]);
+        try {
+
+            ParseResult ok = d.ParseStream(isw);
+            if (!ok)
+                throw runtime_error("eror parsing json");
+            pBiot = new Biot(*env);
+            if (!d.IsObject() or !d.HasMember("biot"))
+                throw runtime_error("eror parsing json");
+            pBiot->SerializeJsonLoad(d["biot"]);
+
+        }
+        catch (exception &err) {
+
+            std::cout << err.what() << std::endl;
+            return;
+        }
+
         pBiot->Place(x, y);
         pBiot->OnOpen();
         env->AddBiot(pBiot);

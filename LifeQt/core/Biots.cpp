@@ -1705,6 +1705,8 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void Biot::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
 
     if (!v.HasMember("archiveVersion"))
         throw std::runtime_error("eror parsing json");

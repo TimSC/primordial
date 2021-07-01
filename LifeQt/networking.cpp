@@ -308,11 +308,23 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
         stringstream ss(d.mid(10).constData());
         IStreamWrapper isw(ss);
 
-        doc.ParseStream(isw);
-        Biot *pBiot = new Biot(env);
-        if (!doc.HasMember("biot"))
-            throw runtime_error("eror parsing json");
-        pBiot->SerializeJsonLoad(doc["biot"]);
+        Biot *pBiot = nullptr;
+        try {
+
+            ParseResult ok = doc.ParseStream(isw);
+            if (!ok)
+                throw runtime_error("eror parsing json");
+            pBiot = new Biot(env);
+            if (!doc.IsObject() or !doc.HasMember("biot"))
+                throw runtime_error("eror parsing json");
+            pBiot->SerializeJsonLoad(doc["biot"]);
+
+        } catch (exception &err) {
+
+            std::cout << err.what() << std::endl;
+            return;
+        }
+
         pBiot->OnOpen();
         env.side[side]->ReceiveBiotFromNetwork(pBiot);
     }

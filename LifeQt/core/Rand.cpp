@@ -196,17 +196,36 @@ void  Randomizer::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void Randomizer::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("randrsl"))
+        throw std::runtime_error("eror parsing json");
     const Value &randrslArr = v["randrsl"];
+    if(!randrslArr.IsArray())
+        throw std::runtime_error("eror parsing json");
     for (int i = 0; i < randrslArr.Size() and i<RANDSIZ; i++)
         randrsl[i] = randrslArr[i].GetUint();
 
+    if (!v.HasMember("mm"))
+        throw std::runtime_error("eror parsing json");
     const Value &mmArr = v["mm"];
+    if(!mmArr.IsArray())
+        throw std::runtime_error("eror parsing json");
     for (int i = 0; i < mmArr.Size() and i<RANDSIZ; i++)
         mm[i] = mmArr[i].GetUint();
 
+    if (!v.HasMember("randcnt"))
+        throw std::runtime_error("eror parsing json");
     randcnt = v["randcnt"].GetUint();
+    if (!v.HasMember("aa"))
+        throw std::runtime_error("eror parsing json");
     aa = v["aa"].GetUint();
+    if (!v.HasMember("bb"))
+        throw std::runtime_error("eror parsing json");
     bb = v["bb"].GetUint();
+    if (!v.HasMember("cc"))
+        throw std::runtime_error("eror parsing json");
     cc = v["cc"].GetUint();
 
 }

@@ -267,9 +267,20 @@ void BRect::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void BRect::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("m_left"))
+        throw std::runtime_error("eror parsing json");
     m_left = v["m_left"].GetInt();
+    if (!v.HasMember("m_right"))
+        throw std::runtime_error("eror parsing json");
     m_right = v["m_right"].GetInt();
+    if (!v.HasMember("m_top"))
+        throw std::runtime_error("eror parsing json");
     m_top = v["m_top"].GetInt();
+    if (!v.HasMember("m_bottom"))
+        throw std::runtime_error("eror parsing json");
     m_bottom = v["m_bottom"].GetInt();
 }
 

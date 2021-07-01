@@ -52,7 +52,14 @@ void ProductTerm::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void ProductTerm::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("m_dwMask"))
+        throw std::runtime_error("eror parsing json");
     m_dwMask = v["m_dwMask"].GetUint();
+    if (!v.HasMember("m_dwInvert"))
+        throw std::runtime_error("eror parsing json");
     m_dwInvert = v["m_dwInvert"].GetUint();
 }
 
@@ -114,11 +121,22 @@ void ProductArray::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void ProductArray::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("m_productTerm"))
+        throw std::runtime_error("eror parsing json");
     const Value &pt = v["m_productTerm"];
+    if(!pt.IsArray())
+        throw std::runtime_error("eror parsing json");
     for (int i = 0; i < pt.Size() and i < MAX_PRODUCT_TERMS; i++)
         m_productTerm[i].SerializeJsonLoad(pt[i]);
 
+    if (!v.HasMember("m_productSum"))
+        throw std::runtime_error("eror parsing json");
     const Value &ps = v["m_productSum"];
+    if(!ps.IsArray())
+        throw std::runtime_error("eror parsing json");
     for (int i = 0; i < ps.Size() and i < MAX_PRODUCT_SUMS; i++)
         m_productSum[i].SerializeJsonLoad(ps[i]);
 }
@@ -197,10 +215,19 @@ void ProductSum::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void ProductSum::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("m_reference"))
+        throw std::runtime_error("eror parsing json");
     const Value &ref = v["m_reference"];
+    if(!ref.IsArray())
+        throw std::runtime_error("eror parsing json");
     for (int i = 0; i < ref.Size() and i < MAX_PRODUCT_SUM_TERMS; i++)
          m_reference[i] = ref[i].GetUint();
 
+    if (!v.HasMember("m_bTrue"))
+        throw std::runtime_error("eror parsing json");
     m_bTrue = v["m_bTrue"].GetBool();
 }
 
@@ -261,10 +288,23 @@ void CommandArgument::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void CommandArgument::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("m_command"))
+        throw std::runtime_error("eror parsing json");
     m_command = v["m_command"].GetInt();
+    if (!v.HasMember("m_limb"))
+        throw std::runtime_error("eror parsing json");
     m_limb = v["m_limb"].GetUint();
+    if (!v.HasMember("m_segment"))
+        throw std::runtime_error("eror parsing json");
     m_segment = v["m_segment"].GetUint();
+    if (!v.HasMember("m_rate"))
+        throw std::runtime_error("eror parsing json");
     m_rate = v["m_rate"].GetUint();
+    if (!v.HasMember("m_degrees"))
+        throw std::runtime_error("eror parsing json");
     m_degrees = v["m_degrees"].GetUint();
 }
 
@@ -368,13 +408,26 @@ void CommandArray::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void CommandArray::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("m_command"))
+        throw std::runtime_error("eror parsing json");
     const Value &commArrJson = v["m_command"];
+    if(!commArrJson.IsArray())
+        throw std::runtime_error("eror parsing json");
     for (int i = 0; i < commArrJson.Size() and i < MAX_COMMANDS; i++)
         m_command[i].SerializeJsonLoad(commArrJson[i]);
 
+    if (!v.HasMember("m_productArray"))
+        throw std::runtime_error("eror parsing json");
     m_productArray.SerializeJsonLoad(v["m_productArray"]);
 
+    if (!v.HasMember("m_commandLimbType"))
+        throw std::runtime_error("eror parsing json");
     const Value &commLimbArrJson = v["m_commandLimbType"];
+    if(!commLimbArrJson.IsArray())
+        throw std::runtime_error("eror parsing json");
     for (int i = 0; i < commLimbArrJson.Size() and i < MAX_LIMB_TYPES; i++)
         m_commandLimbType[i].SerializeJsonLoad(commLimbArrJson[i]);
 
@@ -459,11 +512,22 @@ void CommandLimbType::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void CommandLimbType::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("m_comref"))
+        throw std::runtime_error("eror parsing json");
     const Value &cr = v["m_comref"];
+    if(!cr.IsArray())
+        throw std::runtime_error("eror parsing json");
     for(int i=0; i<cr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
         m_comref[i] = cr[i].GetUint();
 
+    if (!v.HasMember("m_sumref"))
+        throw std::runtime_error("eror parsing json");
     const Value &sr = v["m_sumref"];
+    if(!sr.IsArray())
+        throw std::runtime_error("eror parsing json");
     for(int i=0; i<sr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
         m_sumref[i] = sr[i].GetUint();
 

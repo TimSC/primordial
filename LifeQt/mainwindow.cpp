@@ -129,10 +129,21 @@ void MainWindow::on_actionOpen_triggered()
     ifstream ifs(fileName.toStdString().c_str());
     IStreamWrapper isw(ifs);
 
-    d.ParseStream(isw);
-    if (!d.HasMember("environment"))
-        throw runtime_error("eror parsing json");
-    this->env.SerializeJsonLoad(d["environment"]);
+    try {
+
+        ParseResult ok = d.ParseStream(isw);
+        if (!ok)
+            throw runtime_error("eror parsing json");
+        if (!d.IsObject() or !d.HasMember("environment"))
+            throw runtime_error("eror parsing json");
+        this->env.SerializeJsonLoad(d["environment"]);
+
+    } catch (exception &err) {
+
+        std::cout << err.what() << std::endl;
+        return;
+    }
+
     this->env.OnOpen();
 
     this->currentFilename = fileName.toStdString();

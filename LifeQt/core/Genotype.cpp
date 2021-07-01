@@ -30,11 +30,26 @@ void GeneSegment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void GeneSegment::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("m_angle"))
+        throw std::runtime_error("eror parsing json");
     m_angle = v["m_angle"].GetInt();
+    if (!v.HasMember("m_radius"))
+        throw std::runtime_error("eror parsing json");
     m_radius = v["m_radius"].GetUint();
+    if (!v.HasMember("m_visible"))
+        throw std::runtime_error("eror parsing json");
     m_visible = v["m_visible"].GetUint();
+    if (!v.HasMember("m_startSegment"))
+        throw std::runtime_error("eror parsing json");
     m_startSegment = v["m_startSegment"].GetUint();
+    if (!v.HasMember("m_color0"))
+        throw std::runtime_error("eror parsing json");
     m_color[0] = v["m_color0"].GetUint();
+    if (!v.HasMember("m_color1"))
+        throw std::runtime_error("eror parsing json");
     m_color[1] = v["m_color1"].GetUint();
 
     // A little crash protection
@@ -231,7 +246,14 @@ void GeneLimb::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void GeneLimb::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("m_segment"))
+        throw std::runtime_error("eror parsing json");
     const Value &seg = v["m_segment"];
+    if(!seg.IsArray())
+        throw std::runtime_error("eror parsing json");
     for (int i = 0; i < seg.Size() and i<MAX_SEGMENTS; i++)
         m_segment[i].SerializeJsonLoad(seg[i]);
 
@@ -326,28 +348,67 @@ void GeneTrait::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
 void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
 {
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    if (!v.HasMember("m_geneLine"))
+        throw std::runtime_error("eror parsing json");
     const Value &gl = v["m_geneLine"];
+    if(!gl.IsArray())
+        throw std::runtime_error("eror parsing json");
     for (int i = 0; i < gl.Size() and i<MAX_LIMB_TYPES; i++)
             m_geneLine[i].SerializeJsonLoad(gl[i]);
 
+    if (!v.HasMember("m_disperse"))
+        throw std::runtime_error("eror parsing json");
     m_disperse = v["m_disperse"].GetUint();
+    if (!v.HasMember("m_children"))
+        throw std::runtime_error("eror parsing json");
     m_children = v["m_children"].GetUint();
+    if (!v.HasMember("m_attackChildren"))
+        throw std::runtime_error("eror parsing json");
     m_attackChildren = v["m_attackChildren"].GetUint();
+    if (!v.HasMember("m_attackSiblings"))
+        throw std::runtime_error("eror parsing json");
     m_attackSiblings = v["m_attackSiblings"].GetUint();
+    if (!v.HasMember("m_species"))
+        throw std::runtime_error("eror parsing json");
     m_species = v["m_species"].GetUint();
+    if (!v.HasMember("m_adultRatio0"))
+        throw std::runtime_error("eror parsing json");
     m_adultRatio[0] = v["m_adultRatio0"].GetUint();
+    if (!v.HasMember("m_adultRatio1"))
+        throw std::runtime_error("eror parsing json");
     m_adultRatio[1] = v["m_adultRatio1"].GetUint();
+    if (!v.HasMember("m_lineCount"))
+        throw std::runtime_error("eror parsing json");
     m_lineCount = v["m_lineCount"].GetUint();
+    if (!v.HasMember("m_offset"))
+        throw std::runtime_error("eror parsing json");
     m_offset = v["m_offset"].GetInt();
 
+    if (!v.HasMember("m_lineRef"))
+        throw std::runtime_error("eror parsing json");
     const Value &lr = v["m_lineRef"];
+    if(!lr.IsArray())
+        throw std::runtime_error("eror parsing json");
     for(int i=0; i<lr.Size() and i<MAX_LIMBS; i++)
         m_lineRef[i] = lr[i].GetUint();
 
+    if (!v.HasMember("m_mirrored"))
+        throw std::runtime_error("eror parsing json");
     m_mirrored = v["m_mirrored"].GetUint();
+    if (!v.HasMember("m_sex"))
+        throw std::runtime_error("eror parsing json");
     m_sex = v["m_sex"].GetUint();
+    if (!v.HasMember("m_asexual"))
+        throw std::runtime_error("eror parsing json");
     m_asexual = v["m_asexual"].GetUint();
+    if (!v.HasMember("m_chanceMale"))
+        throw std::runtime_error("eror parsing json");
     m_chanceMale = v["m_chanceMale"].GetUint();
+    if (!v.HasMember("m_maxAge"))
+        throw std::runtime_error("eror parsing json");
     m_maxAge = v["m_maxAge"].GetInt();
 
     if (m_children > 8 || m_children == 0)
