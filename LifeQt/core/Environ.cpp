@@ -187,11 +187,7 @@ void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value
 
     Biot* pBiot = nullptr;
 
-    if (!v.HasMember("biots"))
-        throw std::runtime_error("eror parsing json");
     const Value &biotsJson = v["biots"];
-    if(!biotsJson.IsArray())
-        throw std::runtime_error("eror parsing json");
     m_nBiot = -1;
     m_bLooped = false;
 
@@ -419,78 +415,36 @@ void CEnvStats::SerializeJsonLoad(const rapidjson::Value& v)
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");
 
-    if (!v.HasMember("archVersion"))
-        throw std::runtime_error("eror parsing json");
     long version = v["archVersion"].GetInt();
 
-    if (!v.HasMember("m_births"))
-        throw std::runtime_error("eror parsing json");
     m_births = v["m_births"].GetInt64();
-    if (!v.HasMember("m_deaths"))
-        throw std::runtime_error("eror parsing json");
     m_deaths = v["m_deaths"].GetInt64();
-    if (!v.HasMember("m_arrivals"))
-        throw std::runtime_error("eror parsing json");
     m_arrivals = v["m_arrivals"].GetInt64();
-    if (!v.HasMember("m_departures"))
-        throw std::runtime_error("eror parsing json");
     m_departures = v["m_departures"].GetInt64();
-    if (!v.HasMember("m_peakPopulation"))
-        throw std::runtime_error("eror parsing json");
     m_peakPopulation = v["m_peakPopulation"].GetInt64();
-    if (!v.HasMember("m_population"))
-        throw std::runtime_error("eror parsing json");
     m_population = v["m_population"].GetInt64();
-    if (!v.HasMember("m_extinctions"))
-        throw std::runtime_error("eror parsing json");
     m_extinctions = v["m_extinctions"].GetInt64();
-    if (!v.HasMember("m_collisionCount"))
-        throw std::runtime_error("eror parsing json");
     m_collisionCount = v["m_collisionCount"].GetInt64();
 
     //m_freeEnvArea = v["m_freeEnvArea"].GetInt64();
     //m_totalEnvArea = v["m_totalEnvArea"].GetInt64();
 
-    if (!v.HasMember("m_ageIntervals"))
-        throw std::runtime_error("eror parsing json");
     m_ageIntervals = v["m_ageIntervals"].GetUint64();
-    if (!v.HasMember("m_ageRange"))
-        throw std::runtime_error("eror parsing json");
     m_ageRange = v["m_ageRange"].GetUint64();
 
-    if (!v.HasMember("m_perWhite"))
-        throw std::runtime_error("eror parsing json");
     m_perWhite = v["m_perWhite"].GetFloat();
-    if (!v.HasMember("m_perGreen"))
-        throw std::runtime_error("eror parsing json");
     m_perGreen = v["m_perGreen"].GetFloat();
-    if (!v.HasMember("m_perRed"))
-        throw std::runtime_error("eror parsing json");
     m_perRed = v["m_perRed"].GetFloat();
-    if (!v.HasMember("m_perBlue"))
-        throw std::runtime_error("eror parsing json");
     m_perBlue = v["m_perBlue"].GetFloat();
-    if (!v.HasMember("m_perLtBlue"))
-        throw std::runtime_error("eror parsing json");
     m_perLtBlue = v["m_perLtBlue"].GetFloat();
 
-    if (!v.HasMember("m_days"))
-        throw std::runtime_error("eror parsing json");
     m_days = v["m_days"].GetDouble();
 
-    if (!v.HasMember("m_ages"))
-        throw std::runtime_error("eror parsing json");
     const Value &ageArray = v["m_ages"];
-    if(!ageArray.IsArray())
-        throw std::runtime_error("eror parsing json");
     for(int i=0; i<INTERVALS; i++)
         m_ages[i] = ageArray[i].GetInt64();
 
-    if (!v.HasMember("m_energy"))
-        throw std::runtime_error("eror parsing json");
     const Value &energyArray = v["m_energy"];
-    if(!energyArray.IsArray())
-        throw std::runtime_error("eror parsing json");
     for(int i=0; i<ENERGY_LEVELS; i++)
         m_energy[i] = energyArray[i].GetInt64();
 
@@ -527,11 +481,7 @@ void CEnvStatsList::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
 
     clear();
-    if (!v.HasMember("stats"))
-        throw std::runtime_error("eror parsing json");
     const Value &arr = v["stats"];
-    if(!arr.IsArray())
-        throw std::runtime_error("eror parsing json");
 
     for(int i=0; i!=arr.Size(); i++)
     {
@@ -1103,100 +1053,60 @@ void Environment::SerializeJsonLoad(const rapidjson::Value& v)
     DeleteContents();
     const uint8_t archiveVersion = 13;
 
-    if (!v.HasMember("archiveVersion"))
-        throw std::runtime_error("eror parsing json");
     int32_t version = v["archiveVersion"].GetInt();
     // Check version
     if (version != archiveVersion)
         throw std::runtime_error("eror parsing json");
 
-    if (!v.HasMember("m_generation"))
-        throw std::runtime_error("eror parsing json");
     options.m_generation = v["m_generation"].GetUint();
 
-    if (!v.HasMember("m_uniqueID"))
-        throw std::runtime_error("eror parsing json");
     m_uniqueID = v["m_uniqueID"].GetUint();
 
-    if (!v.HasMember("bSoundOn"))
-        throw std::runtime_error("eror parsing json");
     options.bSoundOn = v["bSoundOn"].GetBool();
     if (options.bSoundOn != false)
         options.bSoundOn = true;
 
-    if (!v.HasMember("bMouse"))
-        throw std::runtime_error("eror parsing json");
     options.bMouse = v["bMouse"].GetBool();
 
     //if (AfxIsNT() && AfxGetPLife().GetView() == CPrimCmdLine::SHOW_SAVER_WINDOW)
     //    options.bMouse = false;
 
-    if (!v.HasMember("nSexual"))
-        throw std::runtime_error("eror parsing json");
     options.nSexual = v["nSexual"].GetInt();
     if (options.nSexual < 1 ||
         options.nSexual > 3)
         options.nSexual = 3;
 
-    if (!v.HasMember("bSiblingsAttack"))
-        throw std::runtime_error("eror parsing json");
     options.bSiblingsAttack = v["bSiblingsAttack"].GetBool();
     if (options.bSiblingsAttack != false)
         options.bSiblingsAttack = true;
 
-    if (!v.HasMember("bParentAttack"))
-        throw std::runtime_error("eror parsing json");
     options.bParentAttack = v["bParentAttack"].GetBool();
     if (options.bParentAttack != false)
         options.bParentAttack = true;
 
-    if (!v.HasMember("chance"))
-        throw std::runtime_error("eror parsing json");
     options.chance = v["chance"].GetInt();
     if (options.chance < 0)
         options.chance = 41;
 
-    if (!v.HasMember("regenCost"))
-        throw std::runtime_error("eror parsing json");
     options.regenCost = v["regenCost"].GetInt64();
-    if (!v.HasMember("regenTime"))
-        throw std::runtime_error("eror parsing json");
     options.regenTime = v["regenTime"].GetUint();
-    if (!v.HasMember("m_leafEnergy"))
-        throw std::runtime_error("eror parsing json");
     options.m_leafEnergy = v["m_leafEnergy"].GetInt();
-    if (!v.HasMember("friction"))
-        throw std::runtime_error("eror parsing json");
     options.friction = v["friction"].GetFloat();
 
     // The starting parameters
-    if (!v.HasMember("m_orginalSeed"))
-        throw std::runtime_error("eror parsing json");
     m_orginalSeed = v["m_orginalSeed"].GetInt();
-    if (!v.HasMember("m_initialPopulation"))
-        throw std::runtime_error("eror parsing json");
     options.m_initialPopulation = v["m_initialPopulation"].GetInt();
 
-    if (!v.HasMember("brect"))
-        throw std::runtime_error("eror parsing json");
     BRect::SerializeJsonLoad(v["brect"]);
 
     // Random state
-    if (!v.HasMember("randomizer"))
-        throw std::runtime_error("eror parsing json");
     Randomizer::SerializeJsonLoad(v["randomizer"]);
 
     // Stats
-    if (!v.HasMember("m_stats"))
-        throw std::runtime_error("eror parsing json");
     m_stats.SerializeJsonLoad(v["m_stats"]);
-    if (!v.HasMember("m_statsList"))
-        throw std::runtime_error("eror parsing json");
     m_statsList.SerializeJsonLoad(v["m_statsList"]);
 
 //		sock.Serialize(ar);
-    if (!v.HasMember("biots"))
-        throw std::runtime_error("eror parsing json");
     m_biotList.SerializeJsonLoad(*this, v["biots"]);
 
 }
