@@ -392,7 +392,6 @@ void CommandArray::SerializeJsonLoad(const rapidjson::Value& v)
     const Value &commLimbArrJson = v["m_commandLimbType"];
     for (int i = 0; i < commLimbArrJson.Size() and i < MAX_LIMB_TYPES; i++)
         m_commandLimbType[i].SerializeJsonLoad(commLimbArrJson[i]);
-
 }
 
 void CommandArray::Crossover(CommandArray& commandArray)
@@ -485,6 +484,19 @@ void CommandLimbType::SerializeJsonLoad(const rapidjson::Value& v)
     for(int i=0; i<sr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
         m_sumref[i] = sr[i].GetUint();
 
+    //Ensure data is valid
+    Randomizer rand;
+    for(int i=0; i < MAX_COMMANDS_PER_LIMB; i++)
+    {
+        if(m_comref[i] < 0) m_comref[i] = 0;
+        if(m_comref[i] >= CommandArray::MAX_COMMANDS) m_comref[i] = rand.Byte(CommandArray::MAX_COMMANDS);
+    }
+
+    for(int i=0; i < MAX_COMMANDS_PER_LIMB; i++)
+    {
+        if(m_sumref[i] < 0) m_comref[i] = 0;
+        if(m_sumref[i] >= ProductArray::MAX_PRODUCT_SUMS) m_comref[i] = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
+    }
 }
 
 void CommandLimbType::Crossover(CommandLimbType& commandLimbType)
