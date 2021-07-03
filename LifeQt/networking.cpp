@@ -320,9 +320,9 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
     if(side == -1) return;
 
     QString rpcType = d.left(10);
-    if(rpcType == "transfbiot")
+    if(rpcType == "transfbiot" or rpcType == "transbiotc")
     {
-        receiveBiotFromNetwork(side, d);
+        receiveBiotFromNetwork(rpcType, side, d);
     }
     else if(rpcType == "assignside")
     {
@@ -386,24 +386,50 @@ void SidesManager::biotLeavingSide(int side, Biot *pBiot)
     if(sockets[side] != nullptr)
     {
         QTcpSocket *sock = sockets[side];
-        QByteArray data("transfbiot");
-        data.append(serBiot.c_str(), serBiot.size());
-        networking.sendPage(sock, data.constData(), data.length());
+        if(1)
+        {
+            //Sent biot in compressed json
+            QByteArray data("transbiotc");
+            QByteArray dat1(qCompress(serBiot.c_str(), serBiot.size()));
+            data.append(dat1);
+            networking.sendPage(sock, data.constData(), data.length());
+        }
+        else
+        {
+            //Sent biot in uncompressed json
+            QByteArray data("transfbiot");
+            data.append(serBiot.c_str(), serBiot.size());
+            networking.sendPage(sock, data.constData(), data.length());
+        }
     }
 }
 
-void SidesManager::receiveBiotFromNetwork(int side, QByteArray &d)
+void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, QByteArray &d)
 {
     cout << "biot arriving " << side << endl;
 
-    Document doc;
-    stringstream ss(d.mid(10).constData());
-    IStreamWrapper isw(ss);
+    QSharedPointer<IStreamWrapper> isw;
+    QSharedPointer<stringstream> ss;
+    QSharedPointer<ifstream> ifs;
+    if(rpcType == "transfbiot")
+    {
+        ss = QSharedPointer<stringstream>(new stringstream(d.mid(10).constData()));
+        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
+    }
+    else if(rpcType == "transbiotc")
+    {
+        QByteArray dat(qUncompress(d.mid(10)));
+
+        ss = QSharedPointer<stringstream>(new stringstream(dat.constData()));
+        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
+    }
+    else return;
 
     Biot *pBiot = nullptr;
     try {
 
-        ParseResult ok = doc.ParseStream(isw);
+        Document doc;
+        ParseResult ok = doc.ParseStream(*isw.data());
         if (!ok)
             throw runtime_error("eror parsing json");
         pBiot = new Biot(env);

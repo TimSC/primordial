@@ -76,7 +76,7 @@ signals:
 
 private:
 
-    void receiveBiotFromNetwork(int side, QByteArray &d);
+    void receiveBiotFromNetwork(const QString &rpcType, int side, QByteArray &d);
 
     class Environment &env;
     class Networking networking;
