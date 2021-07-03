@@ -3,12 +3,14 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <QDebug>
 #include <QDateTime>
 #include <QFileDialog>
 #include <QOpenGLWidget>
 #include <QScreen>
 #include <QLabel>
+#include <QByteArray>
 #include "core/Biots.h"
 #include "settingsui.h"
 #include "aboutui.h"
@@ -135,19 +137,39 @@ void MainWindow::on_actionOpen_triggered()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Open Address Book"), this->currentFilename.c_str(),
-        tr("Primordial Life Files (*.plfj);;All Files (*)"));
+        tr("Primordial Life Files (*.plfc, *.plfj);;All Files (*)"));
 
     if (fileName.isEmpty())
             return;
 
-    Document d;
+    QFileInfo fi(fileName);
+    QString compSuffix = fi.completeSuffix();
+    QSharedPointer<IStreamWrapper> isw;
+    QSharedPointer<stringstream> ss;
+    QSharedPointer<ifstream> ifs;
 
-    ifstream ifs(fileName.toStdString().c_str());
-    IStreamWrapper isw(ifs);
+    if(compSuffix == "plfc")
+    {
+        //Load compressed file
+        QFile fil(fileName);
+        fil.open(QIODevice::ReadOnly);
+        QByteArray dat = fil.readAll();
+        QByteArray dat2(qUncompress(dat));
+
+        ss  = QSharedPointer<stringstream>(new stringstream(dat2.constData()));
+        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
+    }
+    else
+    {
+        //Load uncompressed file
+        ifs = QSharedPointer<ifstream>(new ifstream(fileName.toStdString().c_str()));
+        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ifs.data()));
+    }
 
     try {
-
-        ParseResult ok = d.ParseStream(isw);
+        Document d;
+        IStreamWrapper *pisw = isw.data();
+        ParseResult ok = d.ParseStream(*pisw);
         if (!ok)
             throw runtime_error("eror parsing json");
         if (!d.IsObject() or !d.HasMember("environment"))
@@ -170,7 +192,7 @@ void MainWindow::on_actionSave_As_triggered()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
         tr("Save As"), this->currentFilename.c_str(),
-        tr("Primordial Life Files (*.plfj);;All Files (*)"));
+        tr("Primordial Life Files (*.plfc, *.plfj);;All Files (*)"));
 
     if (fileName.isEmpty())
             return;
@@ -179,17 +201,40 @@ void MainWindow::on_actionSave_As_triggered()
     QFileInfo fi(this->currentFilename.c_str());
     QString compSuffix = fi.completeSuffix();
     if(compSuffix == "")
-        this->currentFilename += ".plfj";
+        this->currentFilename += ".plfc";
+
+    QFileInfo fi2(this->currentFilename.c_str());
+    QString compSuffix2 = fi.completeSuffix();
 
     Document d;
     d.SetObject();
     Value envJson(kObjectType);
     this->env.SerializeJson(d, envJson);
     d.AddMember("environment", envJson, d.GetAllocator());
-    ofstream myfile(this->currentFilename.c_str());
-    OStreamWrapper osw(myfile);
-    Writer<OStreamWrapper> writer(osw);
-    d.Accept(writer);
+
+    if(compSuffix2 == "plfc")
+    {
+        //Write compressed
+        stringstream ss;
+        OStreamWrapper osw(ss);
+        Writer<OStreamWrapper> writer(osw);
+        d.Accept(writer);
+
+        string dat = ss.str();
+        QByteArray dat2(qCompress(dat.data(), dat.size()));
+
+        ofstream myfile(this->currentFilename.c_str(), std::ios::binary);
+
+        myfile.write(dat2.data(), dat2.size());
+    }
+    else
+    {
+        //Write uncompressed
+        ofstream myfile(this->currentFilename.c_str());
+        OStreamWrapper osw(myfile);
+        Writer<OStreamWrapper> writer(osw);
+        d.Accept(writer);
+    }
 }
 
 void MainWindow::on_actionNew_triggered()
