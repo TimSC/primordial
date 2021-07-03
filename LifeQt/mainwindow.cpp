@@ -176,12 +176,17 @@ void MainWindow::on_actionSave_As_triggered()
             return;
 
     this->currentFilename = fileName.toStdString();
+    QFileInfo fi(this->currentFilename.c_str());
+    QString compSuffix = fi.completeSuffix();
+    if(compSuffix == "")
+        this->currentFilename += ".plfj";
+
     Document d;
     d.SetObject();
     Value envJson(kObjectType);
     this->env.SerializeJson(d, envJson);
     d.AddMember("environment", envJson, d.GetAllocator());
-    ofstream myfile(fileName.toStdString().c_str());
+    ofstream myfile(this->currentFilename.c_str());
     OStreamWrapper osw(myfile);
     Writer<OStreamWrapper> writer(osw);
     d.Accept(writer);
