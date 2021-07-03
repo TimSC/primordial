@@ -10,46 +10,12 @@
 #ifndef connect_h
 #define connect_h
 
+#include <QQueue>
 #include "Etools.h"
 
 class Biot;
 
-////////////////////////////////////////////////////////////////
-// Fifo
-//
-//
-class Fifo
-{
-  public:
-      enum {
-        QUEUE_SIZE = 5
-      };
-
-      Fifo();
-      ~Fifo();
-
-//      int Count();
-
- //     int FreeCount() 
- //     {
- //       return QUEUE_SIZE - Count();
- //     }
-
-      bool   Put(void* pClass);
-      void* Get();
-//	  void* Peek();
-		void Empty();
-
-                 
-  private:
-      int    m_read;
-      int    m_write; 
-      int    m_size;
-      void* m_pVoid[QUEUE_SIZE];
-};
-
-
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 //
 // SideListener
 //
@@ -61,9 +27,10 @@ public:
     virtual ~SideListener();
 
     virtual void BiotLeavingSide(int side, Biot *pBiot);
+    virtual void ReadyToReceive(int sideId, bool ready);
 };
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 //
 // Side
 //
@@ -106,6 +73,7 @@ class Side : public BRect
     bool IsConnected();
     void SetConnected(bool conn);
     void SetListener(class SideListener *listenerIn);
+    void SetRemoteReady(bool isReady);
 
     virtual void AdjustBiot(Biot& biot) = 0;
     virtual void RejectBiot(Biot& biot) = 0;
@@ -116,10 +84,11 @@ class Side : public BRect
       int m_lines;
       CLine m_line[4];
       BRect* m_pEnv;
-      Fifo m_inComing;
-      Fifo m_outGoing;
+      QQueue<Biot *> m_inComing;
       bool m_isConnected;
       class SideListener *m_listener;
+      bool m_readyToReceive;
+      bool m_remoteReady;
 };
 
 

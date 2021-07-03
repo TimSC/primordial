@@ -45,7 +45,9 @@ public:
     SidesManagerEventRx(class SidesManager *managerIn);
     virtual ~SidesManagerEventRx();
 
-    virtual void BiotLeavingSide(int side, Biot *pBiot);
+    virtual void BiotLeavingSide(int side, Biot *pBiot) override;
+    virtual void ReadyToReceive(int sideId, bool ready) override;
+
     class SidesManager *manager;
 };
 
@@ -61,6 +63,7 @@ public:
     void getSideStatus(int side, QString &hostPortOut, QString &statusOut, bool &enableConnect);
     void biotLeavingSide(int side, Biot *pBiot);
     bool isListening(uint16_t &portOut);
+    void readyToReceive(int sideId, bool ready);
 
 public slots:
     void netAcceptConnection(QTcpSocket *client);
@@ -72,6 +75,9 @@ signals:
     void sideAssigned(int side);
 
 private:
+
+    void receiveBiotFromNetwork(int side, QByteArray &d);
+
     class Environment &env;
     class Networking networking;
     QTcpSocket *sockets[4];

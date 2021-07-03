@@ -1,77 +1,11 @@
+#include <iostream>
 #include "Etools.h"
 #include "Connect.h"
 #include "Environ.h"
 #include "Biots.h"
 
-
-////////////////////////////////////////////////////////////////////
-// Fifo
-//
-//
-//
-//
-Fifo::Fifo()
-{
-  for (int i = 0; i < QUEUE_SIZE; i++)
-    m_pVoid[i] = NULL;
-
-  m_read  = 0;
-  m_write = 0;
-  m_size  = 0;
-}
-
-
-Fifo::~Fifo()
-{
-  for (int i = 0; i < QUEUE_SIZE; i++)
-    if (m_pVoid[i] != NULL)
-      delete m_pVoid[i];
-}
-
-
-void Fifo::Empty()
-{
-	m_read  = 0;
-	m_write = 0;
-	m_size  = 0;
-	for (int i = 0; i < QUEUE_SIZE; i++)
-		if (m_pVoid[i] != NULL)
-		{	
-			delete m_pVoid[i];
-			m_pVoid[i] = NULL;
-		} 
-}
-
-
-bool Fifo::Put(void *pVoid)
-{
-	if (m_pVoid[m_write] == NULL)
-	{
-		m_pVoid[m_write++] = pVoid;
-		if (m_write >= QUEUE_SIZE)
-			m_write = 0;
-		m_size++;
-        assert(m_size <= QUEUE_SIZE);
-        return true;
-	}
-    return false;
-}
-
-
-void * Fifo::Get()
-{
-	if (m_pVoid[m_read] != NULL)
-	{
-        void* pTemp = m_pVoid[m_read];
-		m_pVoid[m_read++] = NULL;
-		if (m_read >= QUEUE_SIZE)
-			m_read = 0;
-		m_size--;
-        assert(m_size >= 0);
-		return pTemp;
-	}
-    return nullptr;
-}
+const int SIDE_BUFFER_SOFT_MAX=5;
+const int SIDE_BUFFER_HARD_MAX=50;
 
 // //////////////////////////////////////////////////////////////////
 
@@ -90,6 +24,11 @@ void SideListener::BiotLeavingSide(int side, Biot *pBiot)
 
 }
 
+void SideListener::ReadyToReceive(int sideId, bool ready)
+{
+
+}
+
 // //////////////////////////////////////////////////////////////////
 // Side
 //
@@ -103,6 +42,8 @@ Side::Side()
 	m_pEnv = NULL;
     m_isConnected = false;
     m_listener = nullptr;
+    m_readyToReceive = true;
+    m_remoteReady = true;
 }
 
 void Side::Clear(BRect* pEnvRect)
@@ -112,14 +53,12 @@ void Side::Clear(BRect* pEnvRect)
 
 	m_pEnv  = pEnvRect;
 	m_lines = 1;
-	m_outGoing.Empty();
-	m_inComing.Empty();
+    m_inComing.clear();
 }
 
 bool Side::Export(Biot* pBiot)
 {
-    //return false; //Disable for now
-    //return m_outGoing.Put(pBiot);
+    if(!m_remoteReady) return false;
     if(m_listener)
     {
         m_listener->BiotLeavingSide(m_sideId, pBiot);
@@ -130,13 +69,37 @@ bool Side::Export(Biot* pBiot)
 
 Biot*  Side::Import()
 {
-    //return nullptr;
-    return (Biot*)m_inComing.Get();
+    if(m_inComing.isEmpty())
+        return nullptr;
+    Biot* out = m_inComing.dequeue();
+
+    if(m_inComing.size() < SIDE_BUFFER_SOFT_MAX and !m_readyToReceive)
+    {
+        m_readyToReceive = true;
+        if(m_listener)
+            m_listener->ReadyToReceive(m_sideId, true);
+    }
+
+    return out;
 }
 
 void Side::ReceiveBiotFromNetwork(Biot *pBiot)
 {
-    m_inComing.Put(pBiot);
+    if(m_inComing.size() >= SIDE_BUFFER_HARD_MAX)
+    {
+        std::cout << "Error buffer overflow receiving biot" << std::endl;
+        assert(!m_readyToReceive);
+        return;
+    }
+
+    m_inComing.enqueue(pBiot);
+
+    if(m_inComing.size() > SIDE_BUFFER_SOFT_MAX and m_readyToReceive)
+    {
+        m_readyToReceive = false;
+        if(m_listener)
+            m_listener->ReadyToReceive(m_sideId, false);
+    }
 }
 
 bool Side::IsConnected()
@@ -154,6 +117,11 @@ void Side::SetListener(class SideListener *listenerIn)
     m_listener = listenerIn;
 }
 
+void Side::SetRemoteReady(bool isReady)
+{
+    m_remoteReady = isReady;
+}
+
 // ************************************
 
 RightSide::RightSide() : Side()
@@ -168,13 +136,17 @@ int RightSide::SideSize()
 
 void RightSide::AdjustBiot(Biot& biot)
 {
-  biot.MoveBiot(m_left - biot.m_left - 1, m_top);
+    biot.MoveBiot(m_left - biot.m_left - 1, m_top);
+    if(biot.vector.getDeltaX()>-1.0)
+        biot.vector.setDeltaX(-1.0);
 }
 
 void RightSide::RejectBiot(Biot& biot)
 {
-  biot.MoveBiot(m_left - biot.m_left - 1, m_top);
+    biot.MoveBiot(m_left - biot.m_left - 1, m_top);
 }
+
+// ************************************
 
 LeftSide::LeftSide() : Side()
 {
@@ -188,7 +160,9 @@ int LeftSide::SideSize()
 
 void LeftSide::AdjustBiot(Biot& biot)
 {
-  biot.MoveBiot(m_right - biot.m_right  + 1, m_top);
+    biot.MoveBiot(m_right - biot.m_right  + 1, m_top);
+    if(biot.vector.getDeltaX()<1.0)
+        biot.vector.setDeltaX(1.0);
 }
 
 void LeftSide::RejectBiot(Biot& biot)
@@ -208,7 +182,9 @@ int TopSide::SideSize()
 
 void TopSide::AdjustBiot(Biot& biot)
 {
-  biot.MoveBiot(m_left, m_bottom - biot.m_bottom + 1);
+    biot.MoveBiot(m_left, m_bottom - biot.m_bottom + 1);
+    if(biot.vector.getDeltaY()<1.0)
+        biot.vector.setDeltaY(1.0);
 }
 
 void TopSide::RejectBiot(Biot& biot)
@@ -231,7 +207,9 @@ BottomSide::BottomSide() : Side()
 
 void BottomSide::AdjustBiot(Biot& biot)
 {
-  biot.MoveBiot(m_left, m_top - biot.m_top - 1);
+    biot.MoveBiot(m_left, m_top - biot.m_top - 1);
+    if(biot.vector.getDeltaY()>-1.0)
+        biot.vector.setDeltaY(-1.0);
 }
 
 void BottomSide::RejectBiot(Biot& biot)

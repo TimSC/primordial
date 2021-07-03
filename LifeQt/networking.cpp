@@ -183,6 +183,11 @@ void SidesManagerEventRx::BiotLeavingSide(int side, Biot *pBiot)
     manager->biotLeavingSide(side, pBiot);
 }
 
+void SidesManagerEventRx::ReadyToReceive(int sideId, bool ready)
+{
+    manager->readyToReceive(sideId, ready);
+}
+
 // ***************
 
 SidesManager::SidesManager(class Environment &envIn) :
@@ -252,6 +257,7 @@ void SidesManager::netAcceptConnection(QTcpSocket *client)
         QByteArray data("assignside{}");
         networking.sendPage(client, data.constData(), data.length());
         env.side[freeSide]->SetConnected(true);
+        env.side[freeSide]->SetRemoteReady(true);
         env.side[freeSide]->Clear(&this->env);
         env.side[freeSide]->SetSize(true);
 
@@ -314,10 +320,15 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
     if(side == -1) return;
 
     QString rpcType = d.left(10);
-    if(rpcType == "assignside")
+    if(rpcType == "transfbiot")
+    {
+        receiveBiotFromNetwork(side, d);
+    }
+    else if(rpcType == "assignside")
     {
         isAssigned[side] = true;
         env.side[side]->SetConnected(true);
+        env.side[side]->SetRemoteReady(true);
         env.side[side]->Clear(&this->env);
         env.side[side]->SetSize(true);
         emit sideAssigned(side);
@@ -326,33 +337,13 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
     {
         client->disconnectFromHost();
     }
-    else if(rpcType == "transfbiot")
+    else if(rpcType == "sidunready")
     {
-        cout << "biot arriving " << side << endl;
-
-        Document doc;
-        stringstream ss(d.mid(10).constData());
-        IStreamWrapper isw(ss);
-
-        Biot *pBiot = nullptr;
-        try {
-
-            ParseResult ok = doc.ParseStream(isw);
-            if (!ok)
-                throw runtime_error("eror parsing json");
-            pBiot = new Biot(env);
-            if (!doc.IsObject() or !doc.HasMember("biot"))
-                throw runtime_error("eror parsing json");
-            pBiot->SerializeJsonLoad(doc["biot"]);
-
-        } catch (exception &err) {
-
-            std::cout << err.what() << std::endl;
-            return;
-        }
-
-        pBiot->OnOpen();
-        env.side[side]->ReceiveBiotFromNetwork(pBiot);
+        env.side[side]->SetRemoteReady(false);
+    }
+    else if(rpcType == "sidereadyy")
+    {
+        env.side[side]->SetRemoteReady(true);
     }
 }
 
@@ -398,5 +389,52 @@ void SidesManager::biotLeavingSide(int side, Biot *pBiot)
         QByteArray data("transfbiot");
         data.append(serBiot.c_str(), serBiot.size());
         networking.sendPage(sock, data.constData(), data.length());
+    }
+}
+
+void SidesManager::receiveBiotFromNetwork(int side, QByteArray &d)
+{
+    cout << "biot arriving " << side << endl;
+
+    Document doc;
+    stringstream ss(d.mid(10).constData());
+    IStreamWrapper isw(ss);
+
+    Biot *pBiot = nullptr;
+    try {
+
+        ParseResult ok = doc.ParseStream(isw);
+        if (!ok)
+            throw runtime_error("eror parsing json");
+        pBiot = new Biot(env);
+        if (!doc.IsObject() or !doc.HasMember("biot"))
+            throw runtime_error("eror parsing json");
+        pBiot->SerializeJsonLoad(doc["biot"]);
+
+    } catch (exception &err) {
+
+        std::cout << err.what() << std::endl;
+        return;
+    }
+
+    pBiot->OnOpen();
+    env.side[side]->ReceiveBiotFromNetwork(pBiot);
+}
+
+void SidesManager::readyToReceive(int sideId, bool ready)
+{
+    QTcpSocket *sock = sockets[sideId];
+    if(sock)
+    {
+        if(ready)
+        {
+            QByteArray data("sidereadyy{}");
+            networking.sendPage(sock, data.constData(), data.length());
+        }
+        else
+        {
+            QByteArray data("sidunready{}");
+            networking.sendPage(sock, data.constData(), data.length());
+        }
     }
 }
