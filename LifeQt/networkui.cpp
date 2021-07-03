@@ -9,10 +9,8 @@ NetworkUi::NetworkUi(SidesManager &sidesManagerIn, QWidget *parent) :
 {
     ui->setupUi(this);
 
-    connect(&sidesManager, SIGNAL(sideConnecting(int)), this, SLOT(sideChangedStatus(int)));
-    connect(&sidesManager, SIGNAL(sideConnected(int)), this, SLOT(sideChangedStatus(int)));
-    connect(&sidesManager, SIGNAL(sideAssigned(int)), this, SLOT(sideChangedStatus(int)));
-    connect(&sidesManager, SIGNAL(sideDisconnected(int)), this, SLOT(sideChangedStatus(int)));
+    connect(&sidesManager, SIGNAL(sideStateChanged(int, QAbstractSocket::SocketState)), this, SLOT(sideStateChanged(int, QAbstractSocket::SocketState)));
+    connect(&sidesManager, SIGNAL(sideAssigned(int)), this, SLOT(sideAssigned(int)));
 
     UpdateRow(0, this->ui->addressEdit, this->ui->status, this->ui->connectButton);
     UpdateRow(1, this->ui->addressEdit_2, this->ui->status_2, this->ui->connectButton_2);
@@ -45,9 +43,13 @@ void NetworkUi::on_connectButton_4_clicked()
     ConnectRow(3, this->ui->connectButton_4, this->ui->addressEdit_4);
 }
 
-void NetworkUi::sideChangedStatus(int side)
+void NetworkUi::sideAssigned(int side)
 {
-    QString addr, status;
+    sideStateChanged(side, QAbstractSocket::SocketState::ConnectingState);
+}
+
+void NetworkUi::sideStateChanged(int side, QAbstractSocket::SocketState state)
+{
     if(side == 0)
         UpdateRow(0, this->ui->addressEdit, this->ui->status, this->ui->connectButton);
     else if(side == 1)
@@ -56,7 +58,6 @@ void NetworkUi::sideChangedStatus(int side)
         UpdateRow(2, this->ui->addressEdit_3, this->ui->status_3, this->ui->connectButton_3);
     else if(side == 3)
         UpdateRow(3, this->ui->addressEdit_4, this->ui->status_4, this->ui->connectButton_4);
-
 }
 
 void NetworkUi::UpdateRow(int side, QLineEdit *lineEdit, QLineEdit *statusEdit, QPushButton *button)

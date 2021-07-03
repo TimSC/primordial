@@ -488,14 +488,14 @@ void CommandLimbType::SerializeJsonLoad(const rapidjson::Value& v)
     Randomizer rand;
     for(int i=0; i < MAX_COMMANDS_PER_LIMB; i++)
     {
-        if(m_comref[i] < 0) m_comref[i] = 0;
-        if(m_comref[i] >= CommandArray::MAX_COMMANDS) m_comref[i] = rand.Byte(CommandArray::MAX_COMMANDS);
+        if(m_comref[i] < 0 or m_comref[i] >= CommandArray::MAX_COMMANDS)
+            m_comref[i] = rand.Byte(CommandArray::MAX_COMMANDS);
     }
 
     for(int i=0; i < MAX_COMMANDS_PER_LIMB; i++)
     {
-        if(m_sumref[i] < 0) m_comref[i] = 0;
-        if(m_sumref[i] >= ProductArray::MAX_PRODUCT_SUMS) m_comref[i] = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
+        if(m_sumref[i] < 0 or m_sumref[i] >= ProductArray::MAX_PRODUCT_SUMS)
+            m_sumref[i] = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
     }
 }
 

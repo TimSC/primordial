@@ -15,19 +15,18 @@ public:
     Networking();
     virtual ~Networking();
 
-    QTcpSocket *connectToHost(const QString &hostName, quint16 port);
+    void connectToHost(QTcpSocket *socket, const QString &hostName, quint16 port);
     void sendPage(QTcpSocket *client, const char *data, uint32_t size);
 
 public slots:
     void acceptConnection();
-    void clientDisconnected();
     void clientBytesAvailable();
-    void connected();
+    void clientStateChanged(QAbstractSocket::SocketState socketState);
 
 signals:
-    void netConnected(QTcpSocket *client);
-    void netDisconnected(QTcpSocket *client);
+    void netStateChanged(QTcpSocket *client, QAbstractSocket::SocketState socketState);
     void netReceivedPage(QTcpSocket *client, const char *data, uint32_t size);
+    void netAcceptConnection(QTcpSocket *);
 
 private:
     QList<QTcpSocket *> clients;
@@ -63,20 +62,19 @@ public:
     void biotLeavingSide(int side, Biot *pBiot);
 
 public slots:
-    void netConnected(QTcpSocket *client);
-    void netDisconnected(QTcpSocket *client);
+    void netAcceptConnection(QTcpSocket *client);
+    void netStateChanged(QTcpSocket *client, QAbstractSocket::SocketState socketState);
     void netReceivedPage(QTcpSocket *client, const char *data, uint32_t size);
 
 signals:
-    void sideConnecting(int side);
-    void sideConnected(int side);
+    void sideStateChanged(int side, QAbstractSocket::SocketState socketState);
     void sideAssigned(int side);
-    void sideDisconnected(int side);
 
 private:
     class Environment &env;
     class Networking networking;
     QTcpSocket *sockets[4];
+    bool isAssigned[4];
     QString status[4];
     SidesManagerEventRx eventRx;
 };

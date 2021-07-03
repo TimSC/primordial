@@ -28,7 +28,8 @@ private slots:
     void on_connectButton_4_clicked();
 
 public slots:
-    void sideChangedStatus(int side);
+    void sideAssigned(int side);
+    void sideStateChanged(int side, QAbstractSocket::SocketState);
 
 private:
     Ui::NetworkUi *ui;

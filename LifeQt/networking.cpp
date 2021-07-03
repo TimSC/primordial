@@ -13,6 +13,20 @@ using namespace rapidjson;
 
 const uint32_t MAX_PAGE_SIZE = 1024*1024;
 
+std::string SocketStateToString(QAbstractSocket::SocketState state)
+{
+    if(state==QAbstractSocket::UnconnectedState) return "Unconnected";
+    if(state==QAbstractSocket::HostLookupState) return "Host Lookup";
+    if(state==QAbstractSocket::ConnectingState) return "Connecting";
+    if(state==QAbstractSocket::ConnectedState) return "Connected";
+    if(state==QAbstractSocket::BoundState) return "Bound";
+    if(state==QAbstractSocket::ClosingState) return "Closing";
+    if(state==QAbstractSocket::ListeningState) return "Listening";
+    return "Unknown";
+}
+
+// *******************************
+
 Networking::Networking()
 {
     connect(this, &QTcpServer::newConnection, this, &Networking::acceptConnection);
@@ -25,15 +39,11 @@ Networking::~Networking()
 
 }
 
-QTcpSocket *Networking::connectToHost(const QString &hostName, quint16 port)
+void Networking::connectToHost(QTcpSocket *socket, const QString &hostName, quint16 port)
 {
-    QTcpSocket *out = new QTcpSocket(this);
-    connect(out, &QTcpSocket::connected, this, &Networking::connected);
-    connect(out, &QTcpSocket::disconnected, this, &Networking::clientDisconnected);
-    connect(out, &QTcpSocket::readyRead, this, &Networking::clientBytesAvailable);
-    out->connectToHost(hostName, port);
-
-    return out;
+    connect(socket, &QTcpSocket::readyRead, this, &Networking::clientBytesAvailable);
+    connect(socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(clientStateChanged(QAbstractSocket::SocketState)));
+    socket->connectToHost(hostName, port);
 }
 
 void Networking::acceptConnection()
@@ -42,28 +52,17 @@ void Networking::acceptConnection()
     while(client != nullptr)
     {
         std::cout << "acceptConnection" << std::endl;
-        connect(client, &QTcpSocket::disconnected, this, &Networking::clientDisconnected);
+
         connect(client, &QTcpSocket::readyRead, this, &Networking::clientBytesAvailable);
+        connect(client, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(clientStateChanged(QAbstractSocket::SocketState)));
 
         clients.append(client);
         assembleBuffers[client] = QByteArray();
-
-        emit netConnected(client);
+        emit netAcceptConnection(client);
+        emit netStateChanged(client, client->state());
 
         client = nextPendingConnection();
     }
-}
-
-void Networking::connected()
-{
-    QTcpSocket *client = qobject_cast<QTcpSocket *>(QObject::sender());
-    if(client == nullptr) return;
-
-    std::cout << "connected " << (uint64_t)client << std::endl;
-    clients.append(client);
-    assembleBuffers[client] = QByteArray();
-
-    emit netConnected(client);
 }
 
 void Networking::sendPage(QTcpSocket *client, const char *data, uint32_t size)
@@ -81,15 +80,27 @@ void Networking::sendPage(QTcpSocket *client, const char *data, uint32_t size)
     assert(size == expectSize);
 }
 
-void Networking::clientDisconnected()
+void Networking::clientStateChanged(QAbstractSocket::SocketState state)
 {
+    cout << SocketStateToString(state) << endl;
     QTcpSocket *client = qobject_cast<QTcpSocket *>(QObject::sender());
     if(client == nullptr) return;
 
-    std::cout << "disconnected " << (uint64_t)client << std::endl;
-    clients.removeAll(client);
+    if(state==QAbstractSocket::UnconnectedState)
+    {
+        std::cout << "disconnected " << (uint64_t)client << std::endl;
+        clients.removeAll(client);
 
-    emit netDisconnected(client);
+
+    }
+    else if(state==QAbstractSocket::ConnectedState)
+    {
+        std::cout << "connected " << (uint64_t)client << std::endl;
+        clients.append(client);
+        assembleBuffers[client] = QByteArray();
+    }
+
+    emit netStateChanged(client, state);
 }
 
 void Networking::clientBytesAvailable()
@@ -181,10 +192,11 @@ SidesManager::SidesManager(class Environment &envIn) :
     {
         sockets[i] = nullptr;
         status[i] = "no connection";
+        isAssigned[i] = false;
     }
 
-    connect(&networking, SIGNAL(netConnected(QTcpSocket *)), this, SLOT(netConnected(QTcpSocket *)));
-    connect(&networking, SIGNAL(netDisconnected(QTcpSocket *)), this, SLOT(netDisconnected(QTcpSocket *)));
+    connect(&networking, SIGNAL(netAcceptConnection(QTcpSocket *)), this, SLOT(netAcceptConnection(QTcpSocket *)));
+    connect(&networking, SIGNAL(netStateChanged(QTcpSocket *, QAbstractSocket::SocketState)), this, SLOT(netStateChanged(QTcpSocket *, QAbstractSocket::SocketState)));
     connect(&networking, SIGNAL(netReceivedPage(QTcpSocket *, const char *, uint32_t)), this, SLOT(netReceivedPage(QTcpSocket *, const char *, uint32_t)));
 
     networking.listen(QHostAddress::Any);
@@ -206,10 +218,8 @@ void SidesManager::connectToHost(int side, const QString &hostName, quint16 port
     if(sockets[side] != nullptr)
         sockets[side]->disconnectFromHost();
 
-    QTcpSocket *socket = networking.connectToHost(hostName, port);
-    sockets[side] = socket;
-    status[side] = "connecting";
-    emit sideConnecting(side);
+    sockets[side] = new QTcpSocket(this);
+    networking.connectToHost(sockets[side], hostName, port);
 }
 
 void SidesManager::disconnectSide(int side)
@@ -218,17 +228,8 @@ void SidesManager::disconnectSide(int side)
         sockets[side]->disconnectFromHost();
 }
 
-void SidesManager::netConnected(QTcpSocket *client)
+void SidesManager::netAcceptConnection(QTcpSocket *client)
 {
-    //Check if already known
-    for(int i=0;i<4; i++)
-        if(sockets[i] == client)
-        {
-            status[i] = "connected";
-            emit sideConnected(i);
-            return;
-        }
-
     //Assign a side if possible
     int freeSide = -1;
     for(int i=0;i<4; i++)
@@ -237,12 +238,11 @@ void SidesManager::netConnected(QTcpSocket *client)
             freeSide = i;
             break;
         }
-    //std::cout << freeSide << std::endl;
 
     if(freeSide >= 0)
     {
         sockets[freeSide] = client;
-        status[freeSide] = "assigned";
+        isAssigned[freeSide] = true;
         QByteArray data("assignside{}");
         networking.sendPage(client, data.constData(), data.length());
         env.side[freeSide]->SetConnected(true);
@@ -257,20 +257,39 @@ void SidesManager::netConnected(QTcpSocket *client)
         networking.sendPage(client, data.constData(), data.length());
         //client->disconnectFromHost();
     }
+
 }
 
-void SidesManager::netDisconnected(QTcpSocket *client)
+void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketState state)
 {
+    int sideId = -1;
     for(int i=0;i<4; i++)
         if(sockets[i] == client)
         {
-            status[i] = "disconnected";
-            sockets[i] = nullptr;
-            env.side[i]->SetConnected(false);
-            env.side[i]->Clear(&this->env);
-            env.side[i]->SetSize(false);
-            emit sideDisconnected(i);
+            status[i] = SocketStateToString(state).c_str();
+            sideId = i;
+            break;
         }
+
+    if(state==QAbstractSocket::UnconnectedState)
+    {
+        if(sideId >= 0)
+        {
+            sockets[sideId] = nullptr;
+            isAssigned[sideId] = false;
+            env.side[sideId]->SetConnected(false);
+            env.side[sideId]->Clear(&this->env);
+            env.side[sideId]->SetSize(false);
+        }
+    }
+    else if(state==QAbstractSocket::ConnectedState)
+    {
+
+    }
+
+    if(sideId >= 0)
+        emit sideStateChanged(sideId, state);
+
 }
 
 void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_t size)
@@ -291,7 +310,7 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
     QString rpcType = d.left(10);
     if(rpcType == "assignside")
     {
-        status[side] = "assigned";
+        isAssigned[side] = true;
         env.side[side]->SetConnected(true);
         env.side[side]->Clear(&this->env);
         env.side[side]->SetSize(true);
@@ -334,17 +353,20 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
 void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &statusOut, bool &enableConnect)
 {
     assert(side >= 0 and side <= 4);
+    hostPortOut = "";
+    statusOut = "";
+    enableConnect = true;
     if(sockets[side] != nullptr)
     {
         QTcpSocket *sock = sockets[side];
         hostPortOut = QString::asprintf("%s:%d", sock->peerName().toStdString().c_str(), sock->peerPort());
+        QTcpSocket::SocketState state = sock->state();
+        statusOut = SocketStateToString(state).c_str();
+        if(state == QTcpSocket::SocketState::HostLookupState || state == QTcpSocket::SocketState::ConnectingState || state == QTcpSocket::SocketState::ConnectedState)
+            enableConnect = false;
     }
-    else
-        hostPortOut = "";
-    statusOut = status[side];
-    enableConnect = true;
-    if(statusOut == "connecting" or statusOut == "connected" or statusOut == "assigned")
-        enableConnect = false;
+    if(isAssigned[side])
+        statusOut = "Assigned";
 }
 
 void SidesManager::biotLeavingSide(int side, Biot *pBiot)
