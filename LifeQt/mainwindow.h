@@ -66,7 +66,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QLineEdit *statusDay, *statusPopulation, *statusExtinctions;
+    QLineEdit *statusDay, *statusPopulation, *statusExtinctions, *statusNetwork;
 
     class Environment env;
     std::string currentFilename;

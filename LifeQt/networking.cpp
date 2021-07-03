@@ -213,6 +213,12 @@ SidesManager::~SidesManager()
 
 }
 
+bool SidesManager::isListening(uint16_t &portOut)
+{
+    portOut = networking.serverPort();
+    return networking.isListening();
+}
+
 void SidesManager::connectToHost(int side, const QString &hostName, quint16 port)
 {
     if(sockets[side] != nullptr)

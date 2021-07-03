@@ -60,6 +60,7 @@ public:
     void disconnectSide(int side);
     void getSideStatus(int side, QString &hostPortOut, QString &statusOut, bool &enableConnect);
     void biotLeavingSide(int side, Biot *pBiot);
+    bool isListening(uint16_t &portOut);
 
 public slots:
     void netAcceptConnection(QTcpSocket *client);

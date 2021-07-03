@@ -66,15 +66,20 @@ MainWindow::MainWindow(QWidget *parent)
     statusPopulation->setReadOnly(true);
     statusPopulation->setFixedWidth(80);
     this->ui->statusbar->addWidget(statusPopulation);
+
     this->ui->statusbar->addWidget(new QLabel("Extinctions", nullptr));
     statusExtinctions = new QLineEdit();
     statusExtinctions->setReadOnly(true);
     statusExtinctions->setFixedWidth(50);
     this->ui->statusbar->addWidget(statusExtinctions);
 
+    this->ui->statusbar->addWidget(new QLabel("Network", nullptr));
+    statusNetwork = new QLineEdit();
+    statusNetwork->setReadOnly(true);
+    statusNetwork->setFixedWidth(100);
+    this->ui->statusbar->addWidget(statusNetwork);
 
-
-    startTimer(10);     // 5-millisecond timer
+    startTimer(10);     // 10-millisecond timer
 }
 
 MainWindow::~MainWindow()
@@ -113,6 +118,16 @@ void MainWindow::timerEvent(QTimerEvent *event)
         statusDay->setText(stats.GetDaysStr().c_str());
         statusPopulation->setText(QString::asprintf("%d", env.GetPopulation()));
         statusExtinctions->setText(stats.GetExtinctionsStr().c_str());
+        uint16_t port=0;
+        bool isListening = this->sidesManager.isListening(port);
+        if(isListening)
+        {
+            QString newTxt = QString::asprintf("TCP port %d", port);
+            if(statusNetwork->text() != newTxt)
+                statusNetwork->setText(newTxt);
+        }
+        else
+            statusNetwork->setText("");
     }
 }
 
