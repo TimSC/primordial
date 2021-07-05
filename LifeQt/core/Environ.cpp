@@ -543,62 +543,8 @@ Environment::~Environment(void)
 //Fox BEGIN
 void Environment::Clear()
 {
-	options.effectiveLength[GREEN_LEAF] = 1;
-	options.effectiveLength[BLUE_LEAF]  = 2;
-	options.effectiveLength[RED_LEAF]   = 1;
-	options.effectiveLength[WHITE_LEAF] = 1;
-	options.effectiveLength[LBLUE_LEAF] = 1;
-	
-	// You have / he has
-	options.leafContact[GREEN_LEAF][GREEN_LEAF ] = CONTACT_IGNORE;
-	options.leafContact[GREEN_LEAF][BLUE_LEAF  ] = CONTACT_IGNORE;
-	options.leafContact[GREEN_LEAF][WHITE_LEAF ] = CONTACT_IGNORE;
-	options.leafContact[GREEN_LEAF][RED_LEAF   ] = CONTACT_EATEN;
-	options.leafContact[GREEN_LEAF][LBLUE_LEAF ] = CONTACT_IGNORE; 
-
-	options.leafContact[BLUE_LEAF][BLUE_LEAF  ] = CONTACT_IGNORE;
-	options.leafContact[BLUE_LEAF][GREEN_LEAF ] = CONTACT_IGNORE;
-	options.leafContact[BLUE_LEAF][RED_LEAF   ] = CONTACT_DEFEND;
-	options.leafContact[BLUE_LEAF][WHITE_LEAF ] = CONTACT_IGNORE;
-	options.leafContact[BLUE_LEAF][LBLUE_LEAF ] = CONTACT_IGNORE;
-
-	options.leafContact[RED_LEAF][RED_LEAF   ]   = CONTACT_ATTACK;
-	options.leafContact[RED_LEAF][GREEN_LEAF ]   = CONTACT_EAT;
-	options.leafContact[RED_LEAF][BLUE_LEAF  ]   = CONTACT_DEFENDED;
-	options.leafContact[RED_LEAF][WHITE_LEAF ]   = CONTACT_DESTROY;
-	options.leafContact[RED_LEAF][LBLUE_LEAF ]   = CONTACT_DESTROY;
-
-	options.leafContact[WHITE_LEAF][RED_LEAF  ]  = CONTACT_DESTROYED;
-	options.leafContact[WHITE_LEAF][GREEN_LEAF]  = CONTACT_IGNORE;
-	options.leafContact[WHITE_LEAF][BLUE_LEAF ]  = CONTACT_IGNORE;
-	options.leafContact[WHITE_LEAF][WHITE_LEAF]  = CONTACT_IGNORE;
-	options.leafContact[WHITE_LEAF][LBLUE_LEAF]  = CONTACT_IGNORE; 
-
-	options.leafContact[LBLUE_LEAF][RED_LEAF  ]  = CONTACT_DESTROYED;
-	options.leafContact[LBLUE_LEAF][GREEN_LEAF]  = CONTACT_IGNORE;
-	options.leafContact[LBLUE_LEAF][BLUE_LEAF ]  = CONTACT_IGNORE;
-	options.leafContact[LBLUE_LEAF][WHITE_LEAF]  = CONTACT_IGNORE;
-	options.leafContact[LBLUE_LEAF][LBLUE_LEAF]  = CONTACT_IGNORE; 
-
-	options.leafMass[RED_LEAF]    = 1;
-	options.leafMass[BLUE_LEAF]   = 2;
-	options.leafMass[WHITE_LEAF]  = 1;
-	options.leafMass[GREEN_LEAF]  = 4;
-	options.leafMass[LBLUE_LEAF]  = 1;
-
-    options.newType[RED_LEAF]    = RED_LEAF;
-    options.newType[BLUE_LEAF]   = BLUE_LEAF;
-    options.newType[WHITE_LEAF]  = WHITE_LEAF;
-    options.newType[GREEN_LEAF]  = YELLOW_LEAF;
-    options.newType[LBLUE_LEAF]  = LBLUE_LEAF;
-
-	options.m_leafEnergy = 2;
-	options.regenCost  = 200;
-	options.regenTime  = 0x00000007;
-
-	options.startEnergy = 400 * 8;  
-
-	options.friction = (float) 0.005;
+    options.SetToDefaults();
+    options.Load();
 
 	// Set up sides
 	side[0] = (Side*) &leftSide;
@@ -610,23 +556,10 @@ void Environment::Clear()
 	m_uniqueID  = 0;
 
 	// Ini File parameters
-	options.chance              = 12;
-    options.bSoundOn            = true;
-	options.nSexual             = 3;
-	options.startNew            = 1;
-	options.m_initialPopulation = 20;
-    options.bParentAttack       = true;
-    options.bSiblingsAttack     = true;
-    options.bBarrier            = true;
-    options.bMouse              = true;
     bNetworkSettingsChange = false;
 
     m_maxBitPadWidth  = 0;
 	m_maxBitPadHeight = 0;
-
-	options.m_sound.SetScheme("PL", "Primordial Life");
-
-	options.m_nSick = 200;
 
     m_bIsSelected = false;
 

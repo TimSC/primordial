@@ -22,6 +22,7 @@ void SettingsUi::accept()
 {
     this->ui->biotTab->Accept(settings);
     this->ui->habitatTab->Accept(settings);
+    settings.Save();
     QDialog::accept();
 }
 

@@ -32,8 +32,11 @@ public:
 	int  GetFriction() { return (int) ((1000.0 * friction) + 0.5F); }	
 	void SetFriction(int iFriction) {friction = ((float)iFriction) / 1000.0F; }
 
-    void Serialize(QDataStream& a);
-	void Reset(int nWidth, int nHeight);
+    void Load();
+    void Save();
+    void SetToDefaults();
+
+    void Reset(int nWidth, int nHeight);
 	CSettings& operator=(CSettings& s);
 	
 	void SanityCheck();

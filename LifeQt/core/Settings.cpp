@@ -1,61 +1,55 @@
 //#include "primordial life.h"
 #include "Settings.h"
 #include <QDateTime>
-/*
-void CSettings::Serialize(QDataStream& a)
+#include <QSettings>
+
+void CSettings::Save()
 {
-	const int nVersion = 2;
+    QSettings settings("Kinatomic", "Primordial Life");
 
-	if (a.IsStoring())
-	{
-		a << nVersion;
-		a << m_nSeed;
-		a << m_nStartingPopulation;
-		a << m_nArmTypesPerBiot;
-		a << m_nSegmentsPerArm;
-		a << m_nArmsPerBiot;
-		a << m_bGenerateOnExtinction;
+    settings.setValue("habitat/bSoundOn", bSoundOn);
+    settings.setValue("habitat/bMouse", bMouse);
+    settings.setValue("habitat/m_initialPopulation", m_initialPopulation);
+    settings.setValue("habitat/friction", friction);
+    settings.setValue("habitat/m_leafEnergy", m_leafEnergy);
 
-		for (int i = 0; i < SIDES; i++)
-		{
-			a << m_sSideAddress[i];
-			a << m_bSideEnable[i];
-		}
-
-		a << m_nHeight;
-		a << m_nWidth;
-		a << m_nSizeChoice;
-
-	}
-	else
-	{
-		int nThisVersion;
-		a >> nThisVersion;
-
-		if (nThisVersion != nVersion)
-		{
-			throw new CArchiveException(CArchiveException::badIndex);
-		}
-
-		a >> m_nSeed;
-		a >> m_nStartingPopulation;
-		a >> m_nArmTypesPerBiot;
-		a >> m_nSegmentsPerArm;
-		a >> m_nArmsPerBiot;
-		a >> m_bGenerateOnExtinction;
-
-		for (int i = 0; i < SIDES; i++)
-		{
-			a >> m_sSideAddress[i];
-			a >> m_bSideEnable[i];
-		}
-
-		a >> m_nHeight;
-		a >> m_nWidth;
-		a >> m_nSizeChoice;
-	}
+    settings.setValue("biot/chance", chance);
+    settings.setValue("biot/regenCost", (qlonglong)regenCost);
+    settings.setValue("biot/regenTime", regenTime);
+    settings.setValue("biot/nSexual", nSexual);
+    settings.setValue("biot/bParentAttack", bParentAttack);
+    settings.setValue("biot/bSiblingsAttack", bSiblingsAttack);
 }
-*/
+
+void CSettings::Load()
+{
+    QSettings settings("Kinatomic", "Primordial Life");
+
+    QVariant val = settings.value("habitat/bSoundOn");
+    if(val.isValid()) bSoundOn = val.toBool();
+    val = settings.value("habitat/bMouse");
+    bMouse = val.toBool();
+    val = settings.value("habitat/m_initialPopulation");
+    m_initialPopulation = val.toInt();
+    val = settings.value("habitat/friction");
+    friction = val.toFloat();
+    val = settings.value("habitat/m_leafEnergy");
+    m_leafEnergy = val.toInt();
+
+    val = settings.value("biot/chance");
+    chance = val.toInt();
+    val = settings.value("biot/regenCost");
+    regenCost = val.toInt();
+    val = settings.value("biot/regenTime");
+    regenTime = val.toInt();
+    val = settings.value("biot/nSexual");
+    nSexual = val.toInt();
+    val = settings.value("biot/bParentAttack");
+    bParentAttack = val.toBool();
+    val = settings.value("biot/bSiblingsAttack");
+    bSiblingsAttack = val.toBool();
+}
+
 void CSettings::SanityCheck()
 {
     if (this->m_initialPopulation > 50)
@@ -145,6 +139,80 @@ void CSettings::Reset(int nWidth, int nHeight)
 	m_nWidth      = nHeight;
 	m_nSizeChoice = 1;
 
+}
+
+void CSettings::SetToDefaults()
+{
+    effectiveLength[GREEN_LEAF] = 1;
+    effectiveLength[BLUE_LEAF]  = 2;
+    effectiveLength[RED_LEAF]   = 1;
+    effectiveLength[WHITE_LEAF] = 1;
+    effectiveLength[LBLUE_LEAF] = 1;
+
+    // You have / he has
+    leafContact[GREEN_LEAF][GREEN_LEAF ] = CONTACT_IGNORE;
+    leafContact[GREEN_LEAF][BLUE_LEAF  ] = CONTACT_IGNORE;
+    leafContact[GREEN_LEAF][WHITE_LEAF ] = CONTACT_IGNORE;
+    leafContact[GREEN_LEAF][RED_LEAF   ] = CONTACT_EATEN;
+    leafContact[GREEN_LEAF][LBLUE_LEAF ] = CONTACT_IGNORE;
+
+    leafContact[BLUE_LEAF][BLUE_LEAF  ] = CONTACT_IGNORE;
+    leafContact[BLUE_LEAF][GREEN_LEAF ] = CONTACT_IGNORE;
+    leafContact[BLUE_LEAF][RED_LEAF   ] = CONTACT_DEFEND;
+    leafContact[BLUE_LEAF][WHITE_LEAF ] = CONTACT_IGNORE;
+    leafContact[BLUE_LEAF][LBLUE_LEAF ] = CONTACT_IGNORE;
+
+    leafContact[RED_LEAF][RED_LEAF   ]   = CONTACT_ATTACK;
+    leafContact[RED_LEAF][GREEN_LEAF ]   = CONTACT_EAT;
+    leafContact[RED_LEAF][BLUE_LEAF  ]   = CONTACT_DEFENDED;
+    leafContact[RED_LEAF][WHITE_LEAF ]   = CONTACT_DESTROY;
+    leafContact[RED_LEAF][LBLUE_LEAF ]   = CONTACT_DESTROY;
+
+    leafContact[WHITE_LEAF][RED_LEAF  ]  = CONTACT_DESTROYED;
+    leafContact[WHITE_LEAF][GREEN_LEAF]  = CONTACT_IGNORE;
+    leafContact[WHITE_LEAF][BLUE_LEAF ]  = CONTACT_IGNORE;
+    leafContact[WHITE_LEAF][WHITE_LEAF]  = CONTACT_IGNORE;
+    leafContact[WHITE_LEAF][LBLUE_LEAF]  = CONTACT_IGNORE;
+
+    leafContact[LBLUE_LEAF][RED_LEAF  ]  = CONTACT_DESTROYED;
+    leafContact[LBLUE_LEAF][GREEN_LEAF]  = CONTACT_IGNORE;
+    leafContact[LBLUE_LEAF][BLUE_LEAF ]  = CONTACT_IGNORE;
+    leafContact[LBLUE_LEAF][WHITE_LEAF]  = CONTACT_IGNORE;
+    leafContact[LBLUE_LEAF][LBLUE_LEAF]  = CONTACT_IGNORE;
+
+    leafMass[RED_LEAF]    = 1;
+    leafMass[BLUE_LEAF]   = 2;
+    leafMass[WHITE_LEAF]  = 1;
+    leafMass[GREEN_LEAF]  = 4;
+    leafMass[LBLUE_LEAF]  = 1;
+
+    newType[RED_LEAF]    = RED_LEAF;
+    newType[BLUE_LEAF]   = BLUE_LEAF;
+    newType[WHITE_LEAF]  = WHITE_LEAF;
+    newType[GREEN_LEAF]  = YELLOW_LEAF;
+    newType[LBLUE_LEAF]  = LBLUE_LEAF;
+
+    m_leafEnergy = 2;
+    regenCost  = 200;
+    regenTime  = 0x00000007;
+
+    startEnergy = 400 * 8;
+
+    friction = (float) 0.005;
+
+    chance              = 12;
+    bSoundOn            = true;
+    nSexual             = 3;
+    startNew            = 1;
+    m_initialPopulation = 20;
+    bParentAttack       = true;
+    bSiblingsAttack     = true;
+    bBarrier            = true;
+    bMouse              = true;
+
+    m_sound.SetScheme("PL", "Primordial Life");
+
+    m_nSick = 200;
 }
 
 // ************************************
