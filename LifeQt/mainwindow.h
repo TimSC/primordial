@@ -77,5 +77,6 @@ private:
     int64_t lastStatsUpdate;
 
     class SidesManager sidesManager;
+    class AutoConnect autoConnect;
 };
 #endif // MAINWINDOW_H

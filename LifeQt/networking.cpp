@@ -1,6 +1,7 @@
 #include "networking.h"
 #include <QIODevice>
 #include <QtEndian>
+#include <QDateTime>
 #include <iostream>
 #include <sstream>
 #include "core/json.h"
@@ -487,4 +488,31 @@ void SidesManager::updateListenMode()
         std::cout << "stopping network listen" << std::endl;
         networking.close();
     }
+}
+
+// ************************************************
+
+AutoConnect::AutoConnect(class Environment &envIn, class SidesManager &sideManagerIn):
+    env(envIn),
+    sideManager(sideManagerIn)
+{
+    previousActionTime = 0;
+}
+
+AutoConnect::~AutoConnect()
+{
+
+}
+
+void AutoConnect::TimedUpdate()
+{
+    int64_t now = QDateTime::currentMSecsSinceEpoch();
+    int64_t elapse = now - previousActionTime;
+    if(elapse > 1000.0)
+    {
+        previousActionTime = now;
+
+        std::cout << "tick" << std::endl;
+    }
+
 }

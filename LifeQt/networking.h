@@ -51,6 +51,8 @@ public:
     class SidesManager *manager;
 };
 
+// ************************************************
+
 class SidesManager : public QObject
 {
     Q_OBJECT
@@ -85,6 +87,23 @@ private:
     bool isAssigned[4];
     QString status[4];
     SidesManagerEventRx eventRx;
+};
+
+// ************************************************
+
+class AutoConnect : public QObject
+{
+    Q_OBJECT
+public:
+    AutoConnect(class Environment &envIn, class SidesManager &sideManagerIn);
+    virtual ~AutoConnect();
+
+    void TimedUpdate();
+private:
+    class Environment &env;
+    class SidesManager &sideManager;
+
+    int64_t previousActionTime;
 };
 
 #endif // NETWORKING_H

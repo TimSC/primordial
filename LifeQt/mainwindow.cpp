@@ -25,7 +25,8 @@ using namespace rapidjson;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
     ui(new Ui::MainWindow),
-    sidesManager(env)
+    sidesManager(env),
+    autoConnect(env, sidesManager)
 {
     ui->setupUi(this);
     this->setWindowIcon(QIcon(":/res/icon.ico"));
@@ -131,6 +132,8 @@ void MainWindow::timerEvent(QTimerEvent *event)
         else
             statusNetwork->setText("");
     }
+
+    autoConnect.TimedUpdate();
 }
 
 void MainWindow::on_actionOpen_triggered()
