@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="SettingsBiot" name="biotTab">
       <attribute name="title">
@@ -29,7 +29,7 @@
        <string>Habitat</string>
       </attribute>
      </widget>
-     <widget class="QWidget" name="tab">
+     <widget class="SettingsNetwork" name="networkTab">
       <attribute name="title">
        <string>Network</string>
       </attribute>
@@ -59,6 +59,12 @@
    <class>SettingsHabitat</class>
    <extends>QWidget</extends>
    <header>settingshabitat.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SettingsNetwork</class>
+   <extends>QWidget</extends>
+   <header>settingsnetwork.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

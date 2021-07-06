@@ -85,9 +85,16 @@ public: //Fox BEGIN
     std::string m_sSideAddress[SIDES];
     bool    m_bSideEnable[SIDES];
 
-	int m_nHeight;
-	int m_nWidth;
-	int m_nSizeChoice;
+    int m_nHeight;
+    int m_nWidth;
+    int m_nSizeChoice;
+
+    bool m_enableNetworking;
+    uint16_t m_networkPort;
+    QList<QString> m_connectList;
+
+
+
 };//Fox END;
 
 extern const int REGENCOST_OPTIONS;

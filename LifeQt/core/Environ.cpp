@@ -545,6 +545,7 @@ void Environment::Clear()
 {
     options.SetToDefaults();
     options.Load();
+    options.SanityCheck();
 
 	// Set up sides
 	side[0] = (Side*) &leftSide;

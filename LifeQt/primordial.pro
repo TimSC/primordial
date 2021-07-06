@@ -34,6 +34,7 @@ SOURCES += \
     networkui.cpp \
     settingsbiot.cpp \
     settingshabitat.cpp \
+    settingsnetwork.cpp \
     settingsui.cpp
 
 HEADERS += \
@@ -55,6 +56,7 @@ HEADERS += \
     networkui.h \
     settingsbiot.h \
     settingshabitat.h \
+    settingsnetwork.h \
     settingsui.h
 
 FORMS += \
@@ -63,6 +65,7 @@ FORMS += \
     networkui.ui \
     settingsbiot.ui \
     settingshabitat.ui \
+    settingsnetwork.ui \
     settingsui.ui
 
 # Default rules for deployment.

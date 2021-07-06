@@ -2,6 +2,8 @@
 #include "Settings.h"
 #include <QDateTime>
 #include <QSettings>
+#include <QJsonArray>
+#include <QJsonDocument>
 
 void CSettings::Save()
 {
@@ -19,6 +21,12 @@ void CSettings::Save()
     settings.setValue("biot/nSexual", nSexual);
     settings.setValue("biot/bParentAttack", bParentAttack);
     settings.setValue("biot/bSiblingsAttack", bSiblingsAttack);
+
+    settings.setValue("network/m_enableNetworking", m_enableNetworking);
+    settings.setValue("network/m_networkPort", m_networkPort);
+    QJsonArray clj = QJsonArray::fromStringList(m_connectList);
+    QJsonDocument cljdoc(clj);
+    settings.setValue("network/m_connectList", cljdoc.toJson());
 }
 
 void CSettings::Load()
@@ -48,6 +56,26 @@ void CSettings::Load()
     bParentAttack = val.toBool();
     val = settings.value("biot/bSiblingsAttack");
     bSiblingsAttack = val.toBool();
+
+    val = settings.value("network/m_enableNetworking");
+    if(val.isValid()) m_enableNetworking = val.toBool();
+    val = settings.value("network/m_networkPort");
+    if(val.isValid()) m_networkPort = val.toUInt();
+    val = settings.value("network/m_connectList");
+    if(val.isValid())
+    {
+        QJsonDocument cljdoc = QJsonDocument::fromJson(val.toByteArray());
+        if(cljdoc.isArray())
+        {
+            QJsonArray clja = cljdoc.array();
+            m_connectList.clear();
+            for(auto it = clja.begin(); it != clja.end(); it++)
+            {
+                if(it->isString())
+                    m_connectList.append(it->toString());
+            }
+        }
+    }
 }
 
 void CSettings::SanityCheck()
@@ -57,11 +85,11 @@ void CSettings::SanityCheck()
     if (this->m_initialPopulation < 1)
         this->m_initialPopulation = 1;
 
-	for (int i = 0; i < SIDES; i++)
+    for (int i = 0; i < SIDES; i++)
 	{
         if (m_sSideAddress[i].empty())
             m_bSideEnable[i]  = false;
-	}
+    }
 
 	if (m_nHeight > 4000)
 		m_nHeight = 4000;
@@ -71,7 +99,7 @@ void CSettings::SanityCheck()
 
 	if (m_nSizeChoice  > 3 ||
 		m_nSizeChoice < 0)
-		m_nSizeChoice = 2;
+        m_nSizeChoice = 2;
 }
 
 
@@ -117,6 +145,10 @@ CSettings& CSettings::operator=(CSettings& s)
 	m_nHeight     = s.m_nHeight;
 	m_nWidth      = s.m_nWidth;
 	m_nSizeChoice = s.m_nSizeChoice;
+
+    m_enableNetworking = s.m_enableNetworking;
+    m_networkPort = s.m_networkPort;
+    m_connectList = s.m_connectList;
 
 	return *this;
 }
@@ -213,6 +245,10 @@ void CSettings::SetToDefaults()
     m_sound.SetScheme("PL", "Primordial Life");
 
     m_nSick = 200;
+
+    m_enableNetworking = true;
+    m_networkPort = 54275;
+    m_connectList.clear();
 }
 
 // ************************************
