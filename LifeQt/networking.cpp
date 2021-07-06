@@ -204,8 +204,7 @@ SidesManager::SidesManager(class Environment &envIn) :
     connect(&networking, SIGNAL(netStateChanged(QTcpSocket *, QAbstractSocket::SocketState)), this, SLOT(netStateChanged(QTcpSocket *, QAbstractSocket::SocketState)));
     connect(&networking, SIGNAL(netReceivedPage(QTcpSocket *, const char *, uint32_t)), this, SLOT(netReceivedPage(QTcpSocket *, const char *, uint32_t)));
 
-    networking.listen(QHostAddress::Any);
-    std::cout << "listening on port " << networking.serverPort() << std::endl;
+    updateListenMode();
 
     envIn.side[0]->SetListener(&eventRx);
     envIn.side[1]->SetListener(&eventRx);
@@ -462,5 +461,30 @@ void SidesManager::readyToReceive(int sideId, bool ready)
             QByteArray data("sidunready{}");
             networking.sendPage(sock, data.constData(), data.length());
         }
+    }
+}
+
+void SidesManager::updateListenMode()
+{
+    if(env.options.m_enableNetworking and !networking.isListening())
+    {
+        networking.listen(QHostAddress::Any, env.options.m_networkPort);
+        if(networking.isListening())
+            std::cout << "listening on port " << networking.serverPort() << std::endl;
+        else
+        {
+            std::cout << "failed to listen on port " << env.options.m_networkPort << std::endl;
+
+            networking.listen(QHostAddress::Any);
+            if(networking.isListening())
+                std::cout << "listening on fall back port " << networking.serverPort() << std::endl;
+            else
+                std::cout << "failed to listen on fall back  port" << std::endl;
+        }
+    }
+    if(!env.options.m_enableNetworking and networking.isListening())
+    {
+        std::cout << "stopping network listen" << std::endl;
+        networking.close();
     }
 }

@@ -64,6 +64,7 @@ public:
     void biotLeavingSide(int side, Biot *pBiot);
     bool isListening(uint16_t &portOut);
     void readyToReceive(int sideId, bool ready);
+    void updateListenMode();
 
 public slots:
     void netAcceptConnection(QTcpSocket *client);

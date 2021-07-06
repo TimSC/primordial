@@ -359,7 +359,7 @@ void MainWindow::on_actionSettings_triggered()
     int ret = settingsUi.result();
     if(ret == QDialog::Accepted)
     {
-
+        sidesManager.updateListenMode();
     }
 }
 
