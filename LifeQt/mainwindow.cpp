@@ -85,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
     //qint64 seed = 100;
-    int numBiots = 40;
+    int numBiots = this->app.env.options.m_initialPopulation;
     this->app.env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
                 0, 1, 10);
 
@@ -269,7 +269,7 @@ void MainWindow::on_actionNew_triggered()
 {
     QRect rect(0, 0, 2000, 1500);
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
-    int numBiots = 20;
+    int numBiots = this->app.env.options.m_initialPopulation;
 
     this->app.env.DeleteContents();
     this->app.env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,

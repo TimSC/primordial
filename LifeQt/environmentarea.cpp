@@ -87,6 +87,8 @@ void EnvironmentArea::paintBackground(QPainter &painter)
 
 void EnvironmentArea::mousePressEvent(QMouseEvent * event)
 {
+    if(!env->options.bMouse) return;
+
     int x = event->x();
     int y = event->y();
     Biot *pBiot = this->env->FindBiotByPoint(x, y);
@@ -208,6 +210,8 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
 
 void EnvironmentArea::mouseReleaseEvent(QMouseEvent * event)
 {
+    if(!env->options.bMouse) return;
+
     int x = event->x();
     int y = event->y();
 
