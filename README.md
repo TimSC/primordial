@@ -10,8 +10,6 @@ You will see biots battle to dominate the environment. Over time, new species wi
 
 Evolving artificial life is not a light weight task for any computer. Primordial Life runs as a screen saver or in a window. You are in control of the environment in which your biots evolve and now you can connect your environment to others.
 
-Download the compiled program at: https://www.kinatomic.com/files/plife/
-
 ## Changes
 
 Primordial Life 3.16 improves video performance and adds the dreaded PURPLE PLAGUE. The purple plague reduces dense populations.The plague is transmitted biot to biot through contact. Biots can fight off the infection with energy but never gain immunity from the disease.
@@ -188,5 +186,5 @@ While each light blue segment’s length and position effect the strength and di
 
 ## License
 
-In the year 2000, Jason had released this code under GNU Library or Lesser General Public License version 2.0 (LGPLv2) to http://www.egroups.com/files/plife-design/ at Robert Pollak's request.
+In the year 2000, Jason had released this code under GNU Library or Lesser General Public License version 2.0 (LGPLv2) to http://www.egroups.com/files/plife-design/ at Robert Pollak's request. In 2021, Jason and Tim Sheerman-Chase agreed to relicense the code as "LGPLv2 or later", so we can be compatible with the current GNU licenses.
 
