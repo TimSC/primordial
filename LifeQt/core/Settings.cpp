@@ -27,6 +27,7 @@ void CSettings::Save()
     QJsonArray clj = QJsonArray::fromStringList(m_connectList);
     QJsonDocument cljdoc(clj);
     settings.setValue("network/m_connectList", cljdoc.toJson());
+
 }
 
 void CSettings::Load()
@@ -76,6 +77,7 @@ void CSettings::Load()
             }
         }
     }
+
 }
 
 void CSettings::SanityCheck()

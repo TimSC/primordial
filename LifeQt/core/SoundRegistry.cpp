@@ -1,43 +1,78 @@
 // SoundRegistry.cpp
 //
-/////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////////////////////////
 
 #include <assert.h>
+#include <QDir>
+#include <QFileInfo>
 #include "SoundRegistry.h"
 
 //-------------------------------CSoundRegistry-------------------------
 
+CSoundRegistry::CSoundRegistry()
+{
+    m_bSetScheme = false;
+    m_sScheme = "default";
+    m_sSchemeName = "default";
+}
 
-////////////////////////////////////////////////////////////////////////
+CSoundRegistry::~CSoundRegistry()
+{
+
+}
+
+CSoundRegistry::CSoundRegistry(const CSoundRegistry &obj)
+{
+    *this = obj;
+}
+
+CSoundRegistry &CSoundRegistry::operator=(const CSoundRegistry& obj)
+{
+    m_sScheme     = obj.m_sScheme;
+    m_sSchemeName = obj.m_sSchemeName;
+    m_bSetScheme  = obj.m_bSetScheme;
+    return *this;
+}
+
+// //////////////////////////////////////////////////////////////////////
 // CSoundRegistry::GetPath
 //
-// Play a specific sound event.  Transmitter is silent
+// Get a specific sound event file path.
 //
 std::string CSoundRegistry::GetPath(const std::string &szEvent)
 {
     assert(&szEvent);
 
-    //CRegistry sound;
+    /*PL.Extinction
+    PL.Start
+    PL.TooOld
+    PL.Eaten
+    PL.NoEnergy
+    PL.Birth
+    PL.Mate
+    PL.Terminate
+    PL.Edit
+    PL.Feed*/
 
-    std::string sEvent = "AppEvents\\Schemes\\Apps\\";
-	sEvent += m_sScheme;
-	sEvent += '\\';
-	sEvent += szEvent;
-	sEvent += "\\.current";
+    QString fina = "426888__thisusernameis__beep4.mp3";
 
-    /*if (sound.OpenKey(sEvent, HKEY_CURRENT_USER))
-	{
-		sEvent.Empty();
-		sound.GetString(NULL, sEvent);
-		return sEvent;
-//		sndPlaySound(sEvent, SND_FILENAME | SND_ASYNC | SND_NODEFAULT);
-    }
-    sEvent.Empty();*/
-	return sEvent;
+    //Try up one folder level to find audio folder
+    QDir dir1 = QDir(QDir::currentPath());
+    dir1.cd("../audio/");
+    QDir dir2 = QDir(QDir::currentPath()); //Also check current folder for audio
+    dir2.cd("./audio/");
+
+    QString path = dir1.filePath(fina);
+    if(!QFileInfo::exists(path))
+        path = dir2.filePath(fina);
+
+    if(QFileInfo::exists(path))
+        return path.toStdString();
+
+    return ""; //Can't find audio file
 }
 
-
-///////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////
 // CSoundRegistry::CSoundRegistry
 //
 //
@@ -47,7 +82,7 @@ CSoundRegistry::CSoundRegistry(const std::string &szScheme, const std::string &s
 }
 
 
-///////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////
 // CSoundRegistry::SetScheme
 //
 //
@@ -57,50 +92,4 @@ void CSoundRegistry::SetScheme(const std::string &szScheme, const std::string &s
 	m_sSchemeName = szSchemeName;
     m_bSetScheme  = false;
 }
-
-
-///////////////////////////////////////////////////////
-// CSoundRegistry::SoundEvent
-//
-//
-void CSoundRegistry::SoundEvent(const std::string &szEvent, const std::string &szEventName, const std::string &szPath)
-{
-    /*CRegistry sound;
-    std::string sEvent("AppEvents\\EventLabels\\");
-
-	sEvent += szEvent;
-
-	sound.CreateKey(sEvent, HKEY_CURRENT_USER);
-	sound.SetString(NULL, szEventName);
-
-	sEvent  = "AppEvents\\Schemes\\Apps\\";
-	sEvent  += m_sScheme;
-
-	if (!m_bSetScheme)
-	{
-		m_bSetScheme = TRUE;
-		sound.CreateKey(sEvent, HKEY_CURRENT_USER);
-		sound.SetString(NULL, m_sSchemeName);
-	}
-
-	sEvent += '\\';
-	sEvent += szEvent;
-
-	// If the key doesn't exist
-	if (!sound.OpenKey(sEvent, HKEY_CURRENT_USER))
-	{
-		// Create the key with the right name
-		sound.CreateKey(sEvent, HKEY_CURRENT_USER);
-		sound.SetString(NULL, szEventName);
-
-		// Set the default sound
-		sEvent += "\\.current";
-		sound.CreateKey(sEvent, HKEY_CURRENT_USER);
-		sEvent  = szPath;
-		sEvent += szEventName;
-		sEvent += ".wav";
-        sound.SetString(NULL, sEvent);
-    }*/
-}
-
 

@@ -568,15 +568,22 @@ void Environment::Clear()
 // PlayResource
 //
 //
-void Environment::PlayResource(const std::string &szSound, bool bSync)
+void Environment::PlayResource(const std::string &szSound)
 {
-/*	if (options.bSoundOn && !AfxGetPLife().IsSmall())
+    //bool isSmallScreen = AfxGetPLife().IsSmall();
+    bool isSmallScreen = false;
+
+    if (options.bSoundOn && !isSmallScreen)
 	{
         std::string sSound = options.m_sound.GetPath(szSound);
 
-		if (!sSound.IsEmpty())
-			sndPlaySound(sSound, SND_FILENAME | SND_NODEFAULT | ((bSync)?SND_SYNC:SND_ASYNC));
-    }*/
+        if (!sSound.empty())
+        {
+            mediaPlayer.setMedia(QUrl::fromLocalFile(sSound.c_str()));
+            mediaPlayer.setVolume(50);
+            mediaPlayer.play();
+        }
+    }
 }
 
 
@@ -794,7 +801,7 @@ void Environment::Skip()
         this->GetNumConnectedSides() == 0)
     {
         m_stats.m_extinctions++;
-        PlayResource("PL.Extinction", true);
+        PlayResource("PL.Extinction");
         QThread::msleep(1000);
         PlayResource("PL.Start");
         CreateBiots(0, 0, 0);

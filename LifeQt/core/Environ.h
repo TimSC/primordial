@@ -12,6 +12,7 @@
 #include <string>
 #include <QDataStream>
 #include <QOpenGLWidget>
+#include <QMediaPlayer>
 #include "Etools.h"
 #include "Connect.h"
 #include "Genotype.h"
@@ -152,7 +153,7 @@ public:
 
 	void Clear();
 
-    void PlayResource(const std::string & sound, bool bSync = false);
+    void PlayResource(const std::string & sound);
 
     void lights(bool bOn);
 	void NoRoomToGiveBirth(){/*m_stats.m_collisionCount += 4;*/};
@@ -233,6 +234,8 @@ public:
 
     uint64_t tickStart, tickCount;
     double ticksPerSec;
+
+    QMediaPlayer mediaPlayer;
 };
 
 
