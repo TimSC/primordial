@@ -43,18 +43,58 @@ std::string CSoundRegistry::GetPath(const std::string &szEvent)
 {
     assert(&szEvent);
 
-    /*PL.Extinction
-    PL.Start
-    PL.TooOld
-    PL.Eaten
-    PL.NoEnergy
-    PL.Birth
-    PL.Mate
-    PL.Terminate
-    PL.Edit
-    PL.Feed*/
-
+    // https://freesound.org/people/thisusernameis/sounds/426888/
     QString fina = "426888__thisusernameis__beep4.mp3";
+
+    if(szEvent == "PL.Start")
+    {
+        // https://freesound.org/people/plasterbrain/sounds/243020/
+        fina = "243020__plasterbrain__game-start.mp3";
+    }
+    else if(szEvent == "PL.Birth")
+    {
+        //https://freesound.org/people/pablopiccox/sounds/104478/
+        fina = "104478__pablopiccox__cat-birth-mp3-01.mp3";
+    }
+    else if(szEvent == "PL.TooOld")
+    {
+        //https://freesound.org/people/Albasty/sounds/559621/
+        fina = "559621__albasty__monster-sound-medium-death.mp3";
+    }
+    else if(szEvent == "PL.Eaten")
+    {
+        //https://freesound.org/people/princessemilu/sounds/457475/
+        fina = "104478__pablopiccox__cat-birth-mp3-01.mp3";
+    }
+    else if(szEvent == "PL.NoEnergy")
+    {
+        //https://freesound.org/people/threadzz/sounds/384992/
+        fina = "384992__threadzz__woman-sigh.mp3";
+    }
+    else if(szEvent == "PL.Mate")
+    {
+        //https://freesound.org/people/egomassive/sounds/536765/
+        fina = "536765__egomassive__squish.mp3";
+    }
+    else if(szEvent == "PL.Terminate")
+    {
+        //https://freesound.org/people/okieactor/sounds/415912/
+        fina = "415912__okieactor__heathers-gunshot-effect2.mp3";
+    }
+    else if(szEvent == "PL.Edit")
+    {
+
+    }
+    else if(szEvent == "PL.Feed")
+    {
+        //https://freesound.org/people/Rhidor/sounds/346322/
+        fina = "346322__rhidor__filling-cereal-into-a-bowl.mp3";
+    }
+    else if(szEvent == "PL.Extinction")
+    {
+        //https://freesound.org/people/greenvwbeetle/sounds/240837/
+        fina = "240837__greenvwbeetle__creepy-sound.mp3";
+    }
 
     //Try up one folder level to find audio folder
     QDir dir1 = QDir(QDir::currentPath());
