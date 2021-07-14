@@ -235,7 +235,7 @@ public:
     uint64_t tickStart, tickCount;
     double ticksPerSec;
 
-    QMediaPlayer mediaPlayer;
+    QMediaPlayer *mediaPlayer;
 };
 
 

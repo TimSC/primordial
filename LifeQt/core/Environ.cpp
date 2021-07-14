@@ -490,6 +490,8 @@ void CEnvStatsList::SerializeJsonLoad(const rapidjson::Value& v)
 Environment::Environment()
 {
     m_scene = nullptr;
+    mediaPlayer = new QMediaPlayer(nullptr, QMediaPlayer::LowLatency);
+    mediaPlayer->setAudioRole(QAudio::GameRole);
 
     options.pens.clear();
 	for (int i = 0; i <= MAX_LEAF; i++)
@@ -525,7 +527,8 @@ Environment::Environment()
 //
 Environment::~Environment(void)
 {
-
+    delete mediaPlayer;
+    mediaPlayer = nullptr;
 }
 
 
@@ -579,9 +582,9 @@ void Environment::PlayResource(const std::string &szSound)
 
         if (!sSound.empty())
         {
-            mediaPlayer.setMedia(QUrl::fromLocalFile(sSound.c_str()));
-            mediaPlayer.setVolume(50);
-            mediaPlayer.play();
+            mediaPlayer->setMedia(QUrl::fromLocalFile(sSound.c_str()));
+            mediaPlayer->setVolume(50);
+            mediaPlayer->play();
         }
     }
 }
