@@ -512,7 +512,7 @@ void AutoConnect::TimedUpdate()
     {
         previousActionTime = now;
 
-        std::cout << "tick" << std::endl;
+        //std::cout << "tick" << std::endl;
     }
 
 }

@@ -13,6 +13,24 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+class MainApp : public QObject
+{
+    Q_OBJECT
+public:
+    MainApp();
+    virtual ~MainApp();
+
+    class Environment env;
+
+    int64_t lastSimUpdate;
+
+    class SidesManager sidesManager;
+    class AutoConnect autoConnect;
+
+    void TimedUpdate(bool simRunning);
+    void timerEvent(QTimerEvent *event) override;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -68,15 +86,13 @@ private:
     Ui::MainWindow *ui;
     QLineEdit *statusDay, *statusPopulation, *statusExtinctions, *statusNetwork;
 
-    class Environment env;
     std::string currentFilename;
     std::string currentTool;
 
-    int64_t lastSimUpdate;
     int64_t lastGraphicsUpdate;
     int64_t lastStatsUpdate;
 
-    class SidesManager sidesManager;
-    class AutoConnect autoConnect;
+    class MainApp app;
+
 };
 #endif // MAINWINDOW_H

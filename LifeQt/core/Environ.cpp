@@ -1,10 +1,9 @@
- ///////////////////////////////////////////////////////////////////////////////
+ // /////////////////////////////////////////////////////////////////////////////
 //
 // Environment
 //
 // This class defines the environment of the biots
 //
-// FOX WORKED ON THIS ENTIRE DOC(ANYTHING WITH 'options')
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,14 +12,10 @@
 #include <iostream>
 #include <QDateTime>
 #include <QThread>
-//#include "evolve.h"
 #include "Environ.h"
 #include "Biots.h"
 
 using namespace rapidjson;
-
-// from evolve.cpp
-extern char szFile[];
 
 char szChance[]         = "chance";
 char szSound[]          = "sound";
@@ -40,10 +35,7 @@ char szAsexual[]        = "asexual";
 char szNoFlicker[]      = "noFlicker";
 char szFriction[]       = "friction";
 
-//CSock&  sock = g_sock;
-
-
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // CBiotList
 //
 
@@ -52,7 +44,7 @@ CBiotList::CBiotList() : m_nBiot(-1), m_bLooped(false)
 
 }
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // FindBiotByID
 //
 //
@@ -65,7 +57,7 @@ Biot* CBiotList::FindBiotByID(uint32_t id)
 }
 
 
-/////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////////////////
 // FindBiotByPoint
 //
 //
@@ -91,7 +83,7 @@ Biot* CBiotList::FindBiotByPoint(int x, int y)
 }
 
 
-/////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////////////////
 // FreeAll
 //
 void CBiotList::FreeAll()
@@ -103,7 +95,7 @@ void CBiotList::FreeAll()
 }
 
 
-/////////////////////////////////////////////////////////////////////
+// ///////////////////////////////////////////////////////////////////
 // NextBiot
 //
 //
@@ -131,7 +123,7 @@ Biot* CBiotList::NextBiot()
 }
 
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // HitCheck
 //
 //
@@ -158,7 +150,7 @@ Biot* CBiotList::HitCheck(Biot *me, int* pStart)
 }
 
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // Serialize
 //
 //
@@ -203,7 +195,7 @@ void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value
     }
 }
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // OnStop
 //
 //
@@ -215,7 +207,7 @@ void CBiotList::RemoveBiot()
 }
 
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // CEnvironmentStats
 //
 //
@@ -255,7 +247,7 @@ uint32_t CEnvStats::ToGenerations(const std::string &szDays)
     return (uint32_t)((((atof(szDays.c_str()) * GENERATIONS)) / 0.05));
 }
 
-//////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////
 // Sample
 // 
 //
@@ -450,7 +442,7 @@ void CEnvStats::SerializeJsonLoad(const rapidjson::Value& v)
 
 }
 
-//////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////
 // Serialize
 // 
 //
@@ -491,7 +483,7 @@ void CEnvStatsList::SerializeJsonLoad(const rapidjson::Value& v)
     }
 }
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // Environment Class
 //
 //Fox BEGIN
@@ -526,7 +518,7 @@ Environment::Environment()
 }
 //Fox END
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // Environment Destructor
 //
 //  
@@ -537,7 +529,7 @@ Environment::~Environment(void)
 }
 
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // Clear
 //
 //Fox BEGIN
@@ -572,7 +564,7 @@ void Environment::Clear()
 //Fox END
 
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // PlayResource
 //
 //
@@ -588,7 +580,7 @@ void Environment::PlayResource(const std::string &szSound, bool bSync)
 }
 
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // CreateBiots
 //
 //
@@ -610,17 +602,6 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 //	m_sort.SortAll();
 	m_sort.TraceDebug();
 //	m_sort.SetIncrementalSort(true);
-
-//	BRectSortPos pos;
-
-//	pos.FindRectsInPoint(200, 200);
-//	pos.FindRectsInPoint(100, 100);
-
-//	while (m_sort.IterateRects(pos) != NULL);
-//	m_sort.
-//	pNew = new Biot(*this);
-//	pNew = m_biotList[0];
-//	m_sort.Add(pNew);
 
 }
      
@@ -644,9 +625,6 @@ void Environment::OnOpen()
 
     options.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
 
-//	sock.StartSession(pView->GetSafeHwnd(), this);
-//	sock.Listen();
-
 	// Create our biots
     for (int i = 0; i < m_biotList.size(); i++)
 		m_biotList[i]->OnOpen();
@@ -666,7 +644,6 @@ void Environment::OnNew(QOpenGLWidget &scene,
 						int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 {
     m_scene = &scene;
-    //m_scene->setBackgroundBrush(QBrush(QColor(0,0,0)));
 	Clear();
 
 	options.startNew = 1;
@@ -710,14 +687,13 @@ void Environment::OnNew(QOpenGLWidget &scene,
 	m_stats.NewSample();
 }
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // Skip
 //
 //
 
 void Environment::Skip()
 {
-//	ASSERT(0);
 
     uint64_t tickNow = QDateTime::currentMSecsSinceEpoch();
     uint64_t elapse = tickNow - tickStart;
@@ -729,26 +705,6 @@ void Environment::Skip()
         tickCount = 0;
     }
     tickCount ++;
-
-//	bool bSample = ((options.m_generation & 0x000001FF) == 0x00000000);
-
-/*	if ((generation & 0x000001FF) == 0x00000000)
-	{
-		sock.Listen();
-		sock.ConnectAll();
-
-        bSoundOn = true;
-	}
-	else
-	{
-		if (bNetworkSettingsChange)
-		{
-			sock.Listen();
-			sock.ConnectAll();
-            bNetworkSettingsChange = false;
-		}
-	}
-*/
 
     // Handle arrival of biots from network
     for (int i = 0; i < 4; i++)
@@ -833,28 +789,22 @@ void Environment::Skip()
         m_bIsSelected = (pBiot != NULL);
     }
 
-
-/*
     //Handle total extinction
-	if (m_biotList.GetSize() < 4)
-	{
-		if (m_biotList.GetSize() == 0 &&
-			!sock.ConnectionActive())
-		{  
-			m_stats.m_extinctions++;
-            PlayResource("PL.Extinction", true);
-			Sleep(1000);
-			PlayResource("PL.Start");
-			CreateBiots(0, 0, 0);
-		}
+    if (m_biotList.size() == 0 &&
+        this->GetNumConnectedSides() == 0)
+    {
+        m_stats.m_extinctions++;
+        PlayResource("PL.Extinction", true);
+        QThread::msleep(1000);
+        PlayResource("PL.Start");
+        CreateBiots(0, 0, 0);
     }
 
-*/
 
 }
 
  
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // OnStop
 //
 //
@@ -863,7 +813,22 @@ void Environment::OnStop()
     //sock.Disconnect();
 }
 
-//////////////////////////////////////////////////////////////////////
+
+// ////////////////////////////////////////////////////////////////////
+// GetNumConnectedSides
+//
+//
+int Environment::GetNumConnectedSides()
+{
+    int out = 0;
+    for(int i=0; i<4; i++)
+    {
+        out += this->side[i]->IsConnected();
+    }
+    return out;
+}
+
+// ////////////////////////////////////////////////////////////////////
 // DeleteContents
 //
 //
@@ -873,8 +838,7 @@ void Environment::DeleteContents()
 	m_biotList.FreeAll();
 }
 
-
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // AddBiot
 //
 //
@@ -888,33 +852,6 @@ void Environment::AddBiot(Biot* pNewBiot)
 	}
 }
 
-/*
-
-/////////////////////////////////////////////////////////////////////
-// MagnifyBiot
-//
-//
-void Environment::MagnifyBiot(CDC& dc, Biot* pBiot, CRect& rect)
-{
-	float fWidth  = (float) rect.Width() / (float) pBiot->Width();
-	float fHeight = (float) rect.Height() / (float) pBiot->Height();
-	int width;
-	int height;
-
-	if (fWidth > fHeight)
-	{
-		width  = (int)(fHeight * pBiot->Width());
-		height = (int)(fHeight * pBiot->Height());
-	}
-	else
-	{
-		width  = (int)(fWidth * pBiot->Width());
-		height = (int)(fWidth * pBiot->Height());
-	}
-
-}
-
-*/
 Biot* Environment::HitCheck(Biot *me, BRectSortPos& pos)
 {
 	Biot* pBiot;

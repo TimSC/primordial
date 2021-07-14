@@ -22,12 +22,49 @@
 using namespace std;
 using namespace rapidjson;
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    sidesManager(env),
+MainApp::MainApp(): sidesManager(env),
     autoConnect(env, sidesManager)
 {
+    lastSimUpdate = 0;
+
+    startTimer(10);
+}
+
+MainApp::~MainApp()
+{
+
+
+}
+
+void MainApp::TimedUpdate(bool simRunning)
+{
+    int64_t now = QDateTime::currentMSecsSinceEpoch();
+
+    if(simRunning)
+    {
+        uint64_t elapsed = now - lastSimUpdate;
+        if(elapsed > 20)
+        {
+            lastSimUpdate = now;
+            this->env.Skip();
+        }
+    }
+}
+
+void MainApp::timerEvent(QTimerEvent *event)
+{
+    TimedUpdate(true);
+}
+
+// *******************************************
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+    lastGraphicsUpdate = 0;
+    lastStatsUpdate = 0;
+
     ui->setupUi(this);
     this->setWindowIcon(QIcon(":/res/icon.ico"));
 
@@ -44,19 +81,16 @@ MainWindow::MainWindow(QWidget *parent)
 
     gri->setPen(whitePen);
 
-    this->env.options.Reset(rect.x(), rect.y());
+    this->app.env.options.Reset(rect.x(), rect.y());
 
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
     //qint64 seed = 100;
     int numBiots = 40;
-    this->env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
+    this->app.env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
                 0, 1, 10);
 
-    this->ui->openGLWidget->SetEnvironment(&this->env);
+    this->ui->openGLWidget->SetEnvironment(&this->app.env);
 
-    lastSimUpdate = 0;
-    lastGraphicsUpdate = 0;
-    lastStatsUpdate = 0;
     currentTool = "examine";
 
     this->ui->statusbar->addWidget(new QLabel("Day", nullptr));
@@ -94,16 +128,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
 {
     int64_t now = QDateTime::currentMSecsSinceEpoch();
 
-
-    if(this->ui->actionStart_Simulation->isChecked())
-    {
-        uint64_t elapsed = now - lastSimUpdate;
-        if(elapsed > 20)
-        {
-            lastSimUpdate = now;
-            this->env.Skip();
-        }
-    }
+    app.TimedUpdate(this->ui->actionStart_Simulation->isChecked());
 
     int64_t elapsed = now - lastGraphicsUpdate;
     if(elapsed > 40)
@@ -113,16 +138,16 @@ void MainWindow::timerEvent(QTimerEvent *event)
     }
 
     elapsed = now - lastStatsUpdate;
-    if(env.m_statsList.size() > 0 and elapsed > 500)
+    if(app.env.m_statsList.size() > 0 and elapsed > 500)
     {
         lastStatsUpdate = now;
 
-        const CEnvStats &stats = env.m_statsList.last();
+        const CEnvStats &stats = app.env.m_statsList.last();
         statusDay->setText(stats.GetDaysStr().c_str());
-        statusPopulation->setText(QString::asprintf("%d", env.GetPopulation()));
+        statusPopulation->setText(QString::asprintf("%d", app.env.GetPopulation()));
         statusExtinctions->setText(stats.GetExtinctionsStr().c_str());
         uint16_t port=0;
-        bool isListening = this->sidesManager.isListening(port);
+        bool isListening = app.sidesManager.isListening(port);
         if(isListening)
         {
             QString newTxt = QString::asprintf("TCP port %d", port);
@@ -133,7 +158,7 @@ void MainWindow::timerEvent(QTimerEvent *event)
             statusNetwork->setText("");
     }
 
-    autoConnect.TimedUpdate();
+    app.autoConnect.TimedUpdate();
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -177,7 +202,7 @@ void MainWindow::on_actionOpen_triggered()
             throw runtime_error("eror parsing json");
         if (!d.IsObject() or !d.HasMember("environment"))
             throw runtime_error("eror parsing json");
-        this->env.SerializeJsonLoad(d["environment"]);
+        this->app.env.SerializeJsonLoad(d["environment"]);
 
     } catch (exception &err) {
 
@@ -185,7 +210,7 @@ void MainWindow::on_actionOpen_triggered()
         return;
     }
 
-    this->env.OnOpen();
+    this->app.env.OnOpen();
 
     this->currentFilename = fileName.toStdString();
 
@@ -212,7 +237,7 @@ void MainWindow::on_actionSave_As_triggered()
     Document d;
     d.SetObject();
     Value envJson(kObjectType);
-    this->env.SerializeJson(d, envJson);
+    this->app.env.SerializeJson(d, envJson);
     d.AddMember("environment", envJson, d.GetAllocator());
 
     if(compSuffix2 == "plfc")
@@ -246,8 +271,8 @@ void MainWindow::on_actionNew_triggered()
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
     int numBiots = 20;
 
-    this->env.DeleteContents();
-    this->env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
+    this->app.env.DeleteContents();
+    this->app.env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
                                   0, 1, 10);
 }
 
@@ -267,7 +292,7 @@ void MainWindow::on_actionSave_triggered()
     Document d;
     d.SetObject();
     Value envJson(kObjectType);
-    this->env.SerializeJson(d, envJson);
+    this->app.env.SerializeJson(d, envJson);
     d.AddMember("environment", envJson, d.GetAllocator());
     ofstream myfile(this->currentFilename);
     OStreamWrapper osw(myfile);
@@ -357,12 +382,12 @@ void MainWindow::updateToolMenu()
 
 void MainWindow::on_actionSettings_triggered()
 {
-    class SettingsUi settingsUi(env.options);
+    class SettingsUi settingsUi(app.env.options);
     settingsUi.exec();
     int ret = settingsUi.result();
     if(ret == QDialog::Accepted)
     {
-        sidesManager.updateListenMode();
+        app.sidesManager.updateListenMode();
     }
 }
 
@@ -379,6 +404,6 @@ void MainWindow::on_actionAbout_triggered()
 
 void MainWindow::on_actionNetwork_Status_triggered()
 {
-    class NetworkUi networkUi(sidesManager);
+    class NetworkUi networkUi(app.sidesManager);
     networkUi.exec();
 }

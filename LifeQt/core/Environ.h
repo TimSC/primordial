@@ -145,7 +145,6 @@ public:
     void SerializeJsonLoad(const rapidjson::Value& v);
 
 	Biot* HitCheck(Biot *me, BRectSortPos& pos);
-//	Biot* HitCheck(Biot *me, int* pStart = NULL); { return m_biotList.HitCheck(me, pStart); }
     Biot* FindBiotByID(uint32_t id) { return m_biotList.FindBiotByID(id); }
     Biot* FindBiotByPoint(int x, int y) { return m_biotList.FindBiotByPoint(x, y); };
 
@@ -165,6 +164,7 @@ public:
 	void MoveBiot(Biot* pBiot, BRect* pOrigRect) { m_sort.Move((BRectItem*) pBiot, pOrigRect); }
 		
     int  GetPopulation() { return m_biotList.size(); }
+    int  GetNumConnectedSides();
 	void DeleteContents();
     void Skip();
 
