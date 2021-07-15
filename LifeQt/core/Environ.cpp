@@ -685,11 +685,11 @@ void Environment::OnNew(QOpenGLWidget &scene,
 }
 
 // ////////////////////////////////////////////////////////////////////
-// Skip
+// Update
 //
 //
 
-void Environment::Skip()
+void Environment::Update()
 {
 
     uint64_t tickNow = QDateTime::currentMSecsSinceEpoch();
@@ -756,6 +756,9 @@ void Environment::Skip()
                 }
             }
         }
+
+        for(int i=0; i<listeners.size(); i++)
+            listeners[i]->BiotUpdated(pBiot);
     }
 
     //Check if we should update stats
@@ -994,5 +997,10 @@ void Environment::SetSelectedBiot(uint32_t biotId)
 {
     m_selectedId = biotId;
     m_bIsSelected = biotId != 0;
+}
+
+void Environment::AddListener(class EnvironmentListener *listener)
+{
+    listeners.push_back(listener);
 }
 

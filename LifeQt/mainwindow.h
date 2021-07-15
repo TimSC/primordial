@@ -45,6 +45,9 @@ public:
 
     void updateToolMenu();
 
+public slots:
+    void SelectedBiot(uint32_t biotId);
+
 private slots:
     void on_actionOpen_triggered();
 

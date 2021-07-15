@@ -46,7 +46,7 @@ void MainApp::TimedUpdate(bool simRunning)
         if(elapsed > 20)
         {
             lastSimUpdate = now;
-            this->env.Skip();
+            this->env.Update();
         }
     }
 }
@@ -67,7 +67,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->setupUi(this);
     this->setWindowIcon(QIcon(":/res/icon.ico"));
-    ui->dockViewBiot->setVisible(false);
 
     QSize size = qApp->screens()[0]->size();
 
@@ -116,6 +115,13 @@ MainWindow::MainWindow(QWidget *parent)
     statusNetwork->setReadOnly(true);
     statusNetwork->setFixedWidth(100);
     this->ui->statusbar->addWidget(statusNetwork);
+
+    ui->dockViewBiot->setVisible(false);
+    connect(this->ui->openGLWidget, SIGNAL(SelectedBiot(uint32_t)), this, SLOT(SelectedBiot(uint32_t)));
+    class DockViewBiot *dvb = qobject_cast<class DockViewBiot *>(this->ui->dockViewBiot->widget());
+    connect(this->ui->openGLWidget, SIGNAL(SelectedBiot(uint32_t)), dvb, SLOT(SelectedBiot(uint32_t)));
+    app.env.AddListener(&dvb->listenAdapter);
+    dvb->env = &app.env;
 
     startTimer(10);     // 10-millisecond timer
 }
@@ -407,4 +413,9 @@ void MainWindow::on_actionNetwork_Status_triggered()
 {
     class NetworkUi networkUi(app.sidesManager);
     networkUi.exec();
+}
+
+void MainWindow::SelectedBiot(uint32_t biotId)
+{
+    this->ui->dockViewBiot->setVisible(true);
 }

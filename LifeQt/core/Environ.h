@@ -136,6 +136,20 @@ private:
 // Environment
 //
 //
+class EnvironmentListener
+{
+public:
+    EnvironmentListener() {};
+    virtual ~EnvironmentListener() {};
+
+    virtual void BiotUpdated(Biot* pBiot) {};
+};
+
+// ////////////////////////////////////////////////////////////////////
+//
+// Environment
+//
+//
 class Environment : public BRect, Randomizer
 {
 public:                  
@@ -167,7 +181,7 @@ public:
     int  GetPopulation() { return m_biotList.size(); }
     int  GetNumConnectedSides();
 	void DeleteContents();
-    void Skip();
+    void Update();
 
     bool  BiotShouldBox(uint32_t biotId) { return (biotId == m_selectedId && m_bIsSelected); }
 	Biot* GetSelectedBiot()           { return m_biotList.FindBiotByID(m_selectedId); }
@@ -190,6 +204,7 @@ public:
 	void OnStop();
 
     void paintGL(QPainter &painter);
+    void AddListener(class EnvironmentListener *listener);
 
 public:
 
@@ -236,6 +251,7 @@ public:
     double ticksPerSec;
 
     QMediaPlayer *mediaPlayer;
+    QList<class EnvironmentListener *> listeners;
 };
 
 inline bool Environment::WithinBorders(BRect& rect)

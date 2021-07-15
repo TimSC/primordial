@@ -17,7 +17,11 @@
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="6" column="1">
-      <widget class="QLineEdit" name="lineEdit_7"/>
+      <widget class="QLineEdit" name="childredEdit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
      <item row="7" column="1">
       <spacer name="verticalSpacer">
@@ -40,13 +44,17 @@
       </widget>
      </item>
      <item row="2" column="3">
-      <widget class="QLineEdit" name="lineEdit_6"/>
+      <widget class="QLineEdit" name="lifespanEdit"/>
      </item>
      <item row="1" column="1">
-      <widget class="QComboBox" name="comboBox"/>
+      <widget class="QComboBox" name="speciesComboBox"/>
      </item>
      <item row="5" column="1">
-      <widget class="QLineEdit" name="lineEdit_5"/>
+      <widget class="QLineEdit" name="fertileEdit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
      <item row="4" column="0">
       <widget class="QLabel" name="label_7">
@@ -70,7 +78,7 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QLineEdit" name="lineEdit"/>
+      <widget class="QLineEdit" name="nameEdit"/>
      </item>
      <item row="5" column="0">
       <widget class="QLabel" name="label_8">
@@ -80,13 +88,17 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QLineEdit" name="lineEdit_3"/>
+      <widget class="QLineEdit" name="fromEdit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
      <item row="1" column="3">
-      <widget class="QLineEdit" name="lineEdit_4"/>
+      <widget class="QLineEdit" name="daysOldEdit"/>
      </item>
      <item row="0" column="3">
-      <widget class="QLineEdit" name="lineEdit_2"/>
+      <widget class="QLineEdit" name="generationEdit"/>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label_5">
@@ -105,15 +117,15 @@
      <item row="1" column="2">
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>Days Old:</string>
+        <string>Age (days):</string>
        </property>
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QComboBox" name="comboBox_2"/>
+      <widget class="QComboBox" name="orientationComboBox"/>
      </item>
      <item row="3" column="3">
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="applyButton">
        <property name="text">
         <string>Apply</string>
        </property>
