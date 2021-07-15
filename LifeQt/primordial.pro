@@ -27,6 +27,7 @@ SOURCES += \
     core/Settings.cpp \
     core/SoundRegistry.cpp \
     core/vector.cpp \
+    dockviewbiot.cpp \
     environmentarea.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -50,6 +51,7 @@ HEADERS += \
     core/SoundRegistry.h \
     core/json.h \
     core/vector.h \
+    dockviewbiot.h \
     environmentarea.h \
     mainwindow.h \
     networking.h \
@@ -61,6 +63,7 @@ HEADERS += \
 
 FORMS += \
     aboutui.ui \
+    dockviewbiot.ui \
     mainwindow.ui \
     networkui.ui \
     settingsbiot.ui \

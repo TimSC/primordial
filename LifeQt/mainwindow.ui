@@ -85,6 +85,15 @@
    <addaction name="menuInformation"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="dockViewBiot">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="DockViewBiot" name="dockWidgetContents"/>
+  </widget>
   <action name="actionStart_Simulation">
    <property name="checkable">
     <bool>true</bool>
@@ -247,6 +256,12 @@
    <class>EnvironmentArea</class>
    <extends>QOpenGLWidget</extends>
    <header>environmentarea.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DockViewBiot</class>
+   <extends>QWidget</extends>
+   <header>dockviewbiot.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

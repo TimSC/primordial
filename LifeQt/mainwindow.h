@@ -8,6 +8,8 @@
 #include "networking.h"
 #include "core/json.h"
 #include "rapidjson/document.h"
+#include "dockviewbiot.h"
+#include "environmentarea.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

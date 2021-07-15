@@ -1,7 +1,7 @@
  ///////////////////////////////////////////////////////////////////////////////
 //
 // Environment
-//						---FOX MODIFIED MUCH OF THIS DOC---
+//
 // This class defines the environment of the biots
 //
 //
@@ -237,7 +237,6 @@ public:
 
     QMediaPlayer *mediaPlayer;
 };
-
 
 inline bool Environment::WithinBorders(BRect& rect)
 {

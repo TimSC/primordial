@@ -113,6 +113,8 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
     {
         if(pBiot == nullptr) return;
         this->env->SetSelectedBiot(pBiot->m_Id);
+
+        emit SelectedBiot(pBiot->m_Id);
     }
     else if (currentTool == "feed")
     {
@@ -221,3 +223,4 @@ void EnvironmentArea::setCurrentTool(const std::string &tool)
 {
     currentTool = tool;
 }
+

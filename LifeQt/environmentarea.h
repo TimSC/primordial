@@ -20,6 +20,9 @@ public:
     void mouseReleaseEvent(QMouseEvent * event) override;
     void setCurrentTool(const std::string &tool);
 
+signals:
+    void SelectedBiot(uint32_t biotId);
+
 private:
     class Environment *env;
 
@@ -29,6 +32,7 @@ private:
     QPixmap backgroundTop, backgroundBottom;
 
     void paintBackground(QPainter &painter);
+
 };
 
 #endif // ENVIRONMENTAREA_H

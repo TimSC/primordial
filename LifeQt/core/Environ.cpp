@@ -17,24 +17,6 @@
 
 using namespace rapidjson;
 
-char szChance[]         = "chance";
-char szSound[]          = "sound";
-char szPopulation[]     = "population";
-char szRegenCost[]      = "regenerationCost";
-char szRegenTime[]      = "regenerationTime";
-char szGreenValue[]     = "green";
-char szStartNew[]       = "startNew";
-char szMouse[]          = "mouse";
-char szLifeSpan[]       = "lifeSpan";
-char szOneColor[]       = "oneColor";
-char szTwoColor[]       = "twoColor";
-char szThreeColor[]     = "threeColor";
-char szParentAttack[]   = "parentAttack";
-char szSiblingsAttack[] = "siblingsAttack";
-char szAsexual[]        = "asexual";
-char szNoFlicker[]      = "noFlicker";
-char szFriction[]       = "friction";
-
 // ////////////////////////////////////////////////////////////////////
 // CBiotList
 //
@@ -482,6 +464,11 @@ void CEnvStatsList::SerializeJsonLoad(const rapidjson::Value& v)
         this->push_back(stats);
     }
 }
+
+// ////////////////////////////////////////////////////////////////////
+
+
+
 
 // ////////////////////////////////////////////////////////////////////
 // Environment Class
@@ -1008,3 +995,4 @@ void Environment::SetSelectedBiot(uint32_t biotId)
     m_selectedId = biotId;
     m_bIsSelected = biotId != 0;
 }
+

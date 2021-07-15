@@ -67,6 +67,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->setupUi(this);
     this->setWindowIcon(QIcon(":/res/icon.ico"));
+    ui->dockViewBiot->setVisible(false);
 
     QSize size = qApp->screens()[0]->size();
 
