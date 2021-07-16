@@ -184,6 +184,12 @@ For sexual reproduction, a species identifier is used to allow for different spe
 
 While each light blue segment’s length and position effect the strength and direction of a biots propulsion. For symmetrical creatures, however, these propulsion vectors can cancel each other out, or, since the propulsion lines are fired serially, they can make the biot go in circles. The motion frequency gene can tell propulsion segments on one line to fire or skip, depending on which line it belongs. This allows symmetrical creatures to develop complicated motion patterns.
 
+## Developing
+
+### On Debian/Ubuntu/Mint
+
+  sudo apt install qtcreator libqt5multimedia5-plugins qtmultimedia5-dev 
+
 ## License
 
 In the year 2000, Jason had released this code under GNU Library or Lesser General Public License version 2.0 (LGPLv2) to http://www.egroups.com/files/plife-design/ at Robert Pollak's request. In 2021, Jason and Tim Sheerman-Chase agreed to relicense the code as "LGPLv2 or later", so we can be compatible with the current GNU licenses.
