@@ -248,9 +248,7 @@ class Biot: public BRectItem
 
     bool     bTerminateEvent;
 
-
     int      m_nSick; //Time until cured
-    bool     m_bDrawn;
     bool     m_bSelected;
 
 	void MoveArm(int nPeno, short degree);

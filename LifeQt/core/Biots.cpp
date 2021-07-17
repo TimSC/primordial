@@ -157,7 +157,6 @@ void Biot::ClearSettings(void)
 	
     bInjured     = false;
 	ClearCollisions();
-    m_bDrawn     = false;
     m_bSelected  = false;
 
     for(int i=0; i<MAX_GENES; i++)
@@ -2295,6 +2294,8 @@ short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 
 void Biot::paintGL(QPainter &painter)
 {
+    assert (!bDie);
+
     if (env.BiotShouldBox(m_Id))
     {
         QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
