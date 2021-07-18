@@ -141,7 +141,7 @@ float Biot::PercentEnergy()
 void Biot::ClearSettings(void)
 {
     bDie             = false;
-    genes            = MAX_LIMBS; // We start out showing a little
+    genes            = INITIAL_GENES; // We start out showing a little
 	genes2           = 0;
 	m_fatherId       = 0;
 	m_mateId         = 0;
@@ -199,7 +199,7 @@ int Biot::RandomCreate(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 {
 	max_genes = MAX_GENES;
 
-	genes = MAX_GENES; // We show all of the biot on creation
+    genes = INITIAL_GENES;
 
 	//TODO: Switch to Randomize
 	trait.Randomize(nArmsPerBiot, nTypesPerBiot, nSegmentsPerArm);
@@ -1032,14 +1032,15 @@ bool Biot::Move(void)
 	// Handle the disappear case here.
 	if (bDie)
 	{
+        std::cout << this->m_Id << "," << genes << std::endl;
+        //Gradually make less genes express until we get to zero
 		genes -= 2;
 		max_genes -= 2;
 		if (genes <= 0)
 		{
 			env.PlayResource("PL.TooOld");
-            //Erase();
 
-            return false;
+            return false; //Return false to remove
 		}
         bChangeSize = true;
 	}
@@ -2294,7 +2295,6 @@ short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 
 void Biot::paintGL(QPainter &painter)
 {
-    assert (!bDie);
 
     if (env.BiotShouldBox(m_Id))
     {

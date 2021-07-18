@@ -18,10 +18,10 @@ union CSTATE;
 const int MAX_RATIO      = 20;
 const int UNI_RATIO      = 5;
 const int MAX_SEGMENTS   = 10;  // The number of segments which can make up a line
-const int MAX_LIMBS   = 8;   // The number of lines allowed
+const int MAX_LIMBS      = 8;   // The number of lines allowed
 const int MAX_GENES      = MAX_LIMBS * MAX_SEGMENTS; // Maximum number of line segments
 const int MAX_LIMB_TYPES = 4;   // The number of distinct limb types allowed
-
+const int INITIAL_GENES  = 8;
 
 ///////////////////////////////////////////////////////////////////
 // GeneSegment

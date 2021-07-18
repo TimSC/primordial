@@ -21,7 +21,7 @@ using namespace rapidjson;
 // CBiotList
 //
 
-CBiotList::CBiotList() : m_nBiot(-1), m_bLooped(false)
+CBiotList::CBiotList()
 {
 
 }
@@ -74,34 +74,6 @@ void CBiotList::FreeAll()
         delete this->at(i);
 
     clear();
-}
-
-
-// ///////////////////////////////////////////////////////////////////
-// NextBiot
-//
-//
-Biot* CBiotList::NextBiot()
-{
-    if (++m_nBiot >= size())
-	{
-		m_nBiot = 0;
-
-        if (m_nBiot == size())
-		{
-			m_nBiot = -1;
-			return NULL;
-		}
-		else
-		{
-            m_bLooped = true;
-		}
-	}
-	else
-	{
-        m_bLooped = false;
-	}
-    return this->at(m_nBiot);
 }
 
 
@@ -162,8 +134,6 @@ void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value
     Biot* pBiot = nullptr;
 
     const Value &biotsJson = v["biots"];
-    m_nBiot = -1;
-    m_bLooped = false;
 
     for (int i = 0; i < biotsJson.Size(); i++)
     {
@@ -181,13 +151,13 @@ void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value
 // OnStop
 //
 //
-void CBiotList::RemoveBiot()
+void CBiotList::RemoveBiot(class Biot *pBiot)
 {
-    delete this->at(m_nBiot);
-    this->removeAt(m_nBiot);
-	m_nBiot--;
+    int index = this->indexOf(pBiot);
+    assert (index >= 0);
+    delete this->at(index);
+    this->removeAt(index);
 }
-
 
 // ////////////////////////////////////////////////////////////////////
 // CEnvironmentStats
@@ -718,21 +688,21 @@ void Environment::Update()
     }
 
     // Process all the biots now
-    while (true)
+    QVector<class Biot *> pBiotsToRemove;
+    for(auto it=m_biotList.begin(); it!=m_biotList.end(); it++)
     {
-        Biot* pBiot = m_biotList.NextBiot();
+        Biot* pBiot = *it;
 
         // Is the biot present?
-        if (m_biotList.Looped()) break;
+        //if (m_biotList.Looped()) break;
         if (pBiot == nullptr) continue;
 
         BRect origPos(pBiot);
 
         if (!pBiot->Move())
         {
-            m_sort.Remove(pBiot);
-            m_biotList.RemoveBiot();
-            m_stats.m_deaths++;
+            //Biot has died, so remove
+            pBiotsToRemove.append(pBiot);
         }
         else
         {
@@ -746,7 +716,7 @@ void Environment::Update()
                     if (side[i]->Export(pBiot))
                     {                        
                         m_sort.Remove(pBiot);
-                        m_biotList.RemoveBiot();
+                        m_biotList.RemoveBiot(pBiot);
                     }
                     else
                     {
@@ -759,6 +729,16 @@ void Environment::Update()
 
         for(int i=0; i<listeners.size(); i++)
             listeners[i]->BiotUpdated(pBiot);
+    }
+
+    //Remove dead biots from lists
+    for(int i=0; i< pBiotsToRemove.size(); i++)
+    {
+        Biot* pBiot = pBiotsToRemove[i];
+
+        m_sort.Remove(pBiot);
+        m_biotList.RemoveBiot(pBiot);
+        m_stats.m_deaths++;
     }
 
     //Check if we should update stats

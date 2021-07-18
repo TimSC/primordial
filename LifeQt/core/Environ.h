@@ -117,9 +117,9 @@ public:
     Biot* FindBiotByPoint(int x, int y);
 
 	Biot* HitCheck(Biot *me, int* pStart);
-	Biot* NextBiot();
-	void RemoveBiot();
-    bool Looped() { return m_bLooped; }
+    //Biot* NextBiot();
+    void RemoveBiot(class Biot *pBiot);
+    //bool Looped() { return m_bLooped; }
 
 	void FreeAll();
 
@@ -127,8 +127,8 @@ public:
     void SerializeJsonLoad(class Environment &env, const rapidjson::Value& v);
 
 private:
-	int  m_nBiot;
-    bool m_bLooped;
+    //int  m_nBiot;
+    //bool m_bLooped;
 };
 
 // ////////////////////////////////////////////////////////////////////
