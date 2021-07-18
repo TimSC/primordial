@@ -96,7 +96,7 @@ private:
 };
 
 
-//////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////
 // Biot
 //
 // Biot State Variables
@@ -328,8 +328,8 @@ public:
     int      rightX;
     int      ratio;
     int      lastType;
-    int      max_genes;
-    int      genes;
+    int      max_genes; //Number of genes expressed when fully grown
+    int      genes; //Number of genes expressed at current growth size
     int64_t     turnBenefit;
     int64_t     totalDistance;
     int64_t     colorDistance[WHITE_LEAF + 1];

@@ -39,6 +39,7 @@ public:
 	BRect(const BRect* pRect) { *this = *pRect; }
     BRect(const QRect* pRect)  { Set(pRect);     }
     BRect() : m_left(0), m_right(0), m_bottom(0), m_top(0) { };
+    virtual ~BRect() {};
 
     void GetRECT(QRect* pRect)
 	{  
@@ -228,6 +229,9 @@ public:
 class BRectArray : public QList<BRectItem*>
 {
 public:
+    BRectArray();
+    virtual ~BRectArray();
+
 	// Incrementally perform updates to the array
 	void InsertRect(BRectItem* pItem);
 	void MoveRect(BRectItem* pItem);

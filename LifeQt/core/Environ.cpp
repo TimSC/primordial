@@ -689,9 +689,9 @@ void Environment::Update()
 
     // Process all the biots now
     QVector<class Biot *> pBiotsToRemove;
-    for(auto it=m_biotList.begin(); it!=m_biotList.end(); it++)
+    for(int i=0; i<m_biotList.size(); i++)
     {
-        Biot* pBiot = *it;
+        Biot* pBiot = m_biotList[i];
 
         // Is the biot present?
         //if (m_biotList.Looped()) break;
@@ -703,6 +703,8 @@ void Environment::Update()
         {
             //Biot has died, so remove
             pBiotsToRemove.append(pBiot);
+
+            m_stats.m_deaths++;
         }
         else
         {
@@ -714,9 +716,8 @@ void Environment::Update()
                 if (side[i]->IsConnected() and pBiot->IsContainedBy(*side[i]))
                 {
                     if (side[i]->Export(pBiot))
-                    {                        
-                        m_sort.Remove(pBiot);
-                        m_biotList.RemoveBiot(pBiot);
+                    {                                                
+                        pBiotsToRemove.append(pBiot);
                     }
                     else
                     {
@@ -738,7 +739,6 @@ void Environment::Update()
 
         m_sort.Remove(pBiot);
         m_biotList.RemoveBiot(pBiot);
-        m_stats.m_deaths++;
     }
 
     //Check if we should update stats

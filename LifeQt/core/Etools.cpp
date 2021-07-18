@@ -502,6 +502,17 @@ bool BRectSort::FindShortestArray(BRectSortPos& sortPos, int nLeft, int nTop, in
 	return true;
 }
 
+// ************************************************************************************
+
+BRectArray::BRectArray(): QList<BRectItem*>()
+{
+
+}
+
+BRectArray::~BRectArray()
+{
+
+}
 
 void BRectArray::TraceDebug(int nIndex)
 {

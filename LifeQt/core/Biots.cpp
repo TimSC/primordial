@@ -1032,7 +1032,6 @@ bool Biot::Move(void)
 	// Handle the disappear case here.
 	if (bDie)
 	{
-        std::cout << this->m_Id << "," << genes << std::endl;
         //Gradually make less genes express until we get to zero
 		genes -= 2;
 		max_genes -= 2;
