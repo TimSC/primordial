@@ -101,10 +101,13 @@ std::string CSoundRegistry::GetPath(const std::string &szEvent)
     dir1.cd("../audio/");
     QDir dir2 = QDir(QDir::currentPath()); //Also check current folder for audio
     dir2.cd("./audio/");
+    QDir dir3 = QDir("/usr/share/primordial-life/audio/"); //Check default linux path
 
     QString path = dir1.filePath(fina);
     if(!QFileInfo::exists(path))
         path = dir2.filePath(fina);
+    if(!QFileInfo::exists(path))
+        path = dir3.filePath(fina);
 
     if(QFileInfo::exists(path))
         return path.toStdString();
