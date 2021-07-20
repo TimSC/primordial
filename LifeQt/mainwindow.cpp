@@ -123,6 +123,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this->ui->openGLWidget, SIGNAL(SelectedBiot(uint32_t)), dvb, SLOT(SelectedBiot(uint32_t)));
     app.env.AddListener(&dvb->listenAdapter);
     dvb->env = &app.env;
+    connect(this->ui->openGLWidget, SIGNAL(ExitFullscreen()), this, SLOT(ExitFullscreen()));
 
     installEventFilter(this);
     startTimer(10);     // 10-millisecond timer
@@ -419,13 +420,16 @@ void MainWindow::on_actionNetwork_Status_triggered()
 
 void MainWindow::SelectedBiot(uint32_t biotId)
 {
-    this->ui->dockViewBiot->setVisible(true);
+    if(!this->isFullScreen())
+        this->ui->dockViewBiot->setVisible(true);
 }
 
 void MainWindow::on_actionFull_Screen_triggered()
 {
-    //this->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint);
     this->showFullScreen();
+    this->ui->statusbar->setVisible(false);
+    this->ui->menubar->setVisible(false);
+    this->ui->dockViewBiot->setVisible(false);
 }
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)
@@ -433,10 +437,17 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::KeyPress)
     {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-        if(visibility() == QWindow::FullScreen and keyEvent->key() == Qt::Key_Escape)
+        if(keyEvent->key() == Qt::Key_Escape and this->isFullScreen())
         {
-            //this->setVisibility(QWindow::AutomaticVisibility);
+            ExitFullscreen();
         }
     }
     return QObject::eventFilter(obj, event);
+}
+
+void MainWindow::ExitFullscreen()
+{
+    showNormal();
+    this->ui->statusbar->setVisible(true);
+    this->ui->menubar->setVisible(true);
 }

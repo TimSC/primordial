@@ -22,6 +22,7 @@ public:
 
 signals:
     void SelectedBiot(uint32_t biotId);
+    void ExitFullscreen();
 
 private:
     class Environment *env;

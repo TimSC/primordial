@@ -49,6 +49,8 @@ public:
 public slots:
     void SelectedBiot(uint32_t biotId);
 
+    void ExitFullscreen();
+
 private slots:
     void on_actionOpen_triggered();
 

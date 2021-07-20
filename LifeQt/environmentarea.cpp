@@ -88,6 +88,12 @@ void EnvironmentArea::paintBackground(QPainter &painter)
 
 void EnvironmentArea::mousePressEvent(QMouseEvent * event)
 {
+    if(window()->isFullScreen())
+    {
+        emit ExitFullscreen();
+        return;
+    }
+
     if(!env->options.bMouse) return;
 
     int x = event->x();
