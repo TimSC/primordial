@@ -24,6 +24,7 @@ EnvironmentArea::EnvironmentArea(QWidget *central) : QOpenGLWidget(central)
     backgroundTop.load(":/res/top.png");
     backgroundBottom.load(":/res/bottom.png");
     currentTool = "examine";
+
 }
 
 void EnvironmentArea::SetEnvironment(class Environment *envIn)
@@ -223,4 +224,3 @@ void EnvironmentArea::setCurrentTool(const std::string &tool)
 {
     currentTool = tool;
 }
-

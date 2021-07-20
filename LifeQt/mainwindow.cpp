@@ -11,6 +11,7 @@
 #include <QScreen>
 #include <QLabel>
 #include <QByteArray>
+#include <QWindow>
 #include "core/Biots.h"
 #include "settingsui.h"
 #include "aboutui.h"
@@ -123,6 +124,7 @@ MainWindow::MainWindow(QWidget *parent)
     app.env.AddListener(&dvb->listenAdapter);
     dvb->env = &app.env;
 
+    installEventFilter(this);
     startTimer(10);     // 10-millisecond timer
 }
 
@@ -418,4 +420,23 @@ void MainWindow::on_actionNetwork_Status_triggered()
 void MainWindow::SelectedBiot(uint32_t biotId)
 {
     this->ui->dockViewBiot->setVisible(true);
+}
+
+void MainWindow::on_actionFull_Screen_triggered()
+{
+    //this->setWindowFlags(Qt::WindowStaysOnTopHint | Qt::FramelessWindowHint);
+    this->showFullScreen();
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() == QEvent::KeyPress)
+    {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+        if(visibility() == QWindow::FullScreen and keyEvent->key() == Qt::Key_Escape)
+        {
+            //this->setVisibility(QWindow::AutomaticVisibility);
+        }
+    }
+    return QObject::eventFilter(obj, event);
 }

@@ -31,6 +31,7 @@ public:
 
     void TimedUpdate(bool simRunning);
     void timerEvent(QTimerEvent *event) override;
+
 };
 
 class MainWindow : public QMainWindow
@@ -86,6 +87,12 @@ private slots:
     void on_actionAbout_triggered();
 
     void on_actionNetwork_Status_triggered();
+
+    void on_actionFull_Screen_triggered();
+
+protected:
+
+     bool eventFilter(QObject *obj, QEvent *event);
 
 private:
     Ui::MainWindow *ui;

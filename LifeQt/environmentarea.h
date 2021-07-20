@@ -33,6 +33,7 @@ private:
 
     void paintBackground(QPainter &painter);
 
+
 };
 
 #endif // ENVIRONMENTAREA_H
