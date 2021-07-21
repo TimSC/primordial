@@ -37,26 +37,26 @@ void CSettings::Load()
     QVariant val = settings.value("habitat/bSoundOn");
     if(val.isValid()) bSoundOn = val.toBool();
     val = settings.value("habitat/bMouse");
-    bMouse = val.toBool();
+    if(val.isValid()) bMouse = val.toBool();
     val = settings.value("habitat/m_initialPopulation");
-    m_initialPopulation = val.toInt();
+    if(val.isValid()) m_initialPopulation = val.toInt();
     val = settings.value("habitat/friction");
-    friction = val.toFloat();
+    if(val.isValid()) friction = val.toFloat();
     val = settings.value("habitat/m_leafEnergy");
-    m_leafEnergy = val.toInt();
+    if(val.isValid()) m_leafEnergy = val.toInt();
 
     val = settings.value("biot/chance");
-    chance = val.toInt();
+    if(val.isValid()) chance = val.toInt();
     val = settings.value("biot/regenCost");
-    regenCost = val.toInt();
+    if(val.isValid()) regenCost = val.toInt();
     val = settings.value("biot/regenTime");
-    regenTime = val.toInt();
+    if(val.isValid()) regenTime = val.toInt();
     val = settings.value("biot/nSexual");
-    nSexual = val.toInt();
+    if(val.isValid()) nSexual = val.toInt();
     val = settings.value("biot/bParentAttack");
-    bParentAttack = val.toBool();
+    if(val.isValid()) bParentAttack = val.toBool();
     val = settings.value("biot/bSiblingsAttack");
-    bSiblingsAttack = val.toBool();
+    if(val.isValid()) bSiblingsAttack = val.toBool();
 
     val = settings.value("network/m_enableNetworking");
     if(val.isValid()) m_enableNetworking = val.toBool();
