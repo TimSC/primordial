@@ -321,7 +321,7 @@ std::string CEnvStats::GetExtinctionsStr() const
 
 void CEnvStats::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
-    const long archVersion = 2;
+    const int32_t archVersion = 2;
     Document::AllocatorType& allocator = d.GetAllocator();
 
     v.AddMember("archVersion", archVersion, allocator);
@@ -359,7 +359,7 @@ void CEnvStats::SerializeJsonLoad(const rapidjson::Value& v)
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");
 
-    long version = v["archVersion"].GetInt();
+    int32_t version = v["archVersion"].GetInt();
 
     m_births = v["m_births"].GetInt64();
     m_deaths = v["m_deaths"].GetInt64();

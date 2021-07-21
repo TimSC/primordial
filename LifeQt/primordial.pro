@@ -1,4 +1,8 @@
+
 QT       += core gui network multimedia
+win32 {
+INCLUDEPATH += "C:\dev\lib\rapidjson-1.1.0\include"
+}
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
