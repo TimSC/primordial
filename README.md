@@ -8,6 +8,10 @@ You will see biots battle to dominate the environment. Over time, new species wi
 
 Primordial Life runs as a screen saver or in a window. You are in control of the environment in which your biots evolve and now you can connect your environment to others.
 
+* Ubuntu, Mint builds: https://launchpad.net/~timsc/+archive/ubuntu/primordial-life
+
+* Windows builds: https://www.kinatomic.com/files/plife/
+
 ## Changes
 
 Version 4.1 is the first version based on Qt5 and compiles on multiple platforms. Hosting of the project was moved to Github. https://github.com/TimSC/primordial/ While the majority of features been ported to Qt5, a few items were incomplete. This version does not include commits that exist in the SourceForge version but based on the earliest open source code, however some ideas may be incorporated in later versions.
@@ -190,7 +194,7 @@ While each light blue segment’s length and position effect the strength and di
 
 ### On Debian/Ubuntu/Mint
 
-  sudo apt install qtcreator libqt5multimedia5-plugins qtmultimedia5-dev 
+  sudo apt install qtcreator libqt5multimedia5-plugins qtmultimedia5-dev rapidjson-dev
 
 ## License
 
