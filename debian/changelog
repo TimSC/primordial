@@ -1,5 +1,18 @@
-primordial-life (4.1~beta1-1) unstable; urgency=medium
+primordial-life (4.1-0ubuntu2) focal; urgency=medium
 
-  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+  * Add rapidjson to build requirements
 
- -- Tim Sheerman-Chase <orders2008@sheerman-chase.org.uk>  Mon, 19 Jul 2021 01:34:39 +0100
+ -- Tim Sheerman-Chase <orders2008@sheerman-chase.org.uk>  Wed, 21 Jul 2021 05:01:08 +0100
+
+primordial-life (4.1-0ubuntu1) focal; urgency=medium
+
+  * Try to fix packaging 
+
+ -- Tim Sheerman-Chase <orders2008@sheerman-chase.org.uk>  Wed, 21 Jul 2021 04:45:28 +0100
+
+primordial-life (4.1) focal; urgency=medium
+
+  * Initial release
+
+ -- Tim Sheerman-Chase <orders2008@sheerman-chase.org.uk>  Wed, 21 Jul 2021 04:28:16 +0100
+

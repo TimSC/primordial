@@ -2,7 +2,7 @@ Source: primordial-life
 Section: games
 Priority: optional
 Maintainer: Tim Sheerman-Chase <orders2008@sheerman-chase.org.uk>
-Build-Depends: debhelper-compat (= 12), qt5-default, libqt5multimedia5-plugins, qtmultimedia5-dev 
+Build-Depends: debhelper-compat (= 12), qt5-default, libqt5multimedia5-plugins, qtmultimedia5-dev, cmake, rapidjson-dev
 Standards-Version: 4.4.1
 Homepage: https://github.com/TimSC/primordial
 #Vcs-Browser: https://salsa.debian.org/debian/primordial-life

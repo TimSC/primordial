@@ -1,26 +1,18 @@
 # Primordial Life 
 
-Copyright (C) 1996-1998 Jason Spofford
-
-Ported to Qt5 by Tim Sheerman-Chase 2021
+Copyright (C) 1996-1998 Jason Spofford, Ported to Qt5 by Tim Sheerman-Chase 2021
 
 Primordial Life presents an environment filled with artificially living creatures called biots. Like their biological counterparts, each biot has a genetic code that serves as a blueprint for constructing it. It is this blueprint which lays the foundation for their evolution.
 
 You will see biots battle to dominate the environment. Over time, new species will emerge while others may die out. It’s a tough life, but some "biots" got to do it.
 
-Evolving artificial life is not a light weight task for any computer. Primordial Life runs as a screen saver or in a window. You are in control of the environment in which your biots evolve and now you can connect your environment to others.
+Primordial Life runs as a screen saver or in a window. You are in control of the environment in which your biots evolve and now you can connect your environment to others.
 
 ## Changes
 
-Primordial Life 3.16 improves video performance and adds the dreaded PURPLE PLAGUE. The purple plague reduces dense populations.The plague is transmitted biot to biot through contact. Biots can fight off the infection with energy but never gain immunity from the disease.
+Version 4.1 is the first version based on Qt5 and compiles on multiple platforms. Hosting of the project was moved to Github. https://github.com/TimSC/primordial/ While the majority of features been ported to Qt5, a few items were incomplete. This version does not include commits that exist in the SourceForge version but based on the earliest open source code, however some ideas may be incorporated in later versions.
 
-Over Primordial Life 3.0, version 3.1 adds networking capability. What’s that mean? It means you can connect your biot world to other biot worlds. Instead of a biot bouncing off a wall, it can go through the wall to another computer. You can connect each side of your screen to another computer (or even to your own if you’d like). The computer you connect to can also connect to other computers as well. In this manner, you can create an environment of virtually unlimited size. Watch the diversity of life increase as the space over which they can evolve increases. You can construct networked worlds of several different shapes by selecting which side connects to what computer.
-
-You’ll find most of the details of the simulation explained in the following sections.
-
-## What is the purpose of Primordial Life?
-
-I wrote Primordial Life to capture the principles of evolution in an interesting and visual way. This is the fourth version of Primordial Life. In comparison to Primordial Life 3.0, Primordial Life 3.1 adds networking capability giving you the ability to construct arbitrarily large environments. In Primordial Life 4.0, I expect to add the following:
+Version 4 was a planned update that was never officially completed but instead released as open source code in 2000. The code is hosted on https://sourceforge.net/projects/primlife/ using CVS. In 2017, SourceForge eventually set their CSV repositories to read only so development stopped. This is the last version to depended on Windows MFC. The version 4 wish list, which only partially completed for version 4:
 
 *   Motion generated not by light blue lines but by line flapping.
 *   Behavior partly genetically determined, partly determined by the environment.
@@ -32,6 +24,16 @@ I wrote Primordial Life to capture the principles of evolution in an interesting
 *   Start a simulation from a file name.
 *   Biot diseases (variable duration, transmissibility, toxicity)
 *   The ability for a biot to become exclusively a male (generating little white sperm).
+
+Version 3.16 improves video performance and adds the dreaded PURPLE PLAGUE. The purple plague reduces dense populations. The plague is transmitted biot to biot through contact. Biots can fight off the infection with energy but never gain immunity from the disease.
+
+Over Primordial Life 3.0, version 3.1 adds networking capability. What’s that mean? It means you can connect your biot world to other biot worlds. Instead of a biot bouncing off a wall, it can go through the wall to another computer. You can connect each side of your screen to another computer (or even to your own if you’d like). The computer you connect to can also connect to other computers as well. In this manner, you can create an environment of virtually unlimited size. Watch the diversity of life increase as the space over which they can evolve increases. You can construct networked worlds of several different shapes by selecting which side connects to what computer.
+
+You’ll find most of the details of the simulation explained in the following sections.
+
+## What is the purpose of Primordial Life?
+
+I wrote Primordial Life to capture the principles of evolution in an interesting and visual way. This is the fourth version of Primordial Life. 
 
 I want to thank everyone who sent me suggestions for improving Primordial Life. Unfortunately, I didn’t have near the time to implement all of them. I hope you find the new features I selected as interesting as I do.
 
@@ -45,7 +47,7 @@ When a predator touches a green line, the predator gains energy. In addition, th
 
 There are also other lines that are vulnerable to attack by predators. These are the white and light blue lines. White lines are only visible when "Sexual Reproduction" has been enabled. When a white line touches any line, other than another white line, it injects the biots genetic code into the target biot. In this manner, fertilization takes place. The last biot to touch a biot before it gives birth is considered to be the father. White lines, however, are just as vulnerable as green lines.
 
-Light blue lines are new in Primordial Life 3.0. They are little rocket motors that pull a biot around. They fire serially at a frequency determined by the genetic code. They cause biots to rotate, or travel in an apparently erratic path throughout the environment. Light blue lines, just as white lines, are vulnerable to attack by red lines.
+Light blue lines were introduced in version 3.0. They are little rocket motors that pull a biot around. They fire serially at a frequency determined by the genetic code. They cause biots to rotate, or travel in an apparently erratic path throughout the environment. Light blue lines, just as white lines, are vulnerable to attack by red lines.
 
 Biots with blue lines, or defenders, can shield themselves from a predator’s red lines. When defenders collide, no harm is done. A predator with a red line longer than the length of a blue line can "pluck" the shield of a defender and continue the attack. Likewise, a defender with a longer blue line can "pluck" the predators red line and potentially halt the assault.
 
@@ -145,7 +147,7 @@ At any time, you can open your network status dialog by selecting "World Status"
 
 In addition, your worlds population and time units are shown. Time units are incremented every time all biots get processing time. Death and birth rates are updated every 512 turns. Connections are attempted every 512 turns as well, or right after you change network settings. There is a button in your world’s status box that allows you to modify network settings on the fly. Be aware that any changes made while the simulation is running will be carried out. If you change an IP address, it will disconnect from the old address, and reconnect to the new address.
 
-For dialup users, determining the address of another dialup user will likely be a problem, since it changes every time you dialup. You can determine your IP address by viewing your network settings. However, you must communicate that address to the other dialup user. I will be looking for a method of communicating this information over the Web. I may end up setting up a place at my web site (http://www.io.com/~spofford) for sharing this information.
+For users with a dynamic IP, other users will likely have a problem remaining connected, since your IP changes over time. You can determine your IP address by viewing your network settings. However, you must communicate that address to other users. I will be looking for a method of communicating this information over the Web.
 
 ## What does a biot’s genetic code look like?
 
@@ -193,4 +195,3 @@ While each light blue segment’s length and position effect the strength and di
 ## License
 
 In the year 2000, Jason had released this code under GNU Library or Lesser General Public License version 2.0 (LGPLv2) to http://www.egroups.com/files/plife-design/ at Robert Pollak's request. In 2021, Jason and Tim Sheerman-Chase agreed to relicense the code as "LGPLv2 or later", so we can be compatible with the current GNU licenses.
-
