@@ -9,12 +9,6 @@ using namespace rapidjson;
 // Defines a segment of a line
 //
 
-// Take the distance around the circle and divide it into 360 degrees
-// That gives you the number of degrees per unit (or pixel)
-const short GeneSegment::redrawAngle[MAX_SEGMENT_LENGTH + 1] = 
-{ 180, 23, 12, 10, 9, 8, 7, 6, 5, 5, 4, 4, 3, 3, 3, 3, 2 };
-//{ 360, 45, 22, 15, 11, 9, 7, 6, 5, 5, 4, 4, 3, 3, 3, 3, 2 };
-
 void GeneSegment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
     Document::AllocatorType& allocator = d.GetAllocator();

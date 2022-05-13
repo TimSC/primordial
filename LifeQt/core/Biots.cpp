@@ -444,7 +444,6 @@ int64_t Biot::UpdateShape(int aRatio)
     colorDistance[LBLUE_LEAF]   = 0;
 
 	turnBenefit    = 0;
-    redraw.ClearRedraw();
 
     memset(distance, 0x00, sizeof(distance));
     memset(stopPtLocal,   0x00, sizeof(stopPtLocal));
@@ -1828,7 +1827,6 @@ void Biot::MoveSegment(int nPeno, short degree)
 	if (segment.IsVisible())
 	{
 		m_angle[nPeno] += degree;
-		redraw.SetRedraw(segment.ShouldRedraw(m_angle[nPeno] - m_angleDrawn[nPeno]));
 	}
 }
 
@@ -1865,7 +1863,6 @@ bool Biot::MoveLineType(int nLineType, short rate, short offset)
 			if (nAngle - rate < offset)
 				nAngle = offset;
 		}
-		redraw.SetRedraw(abs(m_angleLimbType[nLineType] - m_angleLimbTypeDrawn[nLineType]) > 3);
 
 		return (offset == nAngle);
 	}
@@ -1905,7 +1902,6 @@ bool Biot::MoveLine(int nLine, short rate, short offset)
 			if (nAngle - rate < offset)
 				nAngle = offset;
 		}
-		redraw.SetRedraw(abs(m_angleLimb[nLine] - m_angleLimbDrawn[nLine]) > 3);
 
 		return (offset == nAngle);
 	}
@@ -1947,7 +1943,6 @@ bool Biot::MoveSegmentType(int nLineType, int nSegment, short rate, short offset
 			if (nAngle - rate < offset)
 				nAngle = offset;
 		}
-		redraw.SetRedraw(segment.ShouldRedraw(m_angleLimbTypeSegmentDrawn[nLineType][nSegment] - nAngle));
 
 		return (offset == nAngle);
 	}
@@ -2024,8 +2019,6 @@ void Biot::IncreaseAngle(int nPeno, short rate)
 	{
 		// First increase the angle
 		m_angle[nPeno] += rate;
-
-		redraw.SetRedraw(segment.ShouldRedraw(m_angle[nPeno] - m_angleDrawn[nPeno]));
 	}
 }
 
@@ -2042,7 +2035,6 @@ uint8_t Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
    {
 	   m_retractSegment[nLimb] = nSegment;
 	   m_retractRadius[nLimb] += 1;
-       redraw.SetRedraw(true);
        return (uint8_t) 1;
    }
    return (uint8_t) 0;
@@ -2061,7 +2053,6 @@ uint8_t Biot::ExtendLine(int nSegment, int nLimb)
    {
 	   m_retractSegment[nLimb] = nSegment;
 	   m_retractRadius[nLimb] -= 1;
-       redraw.SetRedraw(true);
        return (uint8_t) 1;
    }
    return (uint8_t) 0;
@@ -2105,7 +2096,6 @@ uint8_t Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
 		   m_retractRadius[i] += 1;
 		}
 	}
-    redraw.SetRedraw(true);
     return (uint8_t) 1;
 }
 
@@ -2143,7 +2133,6 @@ uint8_t Biot::ExtendLimbType(int nSegment, int nLimbType)
 		   m_retractRadius[i] -= 1;
 		}
 	}
-    redraw.SetRedraw(true);
     return (uint8_t) 1;
 }
 
@@ -2178,7 +2167,6 @@ short Biot::MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate)
 	}
 
 	m_angleLimbTypeSegment[nLimbType][nSegment] += nRate;     
-	redraw.SetRedraw((delta + nRate) >= maxRate || (delta + nRate) <= -maxRate);
 	return nRate;
 }
 
@@ -2212,7 +2200,6 @@ short Biot::MoveLimbTypeSegments(int nLimbType, int nRate)
 	}
 
 	m_angleLimbType[nLimbType] += nRate;     
-	redraw.SetRedraw((delta + nRate) >= maxRate || (delta + nRate) <= -maxRate);
 	return nRate;
 }
 
@@ -2246,7 +2233,6 @@ short Biot::MoveLimbSegments(int nLimb, int nRate)
 	}
 
 	m_angleLimb[nLimb] += nRate;     
-	redraw.SetRedraw((delta + nRate) >= maxRate || (delta + nRate) <= -maxRate);
 	return nRate;
 }
 
@@ -2282,7 +2268,6 @@ short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 	}
 
 	m_angleLimb[nPeno] += nRate;     
-	redraw.SetRedraw((delta + nRate) >= maxRate || (delta + nRate) <= -maxRate);
 	return nRate;
 }
 

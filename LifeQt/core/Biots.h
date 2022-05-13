@@ -66,36 +66,6 @@ class Collision
 };
 
 
-
-//////////////////////////////////////////////////
-// CRedraw
-//
-// Biot processes determine if a segment needs
-// to be redrawn.  If so, it marks it for redrawing
-//
-// We use a union to accelerate our check, checking
-// 4 bytes at a time.
-//
-class CRedraw
-{
-public:
-    CRedraw() { ClearRedraw(); }
-
-    bool ShouldRedraw() { return m_bShouldRedraw; }
-
-    void SetRedraw(bool bRedraw = true)
-    {
-        if (bRedraw)
-            m_bShouldRedraw = true;
-    }
-
-    void ClearRedraw() { m_bShouldRedraw = false; }
-
-private:
-    bool m_bShouldRedraw;
-};
-
-
 // ////////////////////////////////////////////////////////////////////
 // Biot
 //
@@ -259,8 +229,6 @@ class Biot: public BRectItem
     bool MoveLineType(int nLineType, short rate, short offset);
     bool MoveSegmentType(int nLineType, int nSegment, short rate, short offset);
     bool MoveLine(int nLine, short rate, short offset);
-
-    CRedraw redraw;
 
     QPointF     startPtLocal[MAX_GENES];
     QPointF     stopPtLocal[MAX_GENES];

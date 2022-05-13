@@ -17,9 +17,6 @@
 #include <QList>
 #include "json.h"
 #include "rapidjson/document.h"
-const double PI      = 3.1415926535898;
-
-
 
 //////////////////////////////////////////////////////////////////////
 // BRect
@@ -672,17 +669,17 @@ inline double CLine::Angle()
 	case STATE_INFINITE:
 		if (m_y1 > m_y2)
 		{
-			return -PI / 2;
+            return -M_PI / 2.0;
 		}
 		else
 		{
-			return PI / 2;
+            return M_PI / 2.0;
 		}
 
 	case STATE_NORMAL:
 		if (m_x1 > m_x2)
 		{
-			return atan(m_slope) + PI;
+            return atan(m_slope) + M_PI;
 		}
 		else
 		{

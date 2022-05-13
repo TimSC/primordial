@@ -16,7 +16,7 @@
 //
 //
 //
-const double RADIANS = PI / 180.0;
+const double RADIANS = M_PI / 180.0;
 const double limit   = 2.0F;  // 3
 const double rlimit  = 3.0F;  // 12 diameter of 100 rotating 8 deg
 

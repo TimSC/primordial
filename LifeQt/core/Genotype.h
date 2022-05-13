@@ -75,7 +75,7 @@ class GeneSegment : Randomizer
 		MAX_SEGMENT_LENGTH = 16
 	};
 
-    static const short redrawAngle[MAX_SEGMENT_LENGTH + 1];
+    //static const short redrawAngle[MAX_SEGMENT_LENGTH + 1];
 	
     
   public:
@@ -96,9 +96,9 @@ class GeneSegment : Randomizer
 
 	// Looks at the radius and angle difference to determine
 	// if a line should be redrawn
-    bool   ShouldRedraw(short angleDifference) {
-			return (redrawAngle[m_radius] <= abs(angleDifference));
-	}
+    //bool   ShouldRedraw(short angleDifference) {
+    //		return (redrawAngle[m_radius] <= abs(angleDifference));
+    //}
 };
 
 
