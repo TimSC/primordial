@@ -137,8 +137,8 @@ int RightSide::SideSize()
 void RightSide::AdjustBiot(Biot& biot)
 {
     biot.MoveBiot(m_left - biot.m_left - 1, m_top);
-    if(biot.vector.getDeltaX()>-1.0)
-        biot.vector.setDeltaX(-1.0);
+    if(biot.posAndSpeed.getDeltaX()>-1.0)
+        biot.posAndSpeed.setDeltaX(-1.0);
 }
 
 void RightSide::RejectBiot(Biot& biot)
@@ -161,8 +161,8 @@ int LeftSide::SideSize()
 void LeftSide::AdjustBiot(Biot& biot)
 {
     biot.MoveBiot(m_right - biot.m_right  + 1, m_top);
-    if(biot.vector.getDeltaX()<1.0)
-        biot.vector.setDeltaX(1.0);
+    if(biot.posAndSpeed.getDeltaX()<1.0)
+        biot.posAndSpeed.setDeltaX(1.0);
 }
 
 void LeftSide::RejectBiot(Biot& biot)
@@ -183,8 +183,8 @@ int TopSide::SideSize()
 void TopSide::AdjustBiot(Biot& biot)
 {
     biot.MoveBiot(m_left, m_bottom - biot.m_bottom + 1);
-    if(biot.vector.getDeltaY()<1.0)
-        biot.vector.setDeltaY(1.0);
+    if(biot.posAndSpeed.getDeltaY()<1.0)
+        biot.posAndSpeed.setDeltaY(1.0);
 }
 
 void TopSide::RejectBiot(Biot& biot)
@@ -208,8 +208,8 @@ BottomSide::BottomSide() : Side()
 void BottomSide::AdjustBiot(Biot& biot)
 {
     biot.MoveBiot(m_left, m_top - biot.m_top - 1);
-    if(biot.vector.getDeltaY()>-1.0)
-        biot.vector.setDeltaY(-1.0);
+    if(biot.posAndSpeed.getDeltaY()>-1.0)
+        biot.posAndSpeed.setDeltaY(-1.0);
 }
 
 void BottomSide::RejectBiot(Biot& biot)

@@ -79,15 +79,15 @@ class Collision
 class CRedraw
 {
 public:
-	CRedraw() { ClearRedraw(); }
+    CRedraw() { ClearRedraw(); }
 
     bool ShouldRedraw() { return m_bShouldRedraw; }
 
     void SetRedraw(bool bRedraw = true)
-	{
-		if (bRedraw)
+    {
+        if (bRedraw)
             m_bShouldRedraw = true;
-	}
+    }
 
     void ClearRedraw() { m_bShouldRedraw = false; }
 
@@ -203,7 +203,7 @@ class Biot: public BRectItem
     int  AddCollision(int enemyId);
     void ClearCollisions(void){for(int i = 0; i < MAX_COLLISIONS; i++) collider[i].id = -1; }
 
-    Vector   vector;
+    PosAndSpeed   posAndSpeed;
 
 
 	short    m_angle[MAX_GENES];
@@ -260,7 +260,7 @@ class Biot: public BRectItem
     bool MoveSegmentType(int nLineType, int nSegment, short rate, short offset);
     bool MoveLine(int nLine, short rate, short offset);
 
-	CRedraw redraw;
+    CRedraw redraw;
 
     QPointF     startPtLocal[MAX_GENES];
     QPointF     stopPtLocal[MAX_GENES];

@@ -20,7 +20,7 @@ const double RADIANS = PI / 180.0;
 const double limit   = 2.0F;  // 3
 const double rlimit  = 3.0F;  // 12 diameter of 100 rotating 8 deg
 
-class Vector
+class PosAndSpeed
 {
 protected:
     double dx;	// Rate of change of position X
@@ -40,7 +40,7 @@ public:
 
 public:
 
-    Vector(void);
+    PosAndSpeed(void);
 
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
@@ -155,7 +155,7 @@ public:
     void setY(int Y)      { y = (double) Y; }
     void setRotate(int R) { r = (double) R; }
 
-    double collisionX(Vector &enemy)
+    double collisionX(PosAndSpeed &enemy)
     {
       return ((mass - enemy.mass) * dx + 2 * enemy.mass * enemy.dx) / (nonZeroMass() + enemy.mass);
     }
@@ -167,7 +167,7 @@ public:
         return ((mass - emass) * DX + 2 * emass * eDX) / (nonZeroMass() + emass);
 	}
 
-    double collisionY(Vector &enemy)
+    double collisionY(PosAndSpeed &enemy)
     {
       return ((mass - enemy.mass) * dy + 2 * enemy.mass * enemy.dy) / (nonZeroMass() + enemy.mass);
     }
@@ -231,7 +231,7 @@ public:
 
 
 // Propose next rotation movement, but don't do it yet
-inline int Vector::tryRotate(const QPoint& origin, const QPoint& center)
+inline int PosAndSpeed::tryRotate(const QPoint& origin, const QPoint& center)
 {
 	CLine line(center, origin);
 
@@ -246,21 +246,21 @@ inline int Vector::tryRotate(const QPoint& origin, const QPoint& center)
 
 
 // Propose next X movement, but don't do it yet
-inline int Vector::tryStepX(void)
+inline int PosAndSpeed::tryStepX(void)
 {
 	return int(x + dx + drx) - int(x);
 }
 
 
 // Propose next Y movement, but don't do it yet
-inline int Vector::tryStepY(void)
+inline int PosAndSpeed::tryStepY(void)
 {
 	return int(y + dy + dry) - int(y);
 }
 
 
 // Actually make the step
-inline void Vector::makeStep(void)
+inline void PosAndSpeed::makeStep(void)
 {
 	int rx = int(drx);
 //	drx -= double(vx);

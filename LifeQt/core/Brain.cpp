@@ -767,28 +767,28 @@ void CommandFlapLimbTypeSegment::Flap(Biot& biot, int nPeno)
 	{
         double Vx = biot.startPt[nPeno].x() - biot.stopPt[nPeno].x();
         double Vy = biot.startPt[nPeno].y() - biot.stopPt[nPeno].y();
-		double dr = biot.vector.rotationComponent(
+        double dr = biot.posAndSpeed.rotationComponent(
             (double) biot.startPt[nPeno].x(),
             (double) biot.startPt[nPeno].y(),
             biot.startPt[nPeno].x() + Vx,
             biot.startPt[nPeno].y() + Vy);
 
-        double radius = biot.vector.distance(biot.startPt[nPeno].x(), biot.startPt[nPeno].y());
+        double radius = biot.posAndSpeed.distance(biot.startPt[nPeno].x(), biot.startPt[nPeno].y());
 
 		if (dr != 0)
 		{
-			double dv = biot.vector.motionComponent(biot.vector.distance(Vx, Vy), dr);
-            Vx = -biot.vector.fraction(dv, (int) biot.startPt[nPeno].x(), radius);
-            Vy = -biot.vector.fraction(dv, (int) biot.startPt[nPeno].y(), radius);
+            double dv = biot.posAndSpeed.motionComponent(biot.posAndSpeed.distance(Vx, Vy), dr);
+            Vx = -biot.posAndSpeed.fraction(dv, (int) biot.startPt[nPeno].x(), radius);
+            Vy = -biot.posAndSpeed.fraction(dv, (int) biot.startPt[nPeno].y(), radius);
 		}
 		else
 		{
 //			Vx = -Vx;
 //			Vy = -Vy;
 		}
-		biot.vector.accelerateX(Vx*20);
-		biot.vector.accelerateY(Vy*20);
-		biot.vector.accelerateRotation(dr*10);
+        biot.posAndSpeed.accelerateX(Vx*20);
+        biot.posAndSpeed.accelerateY(Vy*20);
+        biot.posAndSpeed.accelerateRotation(dr*10);
 	}
 }
 
@@ -894,28 +894,28 @@ void CommandFlapLimbSegment::Flap(Biot& biot)
 		// rectangle.
         double Vx = biot.startPt[nPeno].x() - biot.stopPt[nPeno].x();
         double Vy = biot.startPt[nPeno].y() - biot.stopPt[nPeno].y();
-		double dr = biot.vector.rotationComponent(
+        double dr = biot.posAndSpeed.rotationComponent(
             (double) biot.startPt[nPeno].x(),
             (double) biot.startPt[nPeno].y(),
             biot.startPt[nPeno].x() + Vx,
             biot.startPt[nPeno].y() + Vy);
 
-        double radius = biot.vector.distance(biot.startPt[nPeno].x() , biot.startPt[nPeno].y());
+        double radius = biot.posAndSpeed.distance(biot.startPt[nPeno].x() , biot.startPt[nPeno].y());
 
 		if (dr != 0)
 		{
-			double dv = biot.vector.motionComponent(biot.vector.distance(Vx, Vy), dr);
-            Vx = -biot.vector.fraction(dv, (int) biot.startPt[nPeno].x(), radius);
-            Vy = -biot.vector.fraction(dv, (int) biot.startPt[nPeno].y(), radius);
+            double dv = biot.posAndSpeed.motionComponent(biot.posAndSpeed.distance(Vx, Vy), dr);
+            Vx = -biot.posAndSpeed.fraction(dv, (int) biot.startPt[nPeno].x(), radius);
+            Vy = -biot.posAndSpeed.fraction(dv, (int) biot.startPt[nPeno].y(), radius);
 		}
 		else
 		{
 //			Vx = -Vx;
 //			Vy = -Vy;
 		}
-		biot.vector.accelerateX(Vx*20);
-		biot.vector.accelerateY(Vy*20);
-		biot.vector.accelerateRotation(dr*10);
+        biot.posAndSpeed.accelerateX(Vx*20);
+        biot.posAndSpeed.accelerateY(Vy*20);
+        biot.posAndSpeed.accelerateRotation(dr*10);
 	}
 }
 

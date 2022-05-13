@@ -11,7 +11,7 @@
 
 using namespace rapidjson;
 
-Vector::Vector()
+PosAndSpeed::PosAndSpeed()
 {
   dr = r = mass =  dy = x = y = dx = drx = dry = 0.0;
 }
@@ -23,7 +23,7 @@ Vector::Vector()
 //
 //
 
-void Vector::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+void PosAndSpeed::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
     Document::AllocatorType& allocator = d.GetAllocator();
 
@@ -35,7 +35,7 @@ void Vector::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("r", r, allocator);
 }
 
-void Vector::SerializeJsonLoad(const rapidjson::Value& v)
+void PosAndSpeed::SerializeJsonLoad(const rapidjson::Value& v)
 {
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");

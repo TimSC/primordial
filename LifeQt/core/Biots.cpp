@@ -212,9 +212,9 @@ int Biot::RandomCreate(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 	// Initially we have no parent
 	m_motherId = 0;
 
-	vector.setDeltaY(0); 
-	vector.setDeltaX(0);
-	vector.setDeltaRotate(0);
+    posAndSpeed.setDeltaY(0);
+    posAndSpeed.setDeltaX(0);
+    posAndSpeed.setDeltaRotate(0);
 
     Initialize(true);
 
@@ -360,8 +360,8 @@ void Biot::Place(int x, int y)
     origin.setX(x);
     origin.setY(y);
 
-    vector.setX(origin.x());
-    vector.setY(origin.y());
+    posAndSpeed.setX(origin.x());
+    posAndSpeed.setY(origin.y());
 
     bShapeChanged = true;
     UpdateGraphics();
@@ -407,13 +407,13 @@ static int side[8][2] = {
       {
         if (parent.trait.GetDisperseChildren())
         {
-          vector.setDeltaX(side[nPos][0] * (float) fabs(parent.vector.getDeltaX()));
-          vector.setDeltaY(side[nPos][1] * (float) fabs(parent.vector.getDeltaY()));
+          posAndSpeed.setDeltaX(side[nPos][0] * (float) fabs(parent.posAndSpeed.getDeltaX()));
+          posAndSpeed.setDeltaY(side[nPos][1] * (float) fabs(parent.posAndSpeed.getDeltaY()));
         }
         else
         {
-          vector.setDeltaX(parent.vector.getDeltaX());
-          vector.setDeltaY(parent.vector.getDeltaY());
+          posAndSpeed.setDeltaX(parent.posAndSpeed.getDeltaX());
+          posAndSpeed.setDeltaY(parent.posAndSpeed.getDeltaY());
         }
         return true;
       }
@@ -444,7 +444,7 @@ int64_t Biot::UpdateShape(int aRatio)
     colorDistance[LBLUE_LEAF]   = 0;
 
 	turnBenefit    = 0;
-	redraw.ClearRedraw();
+    redraw.ClearRedraw();
 
     memset(distance, 0x00, sizeof(distance));
     memset(stopPtLocal,   0x00, sizeof(stopPtLocal));
@@ -533,10 +533,10 @@ int64_t Biot::UpdateShape(int aRatio)
 		}
 	}
 
-    vector.setMass(0.0);
+    posAndSpeed.setMass(0.0);
 
     for (i = GREEN_LEAF; i <= WHITE_LEAF; i++)
-        vector.addMass(colorDistance[i] * env.options.leafMass[i]);
+        posAndSpeed.addMass(colorDistance[i] * env.options.leafMass[i]);
 
     return dist;
 }
@@ -549,7 +549,7 @@ void Biot::UpdateShapeRotation()
     bottomY = 0;
 
     //Convert local non-rotated coordinates to rotated coordinates
-    int rot = vector.getRotate();
+    int rot = posAndSpeed.getRotate();
     double rotSin = sin(deg2rad(rot));
     double rotCos = cos(deg2rad(rot));
     for (int nLimb = 0; nLimb < trait.GetLines(); nLimb++)
@@ -685,8 +685,8 @@ void Biot::UpdateGraphics()
 void Biot::Reject(int side)
 {
 	env.side[side]->RejectBiot(*this);
-	vector.invertDeltaY();
-	vector.invertDeltaX();
+    posAndSpeed.invertDeltaY();
+    posAndSpeed.invertDeltaX();
 }
 
 
@@ -705,28 +705,28 @@ void Biot::WallBounce(int x, int y)
 //    int deltaY = y - origin.y;
     int deltaX    = x - CenterX();
     int deltaY    = y - CenterY();
-	double radius = vector.distance(deltaX, deltaY);
+    double radius = posAndSpeed.distance(deltaX, deltaY);
 
 	// Determine the vector to apply by looking at our motion
     double dx, dy; 
-    vector.RotatedDelta(dx, dy, deltaX, deltaY, radius);
+    posAndSpeed.RotatedDelta(dx, dy, deltaX, deltaY, radius);
 
 	// Determine our resulting rotation from the collision at that point
-    double dr = vector.rotationComponent((double)deltaX, (double)deltaY, deltaX + dx, deltaY + dy);
+    double dr = posAndSpeed.rotationComponent((double)deltaX, (double)deltaY, deltaX + dx, deltaY + dy);
     if (dr != 0)
     {
-		double dv = vector.motionComponent(vector.distance(dx, dy), dr);
-		dx = vector.fraction(dv, deltaX, radius); 
-		dy = vector.fraction(dv, deltaY, radius); 
+        double dv = posAndSpeed.motionComponent(posAndSpeed.distance(dx, dy), dr);
+        dx = posAndSpeed.fraction(dv, deltaX, radius);
+        dy = posAndSpeed.fraction(dv, deltaY, radius);
 
     }
     
 	// Put Validate Movement back in.  Perhaps it
 	// could keep sticky collisions from happening.
 //    ValidateBorderMovement(dx, dy);//JJS!
-    vector.setDeltaX(-dx);
-    vector.setDeltaY(-dy);
-    vector.setDeltaRotate(-dr);
+    posAndSpeed.setDeltaX(-dx);
+    posAndSpeed.setDeltaY(-dy);
+    posAndSpeed.setDeltaRotate(-dr);
 }
 
 
@@ -785,18 +785,18 @@ void Biot::ValidateBorderMovement(double& dx, double& dy)
 //
 void Biot::Motion(const double deltaX, const double deltaY, double Vx, double Vy, const double radius)
 {
-	double dr = vector.rotationComponent(deltaX, deltaY, deltaX + Vx, deltaY + Vy);
+    double dr = posAndSpeed.rotationComponent(deltaX, deltaY, deltaX + Vx, deltaY + Vy);
 	if (dr != 0)
 	{
-		double dv = vector.motionComponent(vector.distance(Vx, Vy), dr);
-		Vx = vector.fraction(dv, (int) deltaX, radius); 
-		Vy = vector.fraction(dv, (int) deltaY, radius);
+        double dv = posAndSpeed.motionComponent(posAndSpeed.distance(Vx, Vy), dr);
+        Vx = posAndSpeed.fraction(dv, (int) deltaX, radius);
+        Vy = posAndSpeed.fraction(dv, (int) deltaY, radius);
 		dr=-dr;
 	}
 
-	vector.setDeltaX(Vx);
-	vector.setDeltaY(Vy);
-	vector.setDeltaRotate(dr);
+    posAndSpeed.setDeltaX(Vx);
+    posAndSpeed.setDeltaY(Vy);
+    posAndSpeed.setDeltaRotate(dr);
 }
 
 
@@ -823,9 +823,9 @@ bool Biot::Move(void)
 	// We must account for the center of mass in relation
 	// to the origin.  We estimate the center of mass
 	// to be the center of the bounding rectangle
-	int dr = vector.tryRotate(origin, Center(center));
-	int dx = vector.tryStepX();
-	int dy = vector.tryStepY();
+    int dr = posAndSpeed.tryRotate(origin, Center(center));
+    int dx = posAndSpeed.tryStepX();
+    int dy = posAndSpeed.tryStepY();
 
 
 	// Statistics
@@ -863,9 +863,9 @@ bool Biot::Move(void)
 
 						MoveBiot(-dx, -dy);
 
-						dr = vector.tryRotate(origin, Center(center));
-						dx = vector.tryStepX();
-						dy = vector.tryStepY();
+                        dr = posAndSpeed.tryRotate(origin, Center(center));
+                        dx = posAndSpeed.tryStepX();
+                        dy = posAndSpeed.tryStepY();
 
 						MoveBiot(dx, dy);
 
@@ -874,20 +874,20 @@ bool Biot::Move(void)
 					}
 					else
 					{
-						double tempDX = vector.getDeltaX();
-						double tempDY = vector.getDeltaY();
+                        double tempDX = posAndSpeed.getDeltaX();
+                        double tempDY = posAndSpeed.getDeltaY();
 
                         assert(tempDX < 1000 && tempDX > -1000);
 
 						ValidateBorderMovement(tempDX, tempDY);
 
-						vector.setDeltaX((float)tempDX);
-						vector.setDeltaY((float)tempDY);
+                        posAndSpeed.setDeltaX((float)tempDX);
+                        posAndSpeed.setDeltaY((float)tempDY);
 
 						MoveBiot(-dx, -dy);
-						dr = vector.tryRotate(origin, Center(center));
-						dx = vector.tryStepX();
-						dy = vector.tryStepY();
+                        dr = posAndSpeed.tryRotate(origin, Center(center));
+                        dx = posAndSpeed.tryStepX();
+                        dy = posAndSpeed.tryStepY();
 
 						MoveBiot(dx, dy);
 						break;
@@ -931,8 +931,8 @@ bool Biot::Move(void)
                     if (enemy->origin.x() < origin.x())
 						boost = (float)0.05;
 
-					vector.adjustDeltaX(boost);
-					enemy->vector.adjustDeltaX(-boost);
+                    posAndSpeed.adjustDeltaX(boost);
+                    enemy->posAndSpeed.adjustDeltaX(-boost);
 
 					boost = (float)0;
                     if (enemy->origin.y() > origin.y())
@@ -941,11 +941,11 @@ bool Biot::Move(void)
                     if (enemy->origin.y() < origin.y())
 						boost = (float)0.05;
 
-					vector.adjustDeltaY(boost);
-					enemy->vector.adjustDeltaY(-boost);
+                    posAndSpeed.adjustDeltaY(boost);
+                    enemy->posAndSpeed.adjustDeltaY(-boost);
 
-					dx = vector.tryStepX();
-					dy = vector.tryStepY();
+                    dx = posAndSpeed.tryStepX();
+                    dy = posAndSpeed.tryStepY();
 
 					MoveBiot(dx, dy); 
 				}
@@ -967,38 +967,38 @@ bool Biot::Move(void)
 						// Calculate adjusted dx and dy for me
 						int deltaX = x - CenterX();//origin.x;
 						int deltaY = y - CenterY(); //origin.y;
-						double radius = vector.distance(deltaX, deltaY);
+                        double radius = posAndSpeed.distance(deltaX, deltaY);
                         assert(radius < 1000);
 
 						// This step calculates the X and Y vector from this biot
 						// at that point taking into consideration the
 						// biots rotation and translational vectors
 						double DX, DY; 
-						vector.RotatedDelta(DX, DY, deltaX, deltaY, radius);
+                        posAndSpeed.RotatedDelta(DX, DY, deltaX, deltaY, radius);
                         assert(DX < 1000 && DX > -1000);
                         assert(DY < 1000 && DY > -1000);
 
 						// Calculate adjusted dx and dy for enemy
 						int edeltaX = enemy->CenterX() - x;//enemy->origin.x - x;
 						int edeltaY = enemy->CenterY() - y;//enemy->origin.y - y;
-						double eradius = enemy->vector.distance(edeltaX, edeltaY);
+                        double eradius = enemy->posAndSpeed.distance(edeltaX, edeltaY);
                         assert(eradius < 1000);
            
 						// This step calculates the X and Y vector from this biot
 						// at that point taking into consideration the
 						// biots rotation and translational vectors
                         double eDX = 0.0, eDY = 0.0;
-						enemy->vector.RotatedDelta(eDX, eDY, edeltaX, edeltaY, eradius);
+                        enemy->posAndSpeed.RotatedDelta(eDX, eDY, edeltaX, edeltaY, eradius);
                         assert(eDX < 1000 && eDX > -1000);
                         assert(eDY < 1000 && eDY > -1000);
 
 						// This step determines the effect of mass and calculates
 						// the resultant vector to be imparted on each biot
-						double Vx = vector.collisionResult(enemy->vector.mass, DX, eDX);
-						double Vy = vector.collisionResult(enemy->vector.mass, DY, eDY);
+                        double Vx = posAndSpeed.collisionResult(enemy->posAndSpeed.mass, DX, eDX);
+                        double Vy = posAndSpeed.collisionResult(enemy->posAndSpeed.mass, DY, eDY);
 
-						double eVx = enemy->vector.collisionResult(vector.mass, eDX, DX);
-						double eVy = enemy->vector.collisionResult(vector.mass, eDY, DY);
+                        double eVx = enemy->posAndSpeed.collisionResult(posAndSpeed.mass, eDX, DX);
+                        double eVy = enemy->posAndSpeed.collisionResult(posAndSpeed.mass, eDY, DY);
 
 						// We have the resultant collision vector, now we need to
 						// break it into a rotational vector and X and Y translational vectors.
@@ -1008,8 +1008,8 @@ bool Biot::Move(void)
                         assert(DY < 1000 && DY > -1000);
 						Motion(deltaX, deltaY, Vx, Vy, radius);
               
-						dx = vector.tryStepX();
-						dy = vector.tryStepY();
+                        dx = posAndSpeed.tryStepX();
+                        dy = posAndSpeed.tryStepY();
 						MoveBiot(dx, dy); 
 					}
 				} 
@@ -1019,8 +1019,8 @@ bool Biot::Move(void)
 
 	RemoveCollisions(m_age);
 
-	vector.makeStep();
-//	vector.friction(env.options.friction);
+    posAndSpeed.makeStep();
+//	posAndSpeed.friction(env.options.friction);
 
 	// Time to behave
     for (i = 0; i < MAX_LIMBS; i++)
@@ -1058,7 +1058,7 @@ bool Biot::Move(void)
 	}
 
 	// Should we recalculate (top priority)
-    if (redraw.ShouldRedraw() || bChangeSize || lastType != newType)
+    if (bChangeSize || lastType != newType)
 	{
         Prepare(RECALCULATE);
         UpdateShapeRotation();
@@ -1662,7 +1662,7 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("m_commandArray2", comm2Json, allocator);
 
     Value vectorJson(kObjectType);
-    vector.SerializeJson(d, vectorJson);
+    posAndSpeed.SerializeJson(d, vectorJson);
     v.AddMember("vector", vectorJson, allocator);
 
     //short    state[MAX_GENES];
@@ -1720,7 +1720,7 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
 
     m_commandArray2.SerializeJsonLoad(v["m_commandArray2"]);
 
-    vector.SerializeJsonLoad(v["vector"]);
+    posAndSpeed.SerializeJsonLoad(v["vector"]);
 
     // Now handle biot level variables
     const Value &stateJson = v["state"];
