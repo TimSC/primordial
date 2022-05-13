@@ -32,6 +32,11 @@ public:
     void TimedUpdate(bool simRunning);
     void timerEvent(QTimerEvent *event) override;
 
+    void closeEvent(QCloseEvent *bar);
+
+    void Save(const std::string &filename);
+    void Load(const std::string &filename);
+
 };
 
 class MainWindow : public QMainWindow
@@ -94,9 +99,11 @@ private slots:
 
 protected:
 
-     bool eventFilter(QObject *obj, QEvent *event);
+    bool eventFilter(QObject *obj, QEvent *event);
 
 private:
+    void closeEvent(QCloseEvent *bar);
+
     Ui::MainWindow *ui;
     QLineEdit *statusDay, *statusPopulation, *statusExtinctions, *statusNetwork;
 

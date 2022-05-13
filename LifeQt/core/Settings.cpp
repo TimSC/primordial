@@ -5,6 +5,30 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 
+using namespace rapidjson;
+
+CSettings::CSettings() {
+    Reset(600, 340);
+
+    pens.clear();
+    for (int i = 0; i <= MAX_LEAF; i++)
+        pens.append(QPen());
+
+    pens[GREEN_LEAF]      = QPen(QColor(0,255,0));
+    pens[BLUE_LEAF]       = QPen(QColor(0,0,255));
+    pens[RED_LEAF]        = QPen(QColor(255,0,0));
+    pens[LBLUE_LEAF]      = QPen(QColor(0,255,255));
+    pens[WHITE_LEAF]      = QPen(QColor(255,255,255));
+    pens[DARK_GREEN_LEAF] = QPen(QColor(0, 128, 0));
+    pens[DARK_BLUE_LEAF]  = QPen(QColor(0, 0, 128));
+    pens[DARK_RED_LEAF]   = QPen(QColor(128, 0, 0));
+    pens[DARK_LBLUE_LEAF] = QPen(QColor(0, 128, 128));
+    pens[GREY_LEAF]       = QPen(QColor(128,128,128));
+    pens[YELLOW_LEAF]     = QPen(QColor(255,255,0));
+    pens[BLACK_LEAF]      = QPen(QColor(0,0,0));
+    pens[PURPLE_LEAF]     = QPen(QColor(255,0,255));
+}
+
 void CSettings::Save()
 {
     QSettings settings("Kinatomic", "Primordial Life");
@@ -232,8 +256,6 @@ void CSettings::SetToDefaults()
 
     startEnergy = 400 * 8;
 
-    friction = (float) 0.005;
-
     chance              = 12;
     bSoundOn            = true;
     nSexual             = 3;
@@ -241,6 +263,9 @@ void CSettings::SetToDefaults()
     m_initialPopulation = 20;
     bParentAttack       = true;
     bSiblingsAttack     = true;
+    bSaveOnQuit     = true;
+
+    friction            = 0.005f;
     bBarrier            = true;
     bMouse              = true;
 
@@ -251,6 +276,86 @@ void CSettings::SetToDefaults()
     m_enableNetworking = true;
     m_networkPort = 54275;
     m_connectList.clear();
+}
+
+void CSettings::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+
+    const uint8_t archiveVersion = 13;
+    Document::AllocatorType& allocator = d.GetAllocator();
+
+    v.AddMember("archiveVersion", archiveVersion, allocator);
+    v.AddMember("m_generation", m_generation, allocator);
+    v.AddMember("bSoundOn", bSoundOn, allocator);
+    v.AddMember("bMouse", bMouse, allocator);
+    v.AddMember("nSexual", nSexual, allocator);
+    v.AddMember("bSiblingsAttack", bSiblingsAttack, allocator);
+    v.AddMember("bSaveOnQuit", bSaveOnQuit, allocator);
+
+    v.AddMember("bParentAttack", bParentAttack, allocator);
+    v.AddMember("chance", chance, allocator);
+    v.AddMember("regenCost", regenCost, allocator);
+    v.AddMember("regenTime", regenTime, allocator);
+    v.AddMember("m_leafEnergy", m_leafEnergy, allocator);
+    v.AddMember("friction", friction, allocator);
+
+    // The starting parameters
+    v.AddMember("m_initialPopulation", m_initialPopulation, allocator);
+
+}
+
+void CSettings::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    if(!v.IsObject())
+        throw std::runtime_error("eror parsing json");
+
+    const uint8_t archiveVersion = 13;
+
+    int32_t version = v["archiveVersion"].GetInt();
+    // Check version
+    if (version != archiveVersion)
+        throw std::runtime_error("eror parsing json");
+
+    m_generation = v["m_generation"].GetUint();
+
+    bSoundOn = v["bSoundOn"].GetBool();
+    if (bSoundOn != false)
+        bSoundOn = true;
+
+    bMouse = v["bMouse"].GetBool();
+
+    //if (AfxIsNT() && AfxGetPLife().GetView() == CPrimCmdLine::SHOW_SAVER_WINDOW)
+    //    options.bMouse = false;
+
+    nSexual = v["nSexual"].GetInt();
+    if (nSexual < 1 ||
+        nSexual > 3)
+        nSexual = 3;
+
+    bSiblingsAttack = v["bSiblingsAttack"].GetBool();
+    if (bSiblingsAttack != false)
+        bSiblingsAttack = true;
+
+    bSaveOnQuit = v["bSaveOnQuit"].GetBool();
+    if (bSaveOnQuit != false)
+        bSaveOnQuit = true;
+
+    bParentAttack = v["bParentAttack"].GetBool();
+    if (bParentAttack != false)
+        bParentAttack = true;
+
+    chance = v["chance"].GetInt();
+    if (chance < 0)
+        chance = 41;
+
+    regenCost = v["regenCost"].GetInt64();
+    regenTime = v["regenTime"].GetUint();
+    m_leafEnergy = v["m_leafEnergy"].GetInt();
+    friction = v["friction"].GetFloat();
+
+    // The starting parameters
+    m_initialPopulation = v["m_initialPopulation"].GetInt();
+
 }
 
 // ************************************

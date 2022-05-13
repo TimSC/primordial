@@ -18,13 +18,11 @@ typedef QPair<QString, int> ListEntry;
 
 class BRect;
 
-#pragma once
-
 class CSettings 
 {
 	// Public Methods
 public:
-	CSettings() { Reset(600, 340); }
+    CSettings();
 
 	// Identity constructor
 	CSettings(CSettings &s){*this = s;}
@@ -40,6 +38,9 @@ public:
 	CSettings& operator=(CSettings& s);
 	
 	void SanityCheck();
+
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
 	enum {
 		BOTTOM = 0,
@@ -70,6 +71,7 @@ public: //Fox BEGIN
     bool    bMouse;
     bool    bParentAttack;
     bool    bSiblingsAttack;
+    bool    bSaveOnQuit;
 
     float   friction;
     BRect   barrier;

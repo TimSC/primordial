@@ -467,14 +467,14 @@ void SidesManager::readyToReceive(int sideId, bool ready)
 
 void SidesManager::updateListenMode()
 {
-    if(env.options.m_enableNetworking and !networking.isListening())
+    if(env.settings.m_enableNetworking and !networking.isListening())
     {
-        networking.listen(QHostAddress::Any, env.options.m_networkPort);
+        networking.listen(QHostAddress::Any, env.settings.m_networkPort);
         if(networking.isListening())
             std::cout << "listening on port " << networking.serverPort() << std::endl;
         else
         {
-            std::cout << "failed to listen on port " << env.options.m_networkPort << std::endl;
+            std::cout << "failed to listen on port " << env.settings.m_networkPort << std::endl;
 
             networking.listen(QHostAddress::Any);
             if(networking.isListening())
@@ -483,7 +483,7 @@ void SidesManager::updateListenMode()
                 std::cout << "failed to listen on fall back  port" << std::endl;
         }
     }
-    if(!env.options.m_enableNetworking and networking.isListening())
+    if(!env.settings.m_enableNetworking and networking.isListening())
     {
         std::cout << "stopping network listen" << std::endl;
         networking.close();

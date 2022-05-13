@@ -205,7 +205,6 @@ class Biot: public BRectItem
     uint8_t    RetractLimbType(int nSegment, int nLimbType, int maxRadius);
     uint8_t    ExtendLimbType(int nSegment, int nLimbType);
 
-
     CommandLimbStore m_store[MAX_LIMBS];
 
 	CommandArray m_commandArray;
@@ -318,7 +317,7 @@ public:
 	short CheckWhite(int type)
 	{
 		// If IsMale(), 
-		return (short) ((type == WHITE_LEAF && (env.options.nSexual == 2 || (env.options.nSexual == 3 && trait.IsAsexual())))?GREEN_LEAF:type);
+        return (short) ((type == WHITE_LEAF && (env.settings.nSexual == 2 || (env.settings.nSexual == 3 && trait.IsAsexual())))?GREEN_LEAF:type);
 //		return (short) ((type == WHITE_LEAF && !trait.IsMale() && trait.IsAsexual())?GREEN_LEAF:type);
 	}
 

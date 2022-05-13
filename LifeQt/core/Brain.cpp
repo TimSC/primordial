@@ -15,6 +15,12 @@ using namespace rapidjson;
 // ProductTerm (Picks a subset sensor bits that must be true or false)
 //
 
+ProductTerm::ProductTerm()
+{
+    m_dwMask = 0;
+    m_dwInvert = 0xffffffff;
+}
+
 void ProductTerm::Mutate(int nChance)
 {
 	Randomizer rand;
@@ -57,6 +63,17 @@ void ProductTerm::SerializeJsonLoad(const rapidjson::Value& v)
 
     m_dwMask = v["m_dwMask"].GetUint();
     m_dwInvert = v["m_dwInvert"].GetUint();
+}
+
+//
+// ProductSum
+//
+
+ProductSum::ProductSum()
+{
+    for(size_t i =0; i<MAX_PRODUCT_SUM_TERMS; i++)
+        m_reference[i] = 0;
+    m_bTrue = false;
 }
 
 //
@@ -256,6 +273,15 @@ bool ProductSum::IsTrue(ProductArray& productArray, uint32_t dwSensor)
 // CommandArgument
 //
 //
+
+CommandArgument::CommandArgument()
+{
+    m_command = -1;
+    m_limb = -1;
+    m_segment = -1;
+    m_rate = 0;
+    m_degrees = 0;
+}
 
 void CommandArgument::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
@@ -531,6 +557,17 @@ CommandLimbType& CommandLimbType::operator=(CommandLimbType& commandLimbType)
 // Each limb, regardless of type, has associated state information
 // to store.
 //
+
+CommandLimbStore::CommandLimbStore()
+{
+    m_nLimbType = -1;
+    m_nLimb = -1;
+
+    m_index = -1;
+    m_dwSensor = -1;
+    m_pBiot = nullptr;
+    m_pArg = nullptr;
+}
 
 void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
 {

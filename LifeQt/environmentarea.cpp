@@ -94,7 +94,7 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
         return;
     }
 
-    if(!env->options.bMouse) return;
+    if(!env->settings.bMouse) return;
 
     int x = event->x();
     int y = event->y();
@@ -219,7 +219,7 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
 
 void EnvironmentArea::mouseReleaseEvent(QMouseEvent * event)
 {
-    if(!env->options.bMouse) return;
+    if(!env->settings.bMouse) return;
 
     int x = event->x();
     int y = event->y();

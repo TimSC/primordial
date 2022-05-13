@@ -21,6 +21,7 @@ void SettingsHabitat::Init(class CSettings &settingsIn)
     this->ui->populationLineEdit->setText(popString);
     this->ui->frictionComboBox->setCurrentText(SettingFindClosestTextByValue(frictionList, FRICTION_OPTIONS, settingsIn.friction));
     this->ui->solarComboBox->setCurrentText(SettingFindClosestTextByValue(benefitList, BENEFIT_OPTIONS, settingsIn.m_leafEnergy));
+    this->ui->saveOnQuit->setChecked(settingsIn.bSaveOnQuit);
 }
 
 void SettingsHabitat::Accept(class CSettings &settingsIn)
@@ -30,4 +31,5 @@ void SettingsHabitat::Accept(class CSettings &settingsIn)
     settingsIn.m_initialPopulation = this->ui->populationLineEdit->text().toInt();
     settingsIn.friction = SettingFindValueByText(frictionList, FRICTION_OPTIONS, this->ui->frictionComboBox->currentText());
     settingsIn.m_leafEnergy = SettingFindValueByText(benefitList, BENEFIT_OPTIONS, this->ui->solarComboBox->currentText());
+    settingsIn.bSaveOnQuit = this->ui->saveOnQuit->isChecked();
 }

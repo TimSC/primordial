@@ -450,24 +450,6 @@ Environment::Environment()
     mediaPlayer = new QMediaPlayer(nullptr, QMediaPlayer::LowLatency);
     mediaPlayer->setAudioRole(QAudio::GameRole);
 
-    options.pens.clear();
-	for (int i = 0; i <= MAX_LEAF; i++)
-        options.pens.append(QPen());
-
-    options.pens[GREEN_LEAF]      = QPen(QColor(0,255,0));
-    options.pens[BLUE_LEAF]       = QPen(QColor(0,0,255));
-    options.pens[RED_LEAF]        = QPen(QColor(255,0,0));
-    options.pens[LBLUE_LEAF]      = QPen(QColor(0,255,255));
-    options.pens[WHITE_LEAF]      = QPen(QColor(255,255,255));
-    options.pens[DARK_GREEN_LEAF] = QPen(QColor(0, 128, 0));
-    options.pens[DARK_BLUE_LEAF]  = QPen(QColor(0, 0, 128));
-    options.pens[DARK_RED_LEAF]   = QPen(QColor(128, 0, 0));
-    options.pens[DARK_LBLUE_LEAF] = QPen(QColor(0, 128, 128));
-    options.pens[GREY_LEAF]       = QPen(QColor(128,128,128));
-    options.pens[YELLOW_LEAF]     = QPen(QColor(255,255,0));
-    options.pens[BLACK_LEAF]      = QPen(QColor(0,0,0));
-    options.pens[PURPLE_LEAF]     = QPen(QColor(255,0,255));
-
     tickStart = QDateTime::currentMSecsSinceEpoch();
     tickCount = 0;
     ticksPerSec = 0.0;
@@ -495,9 +477,9 @@ Environment::~Environment(void)
 //Fox BEGIN
 void Environment::Clear()
 {
-    options.SetToDefaults();
-    options.Load();
-    options.SanityCheck();
+    settings.SetToDefaults();
+    settings.Load();
+    settings.SanityCheck();
 
 	// Set up sides
 	side[0] = (Side*) &leftSide;
@@ -533,9 +515,9 @@ void Environment::PlayResource(const std::string &szSound)
     //bool isSmallScreen = AfxGetPLife().IsSmall();
     bool isSmallScreen = false;
 
-    if (options.bSoundOn && !isSmallScreen)
+    if (settings.bSoundOn && !isSmallScreen)
 	{
-        std::string sSound = options.m_sound.GetPath(szSound);
+        std::string sSound = settings.m_sound.GetPath(szSound);
 
         if (!sSound.empty())
         {
@@ -556,7 +538,7 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
     Biot* pNew = nullptr;
 
 //	m_sort.SetIncrementalSort(false);
-	for (long lIndex = 0; lIndex < options.m_initialPopulation; lIndex++)
+    for (long lIndex = 0; lIndex < settings.m_initialPopulation; lIndex++)
 	{
 		if ((pNew = new Biot(*this)) != NULL)
 		{
@@ -590,7 +572,7 @@ void Environment::OnOpen()
     topSide.SetSize(false);
     bottomSide.SetSize(false);
 
-    options.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
+    settings.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
 
 	// Create our biots
     for (int i = 0; i < m_biotList.size(); i++)
@@ -613,11 +595,11 @@ void Environment::OnNew(QOpenGLWidget &scene,
     m_scene = &scene;
 	Clear();
 
-	options.startNew = 1;
+    settings.startNew = 1;
 	Set(&worldRect);
 
-	options.m_initialPopulation  = population;
-    options.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
+    settings.m_initialPopulation  = population;
+    settings.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
 
 	m_orginalSeed = seed;
 
@@ -634,9 +616,9 @@ void Environment::OnNew(QOpenGLWidget &scene,
 	// Are we being displayed in the small window?
 	if (AfxGetPLife().IsSmall())
 	{
-		options.startNew            = 1;
-		options.m_initialPopulation = 4;
-		options.maxLineSegments     = 4;
+        settings.startNew            = 1;
+        settings.m_initialPopulation = 4;
+        settings.maxLineSegments     = 4;
 	}
 	else
 	{
@@ -647,7 +629,7 @@ void Environment::OnNew(QOpenGLWidget &scene,
 	// Create our biots
 	CreateBiots(nArmsPerBiot, nTypesPerBiot, nSegmentsPerArm);
 
-	options.m_generation = 0;
+    settings.m_generation = 0;
 
 	m_stats.Sample(*this);
     m_statsList.append(m_stats);
@@ -742,7 +724,7 @@ void Environment::Update()
     }
 
     //Check if we should update stats
-    if ((options.m_generation & CEnvStats::SAMPLE_TIME) == CEnvStats::SAMPLE_TIME)
+    if ((settings.m_generation & CEnvStats::SAMPLE_TIME) == CEnvStats::SAMPLE_TIME)
     {
         m_stats.Sample(*this);
         m_statsList.append(m_stats);
@@ -752,12 +734,12 @@ void Environment::Update()
 
         if (m_stats.PercentUncoveredByBiots() < 0.50)
         {
-            m_biotList[Integer(m_biotList.size())]->m_nSick = options.m_nSick;
+            m_biotList[Integer(m_biotList.size())]->m_nSick = settings.m_nSick;
         }
 
     }
 
-    options.m_generation++;
+    settings.m_generation++;
 
     if (m_bIsSelected)
     {
@@ -855,22 +837,10 @@ void Environment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     Document::AllocatorType& allocator = d.GetAllocator();
 
     v.AddMember("archiveVersion", archiveVersion, allocator);
-    v.AddMember("m_generation", options.m_generation, allocator);
     v.AddMember("m_uniqueID", m_uniqueID, allocator);
-    v.AddMember("bSoundOn", options.bSoundOn, allocator);
-    v.AddMember("bMouse", options.bMouse, allocator);
-    v.AddMember("nSexual", options.nSexual, allocator);
-    v.AddMember("bSiblingsAttack", options.bSiblingsAttack, allocator);
-    v.AddMember("bParentAttack", options.bParentAttack, allocator);
-    v.AddMember("chance", options.chance, allocator);
-    v.AddMember("regenCost", options.regenCost, allocator);
-    v.AddMember("regenTime", options.regenTime, allocator);
-    v.AddMember("m_leafEnergy", options.m_leafEnergy, allocator);
-    v.AddMember("friction", options.friction, allocator);
 
     // The starting parameters
     v.AddMember("m_orginalSeed", m_orginalSeed, allocator);
-    v.AddMember("m_initialPopulation", options.m_initialPopulation, allocator);
 
     Value br(kObjectType);
     BRect::SerializeJson(d, br);
@@ -890,10 +860,14 @@ void Environment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     m_statsList.SerializeJson(d, statsLi);
     v.AddMember("m_statsList", statsLi, allocator);
 
-//		sock.Serialize(ar);
     Value biotLi(kObjectType);
     m_biotList.SerializeJson(*this, d, biotLi);
     v.AddMember("biots", biotLi, allocator);
+
+    Value settingsJson(kObjectType);
+    settings.SerializeJson(d, settingsJson);
+    v.AddMember("settings", settingsJson, allocator);
+
 }
 
 void Environment::SerializeJsonLoad(const rapidjson::Value& v)
@@ -909,44 +883,10 @@ void Environment::SerializeJsonLoad(const rapidjson::Value& v)
     if (version != archiveVersion)
         throw std::runtime_error("eror parsing json");
 
-    options.m_generation = v["m_generation"].GetUint();
-
     m_uniqueID = v["m_uniqueID"].GetUint();
-
-    options.bSoundOn = v["bSoundOn"].GetBool();
-    if (options.bSoundOn != false)
-        options.bSoundOn = true;
-
-    options.bMouse = v["bMouse"].GetBool();
-
-    //if (AfxIsNT() && AfxGetPLife().GetView() == CPrimCmdLine::SHOW_SAVER_WINDOW)
-    //    options.bMouse = false;
-
-    options.nSexual = v["nSexual"].GetInt();
-    if (options.nSexual < 1 ||
-        options.nSexual > 3)
-        options.nSexual = 3;
-
-    options.bSiblingsAttack = v["bSiblingsAttack"].GetBool();
-    if (options.bSiblingsAttack != false)
-        options.bSiblingsAttack = true;
-
-    options.bParentAttack = v["bParentAttack"].GetBool();
-    if (options.bParentAttack != false)
-        options.bParentAttack = true;
-
-    options.chance = v["chance"].GetInt();
-    if (options.chance < 0)
-        options.chance = 41;
-
-    options.regenCost = v["regenCost"].GetInt64();
-    options.regenTime = v["regenTime"].GetUint();
-    options.m_leafEnergy = v["m_leafEnergy"].GetInt();
-    options.friction = v["friction"].GetFloat();
 
     // The starting parameters
     m_orginalSeed = v["m_orginalSeed"].GetInt();
-    options.m_initialPopulation = v["m_initialPopulation"].GetInt();
 
     BRect::SerializeJsonLoad(v["brect"]);
 
@@ -957,9 +897,9 @@ void Environment::SerializeJsonLoad(const rapidjson::Value& v)
     m_stats.SerializeJsonLoad(v["m_stats"]);
     m_statsList.SerializeJsonLoad(v["m_statsList"]);
 
-//		sock.Serialize(ar);
     m_biotList.SerializeJsonLoad(*this, v["biots"]);
 
+    settings.SerializeJsonLoad(v["setting"]);
 }
 
 void Environment::paintGL(QPainter &painter)

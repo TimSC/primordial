@@ -242,13 +242,13 @@ void Biot::Mutate(int chance)
 	trait.Mutate(chance);
 	m_commandArray.Mutate(chance);
 
-    adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.options.startEnergy;
+    adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.settings.startEnergy;
 	if (energy < adultBaseEnergy)
 		energy = adultBaseEnergy;
 
 	SetRatio();
     totalDistance   = UpdateShape(ratio);
-	childBaseEnergy = totalDistance * env.options.startEnergy;
+    childBaseEnergy = totalDistance * env.settings.startEnergy;
     UpdateShapeRotation();
   
 	// If not loaded, we need a new ID
@@ -291,7 +291,7 @@ void Biot::SetRatio(void)
 //
 int Biot::Initialize(bool bRandom)
 {
-    adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.options.startEnergy;
+    adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.settings.startEnergy;
 	if (bRandom || energy <= 0)
 		energy = adultBaseEnergy;
 
@@ -299,7 +299,7 @@ int Biot::Initialize(bool bRandom)
     totalDistance   = UpdateShape(ratio);
     UpdateShapeRotation();
 
-	childBaseEnergy = totalDistance * env.options.startEnergy;
+    childBaseEnergy = totalDistance * env.settings.startEnergy;
   
 	// If not loaded, we need a new ID
 	m_Id     = env.GetID();
@@ -524,7 +524,7 @@ int64_t Biot::UpdateShape(int aRatio)
 					nType[nPeno] = GREEN_LEAF;
        
 				if (nType[nPeno] == GREEN_LEAF)
-					turnBenefit += (env.options.m_leafEnergy * distance[nPeno]);
+                    turnBenefit += (env.settings.m_leafEnergy * distance[nPeno]);
 
 				colorDistance[nType[nPeno]] += distance[nPeno];
  			}
@@ -534,7 +534,7 @@ int64_t Biot::UpdateShape(int aRatio)
     posAndSpeed.setMass(0.0);
 
     for (i = GREEN_LEAF; i <= WHITE_LEAF; i++)
-        posAndSpeed.addMass(colorDistance[i] * env.options.leafMass[i]);
+        posAndSpeed.addMass(colorDistance[i] * env.settings.leafMass[i]);
 
     return dist;
 }
@@ -646,7 +646,7 @@ void Biot::Prepare(int operation)
             totalDistance   = UpdateShape(ratio);
 			for (int i = 0; i < MAX_GENES; i++)
 				state[i] = distance[i];
-			childBaseEnergy = totalDistance * env.options.startEnergy;
+            childBaseEnergy = totalDistance * env.settings.startEnergy;
 			SetScreenRect();
 			SetBonus();
 			break;
@@ -1006,7 +1006,7 @@ bool Biot::Move(void)
 	RemoveCollisions(m_age);
 
     posAndSpeed.makeStep();
-//	posAndSpeed.friction(env.options.friction);
+//	posAndSpeed.friction(env.settings.friction);
 
 	// Time to behave
     for (i = 0; i < MAX_LIMBS; i++)
@@ -1105,7 +1105,7 @@ bool Biot::Move(void)
 		}
 	}
 
-	if (bInjured && (m_age & env.options.regenTime) == env.options.regenTime)
+    if (bInjured && (m_age & env.settings.regenTime) == env.settings.regenTime)
 	{
         int64_t regenEnergy  = childBaseEnergy >> 2;
 		if (energy > regenEnergy)
@@ -1120,7 +1120,7 @@ bool Biot::Move(void)
 				{
 					if (state[j] < distance[j]  && distance[j] > 0)
 					{
-						energy   -= env.options.regenCost; //env.leafRegen[nType[j]];
+                        energy   -= env.settings.regenCost; //env.leafRegen[nType[j]];
   
 						state[j]++;
                         bInjured = true;
@@ -1135,7 +1135,7 @@ bool Biot::Move(void)
 								newType = -2;
 
 							if (nType[j] == GREEN_LEAF)
-								turnBenefit += env.options.m_leafEnergy;
+                                turnBenefit += env.settings.m_leafEnergy;
       
 							// How much does this effect our distance?
 							colorDistance[nType[j]]++;
@@ -1285,9 +1285,9 @@ Biot& Biot::operator=(Biot& copyMe)
 //		env.PlayResource("PL.Mate");
 	}
 
-	trait.Mutate(env.options.chance);
+    trait.Mutate(env.settings.chance);
 
-	m_commandArray.Mutate(env.options.chance);
+    m_commandArray.Mutate(env.settings.chance);
 
 	max_genes = MAX_GENES;
 
@@ -1368,13 +1368,13 @@ int Biot::Contacter(Biot* enemy, int dx, int dy, int& x, int& y)
                                     bool bNoContact = enemy->AdjustState(j, enemyDelta);
 
 									// Translate for flash color
-									enemy->newType = env.options.newType[enemy->nType[j]];
+                                    enemy->newType = env.settings.newType[enemy->nType[j]];
 
 									energy += deltaEnergy;
 									bNoContact |= AdjustState(i, delta);
 
 									// Translate for flash color
-									newType = env.options.newType[nType[i]];
+                                    newType = env.settings.newType[nType[i]];
 
 									if (bNoContact)
 										nContacts--;
@@ -1386,12 +1386,12 @@ int Biot::Contacter(Biot* enemy, int dx, int dy, int& x, int& y)
 								if (m_nSick)
 								{
 									if (!enemy->m_nSick)
-										enemy->m_nSick = env.options.m_nSick;
+                                        enemy->m_nSick = env.settings.m_nSick;
 								}
 								else
 								{
 									if (enemy->m_nSick)
-										m_nSick = env.options.m_nSick;
+                                        m_nSick = env.settings.m_nSick;
 								}
 								nContacts++;
 								x = setX;
@@ -1432,7 +1432,7 @@ bool Biot::ContactLine(Biot& enemy, int nEnemyPeno, int nPeno, short& delta, int
 		env.PlayResource("PL.Mate");
 	}
 
-	switch (env.options.leafContact[type][enemyType])
+    switch (env.settings.leafContact[type][enemyType])
 	{
 	case CONTACT_IGNORE:
         return false;
@@ -1521,7 +1521,7 @@ bool Biot::AdjustState(int nPeno, short delta)
 
 	// determine effect on energy production
 	if (nType[nPeno] == GREEN_LEAF)
-		turnBenefit -= (delta * env.options.m_leafEnergy);
+        turnBenefit -= (delta * env.settings.m_leafEnergy);
 
 	// How much does this effect our distance?
 	colorDistance[nType[nPeno]] -= delta;
@@ -1535,7 +1535,7 @@ bool Biot::AdjustState(int nPeno, short delta)
 			if (state[nPeno] > 0)
 			{
 				if (nType[nPeno] == GREEN_LEAF)
-					turnBenefit -= (state[nPeno] * env.options.m_leafEnergy);
+                    turnBenefit -= (state[nPeno] * env.settings.m_leafEnergy);
 
 				totalDistance -= state[nPeno];
 				colorDistance[nType[nPeno]] -= state[nPeno];
@@ -1761,11 +1761,11 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
 
 bool Biot::OnOpen()
 {
-    adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.options.startEnergy;
+    adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.settings.startEnergy;
 
     totalDistance   = UpdateShape(ratio);
     UpdateShapeRotation();
-	childBaseEnergy = totalDistance * env.options.startEnergy;
+    childBaseEnergy = totalDistance * env.settings.startEnergy;
 
 	// Lets assume injury
     bInjured = true;
@@ -2297,7 +2297,7 @@ void Biot::paintGL(QPainter &painter)
             if (flashCol)
                 aPen = newType;
 
-            painter.setPen(env.options.pens[aPen]);
+            painter.setPen(env.settings.pens[aPen]);
 
             painter.drawLine(startPt[i].x()+origin.x(), startPt[i].y()+origin.y(), stopPt[i].x()+origin.x(), stopPt[i].y()+origin.y());
 

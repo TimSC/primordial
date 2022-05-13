@@ -12,6 +12,7 @@
 #include <QLabel>
 #include <QByteArray>
 #include <QWindow>
+#include <QStandardPaths>
 #include "core/Biots.h"
 #include "settingsui.h"
 #include "aboutui.h"
@@ -57,6 +58,106 @@ void MainApp::timerEvent(QTimerEvent *event)
     TimedUpdate(true);
 }
 
+void MainApp::closeEvent(QCloseEvent *ev)
+{
+    if(env.settings.bSaveOnQuit)
+    {
+        QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        QDir pathObj(path);
+        if (!pathObj.exists())
+            pathObj.mkpath(".");
+
+        QString fina = pathObj.filePath("current.plfj");
+
+        Save(fina.toStdString());
+    }
+
+    ev->accept();
+}
+
+void MainApp::Save(const std::string &filename)
+{
+    QFileInfo fi(filename.c_str());
+    QString compSuffix2 = fi.completeSuffix();
+
+    Document d;
+    d.SetObject();
+    Value envJson(kObjectType);
+    this->env.SerializeJson(d, envJson);
+    d.AddMember("environment", envJson, d.GetAllocator());
+
+    if(compSuffix2 == "plfc")
+    {
+        //Write compressed
+        stringstream ss;
+        OStreamWrapper osw(ss);
+        Writer<OStreamWrapper> writer(osw);
+        d.Accept(writer);
+
+        string dat = ss.str();
+        QByteArray dat2(qCompress(dat.data(), dat.size()));
+
+        ofstream myfile(filename.c_str(), std::ios::binary);
+
+        myfile.write(dat2.data(), dat2.size());
+    }
+    else
+    {
+        //Write uncompressed
+        ofstream myfile(filename.c_str());
+        OStreamWrapper osw(myfile);
+        Writer<OStreamWrapper> writer(osw);
+        d.Accept(writer);
+    }
+
+}
+
+void MainApp::Load(const std::string &fileName)
+{
+    QFileInfo fi(fileName.c_str());
+    QString compSuffix = fi.completeSuffix();
+    QSharedPointer<IStreamWrapper> isw;
+    QSharedPointer<stringstream> ss;
+    QSharedPointer<ifstream> ifs;
+
+    if(compSuffix == "plfc")
+    {
+        //Load compressed file
+        QFile fil(fileName.c_str());
+        fil.open(QIODevice::ReadOnly);
+        QByteArray dat = fil.readAll();
+        QByteArray dat2(qUncompress(dat));
+
+        ss  = QSharedPointer<stringstream>(new stringstream(dat2.constData()));
+        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
+    }
+    else
+    {
+        //Load uncompressed file
+        ifs = QSharedPointer<ifstream>(new ifstream(fileName.c_str()));
+        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ifs.data()));
+    }
+
+    try {
+        Document d;
+        IStreamWrapper *pisw = isw.data();
+        ParseResult ok = d.ParseStream(*pisw);
+        if (!ok)
+            throw runtime_error("eror parsing json");
+        if (!d.IsObject() or !d.HasMember("environment"))
+            throw runtime_error("eror parsing json");
+        this->env.SerializeJsonLoad(d["environment"]);
+
+    } catch (exception &err) {
+
+        std::cout << err.what() << std::endl;
+        return;
+    }
+
+    this->env.OnOpen();
+
+}
+
 // *******************************************
 
 MainWindow::MainWindow(QWidget *parent)
@@ -82,11 +183,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     gri->setPen(whitePen);
 
-    this->app.env.options.Reset(rect.x(), rect.y());
+    this->app.env.settings.Reset(rect.x(), rect.y());
 
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
     //qint64 seed = 100;
-    int numBiots = this->app.env.options.m_initialPopulation;
+    int numBiots = this->app.env.settings.m_initialPopulation;
     this->app.env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
                 0, 1, 10);
 
@@ -124,6 +225,16 @@ MainWindow::MainWindow(QWidget *parent)
     app.env.AddListener(&dvb->listenAdapter);
     dvb->env = &app.env;
     connect(this->ui->openGLWidget, SIGNAL(ExitFullscreen()), this, SLOT(ExitFullscreen()));
+
+    if(this->app.env.settings.bSaveOnQuit)
+    {
+        QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+        QString fina = QDir(path).filePath("current.plfj");
+        if(QFileInfo::exists(fina))
+        {
+            this->app.Load(fina.toStdString());
+        }
+    }
 
     installEventFilter(this);
     startTimer(10);     // 10-millisecond timer
@@ -180,47 +291,7 @@ void MainWindow::on_actionOpen_triggered()
     if (fileName.isEmpty())
             return;
 
-    QFileInfo fi(fileName);
-    QString compSuffix = fi.completeSuffix();
-    QSharedPointer<IStreamWrapper> isw;
-    QSharedPointer<stringstream> ss;
-    QSharedPointer<ifstream> ifs;
-
-    if(compSuffix == "plfc")
-    {
-        //Load compressed file
-        QFile fil(fileName);
-        fil.open(QIODevice::ReadOnly);
-        QByteArray dat = fil.readAll();
-        QByteArray dat2(qUncompress(dat));
-
-        ss  = QSharedPointer<stringstream>(new stringstream(dat2.constData()));
-        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
-    }
-    else
-    {
-        //Load uncompressed file
-        ifs = QSharedPointer<ifstream>(new ifstream(fileName.toStdString().c_str()));
-        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ifs.data()));
-    }
-
-    try {
-        Document d;
-        IStreamWrapper *pisw = isw.data();
-        ParseResult ok = d.ParseStream(*pisw);
-        if (!ok)
-            throw runtime_error("eror parsing json");
-        if (!d.IsObject() or !d.HasMember("environment"))
-            throw runtime_error("eror parsing json");
-        this->app.env.SerializeJsonLoad(d["environment"]);
-
-    } catch (exception &err) {
-
-        std::cout << err.what() << std::endl;
-        return;
-    }
-
-    this->app.env.OnOpen();
+    this->app.Load(fileName.toStdString());
 
     this->currentFilename = fileName.toStdString();
 
@@ -241,45 +312,14 @@ void MainWindow::on_actionSave_As_triggered()
     if(compSuffix == "")
         this->currentFilename += ".plfc";
 
-    QFileInfo fi2(this->currentFilename.c_str());
-    QString compSuffix2 = fi.completeSuffix();
-
-    Document d;
-    d.SetObject();
-    Value envJson(kObjectType);
-    this->app.env.SerializeJson(d, envJson);
-    d.AddMember("environment", envJson, d.GetAllocator());
-
-    if(compSuffix2 == "plfc")
-    {
-        //Write compressed
-        stringstream ss;
-        OStreamWrapper osw(ss);
-        Writer<OStreamWrapper> writer(osw);
-        d.Accept(writer);
-
-        string dat = ss.str();
-        QByteArray dat2(qCompress(dat.data(), dat.size()));
-
-        ofstream myfile(this->currentFilename.c_str(), std::ios::binary);
-
-        myfile.write(dat2.data(), dat2.size());
-    }
-    else
-    {
-        //Write uncompressed
-        ofstream myfile(this->currentFilename.c_str());
-        OStreamWrapper osw(myfile);
-        Writer<OStreamWrapper> writer(osw);
-        d.Accept(writer);
-    }
+    this->app.Save(this->currentFilename);
 }
 
 void MainWindow::on_actionNew_triggered()
 {
     QRect rect(0, 0, 2000, 1500);
     qint64 seed = QDateTime::currentMSecsSinceEpoch();
-    int numBiots = this->app.env.options.m_initialPopulation;
+    int numBiots = this->app.env.settings.m_initialPopulation;
 
     this->app.env.DeleteContents();
     this->app.env.OnNew(*this->ui->openGLWidget, rect, numBiots, seed,
@@ -299,15 +339,7 @@ void MainWindow::on_actionSave_triggered()
         return;
     }
 
-    Document d;
-    d.SetObject();
-    Value envJson(kObjectType);
-    this->app.env.SerializeJson(d, envJson);
-    d.AddMember("environment", envJson, d.GetAllocator());
-    ofstream myfile(this->currentFilename);
-    OStreamWrapper osw(myfile);
-    Writer<OStreamWrapper> writer(osw);
-    d.Accept(writer);
+    app.Save(this->currentFilename);
 }
 
 void MainWindow::on_actionStart_Simulation_triggered()
@@ -392,7 +424,7 @@ void MainWindow::updateToolMenu()
 
 void MainWindow::on_actionSettings_triggered()
 {
-    class SettingsUi settingsUi(app.env.options);
+    class SettingsUi settingsUi(app.env.settings);
     settingsUi.exec();
     int ret = settingsUi.result();
     if(ret == QDialog::Accepted)
@@ -450,4 +482,9 @@ void MainWindow::ExitFullscreen()
     showNormal();
     this->ui->statusbar->setVisible(true);
     this->ui->menubar->setVisible(true);
+}
+
+void MainWindow::closeEvent(QCloseEvent *ev)
+{
+    app.closeEvent(ev);
 }

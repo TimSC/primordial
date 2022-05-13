@@ -34,6 +34,8 @@
 class ProductTerm
 {
 public:
+    ProductTerm();
+
 	void Mutate(int nChance);
 	void Randomize();
 	void Debug();
@@ -80,6 +82,7 @@ public:
 		MAX_PRODUCT_SUM_TERMS = 8
 	};
 
+    ProductSum();
 	int GetCount();
 
 	void Mutate(int nChance);
@@ -175,6 +178,7 @@ inline bool ProductArray::IsTrue(int nProductSum, uint32_t dwSensor)
 struct CommandArgument
 {
 public:
+    CommandArgument();
 
 	// Genetic Functions
     void Randomize();
@@ -529,6 +533,7 @@ union CommandType {
 class CommandLimbStore
 {
 public:
+    CommandLimbStore();
 	void Initialize(int nLimbType, int nLimb, Biot& biot);
     void Execute(Biot& biot, uint32_t dwSensor);
 

@@ -214,7 +214,7 @@ public:
 	CEnvStats         m_stats;
 	CEnvStatsList     m_statsList;
 
-	CSettings options; //The optins: Fox
+    CSettings settings;
 
     LeftSide   leftSide;
     RightSide  rightSide;
