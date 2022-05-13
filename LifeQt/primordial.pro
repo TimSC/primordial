@@ -27,10 +27,10 @@ SOURCES += \
     core/Environ.cpp \
     core/Etools.cpp \
     core/Genotype.cpp \
+    core/PosAndSpeed.cpp \
     core/Rand.cpp \
     core/Settings.cpp \
     core/SoundRegistry.cpp \
-    core/vector.cpp \
     dockviewbiot.cpp \
     environmentarea.cpp \
     main.cpp \
@@ -50,11 +50,11 @@ HEADERS += \
     core/Environ.h \
     core/Etools.h \
     core/Genotype.h \
+    core/PosAndSpeed.h \
     core/Rand.h \
     core/Settings.h \
     core/SoundRegistry.h \
     core/json.h \
-    core/vector.h \
     dockviewbiot.h \
     environmentarea.h \
     mainwindow.h \

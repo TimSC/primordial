@@ -6,7 +6,7 @@
 #include <QDataStream>
 #include <QGraphicsItemGroup>
 #include "Etools.h"
-#include "vector.h"
+#include "PosAndSpeed.h"
 #include "Genotype.h"
 #include "Brain.h"
 #include "Environ.h"

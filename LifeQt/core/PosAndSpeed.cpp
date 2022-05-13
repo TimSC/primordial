@@ -7,7 +7,7 @@
 #include <math.h>
 //#include <stdio.h>
 //#include <limits.h>
-#include "vector.h"
+#include "PosAndSpeed.h"
 
 using namespace rapidjson;
 

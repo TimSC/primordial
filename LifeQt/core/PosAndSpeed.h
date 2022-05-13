@@ -1,18 +1,18 @@
 //////////////////////////////////////////////////////////////////////
 //
-// vector.h
+// PosAndSpeed.h
 //
 // Math functions associated with motion and acceleration
 //
 
-#ifndef _VECTOR_H
-#define _VECTOR_H
+#ifndef _POSANDSPEED_H
+#define _POSANDSPEED_H
 #include "Etools.h"
 #include "json.h"
 #include "rapidjson/document.h"
 
 ////////////////////////////////////////////////////////////////////////////////////
-// Class Vector
+// Class PosAndSpeed
 //
 //
 //
@@ -281,4 +281,4 @@ inline void PosAndSpeed::makeStep(void)
 	}
 }
 
-#endif //_VECTOR_H
+#endif //_POSANDSPEED_H
