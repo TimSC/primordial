@@ -364,7 +364,6 @@ void Biot::Place(int x, int y)
     posAndSpeed.setY(origin.y());
 
     bShapeChanged = true;
-    UpdateGraphics();
 }
 
 
@@ -662,18 +661,6 @@ void Biot::Prepare(int operation)
 		default:
 			break;
 	}
-}
-
-
-// ////////////////////////////////////////////////////////////////////
-// UpdateGraphics
-//
-//
-
-void Biot::UpdateGraphics()
-{
-
-
 }
 
 
@@ -1162,8 +1149,6 @@ bool Biot::Move(void)
 			}
 		}
 	}
-
-    UpdateGraphics();
 
     return true;
 }
@@ -1792,7 +1777,6 @@ bool Biot::OnOpen()
 	m_maxAge = trait.GetMaxAge();
 
     bShapeChanged = true;
-    UpdateGraphics();
 
     for (int i = 0; i < MAX_LIMBS; i++)
     {

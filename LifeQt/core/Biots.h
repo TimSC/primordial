@@ -107,7 +107,6 @@ class Biot: public BRectItem
 
     void ClearSettings(void);
     void Draw(void);
-    void UpdateGraphics();
     void FormMask(void);
     void FreeBitmaps();
 	enum {

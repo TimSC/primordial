@@ -964,9 +964,7 @@ void Environment::SerializeJsonLoad(const rapidjson::Value& v)
 
 void Environment::paintGL(QPainter &painter)
 {
-    for(int i=0; i<m_biotList.size(); i++)
-        m_biotList[i]->UpdateGraphics();
-
+    //Draw all the biots
     for(int i=0; i<this->m_biotList.size(); i++)
     {
         m_biotList[i]->paintGL(painter);
