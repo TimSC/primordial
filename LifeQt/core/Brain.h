@@ -353,7 +353,8 @@ class CommandLimbStore;
 class CommandFlapLimbSegment
 {
 public:
-	void Initialize(CommandLimbStore& store);
+    //CommandFlapLimbSegment();
+    void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 	void Flap(Biot& biot);
 
@@ -373,6 +374,7 @@ protected:
 class CommandFlapLimbTypeSegment 
 {
 public:
+    //CommandFlapLimbTypeSegment();
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 	void Flap(Biot& biot, int nPeno);
@@ -391,6 +393,7 @@ protected:
 class CommandMoveLimbSegment
 {
 public:
+    //CommandMoveLimbSegment();
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
@@ -409,7 +412,8 @@ protected:
 class CommandMoveLimbSegments
 {
 public:
-	void Initialize(CommandLimbStore& store);
+    //CommandMoveLimbSegments();
+    void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 
 protected:
@@ -423,7 +427,8 @@ protected:
 class CommandMoveLimbTypeSegment
 {
 public:
-	void Initialize(CommandLimbStore& store);
+    //CommandMoveLimbTypeSegment();
+    void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 
 protected:
@@ -439,7 +444,8 @@ protected:
 class CommandMoveLimbTypeSegments
 {
 public:
-	void Initialize(CommandLimbStore& store);
+    //CommandMoveLimbTypeSegments();
+    void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 
 protected:
@@ -453,7 +459,8 @@ protected:
 class CommandRetractLimbType
 {
 public:
-	void Initialize(CommandLimbStore& store);
+    //CommandRetractLimbType();
+    void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 
 protected:
@@ -468,7 +475,8 @@ protected:
 class CommandRetractLimb
 {
 public:
-	void Initialize(CommandLimbStore& store);
+    //CommandRetractLimb();
+    void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 
 protected:
@@ -482,6 +490,7 @@ protected:
 class CommandNOP
 {
 public:
+    //CommandNOP();
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 
@@ -493,6 +502,7 @@ protected:
 class CommandMemory
 {
 public:
+    //CommandMemory();
 	void Initialize(CommandLimbStore& store);
 	void Execute(CommandLimbStore& store);
 
@@ -549,6 +559,9 @@ public:
 
 	// Callback for each
 	bool IsSensorTrue();
+
+    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
 	// This requires serialization

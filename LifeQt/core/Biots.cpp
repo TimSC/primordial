@@ -1645,6 +1645,15 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     m_commandArray2.SerializeJson(d, comm2Json);
     v.AddMember("m_commandArray2", comm2Json, allocator);
 
+    Value storeJson(kArrayType);
+    for(int i=0; i<MAX_LIMBS; i++)
+    {
+        Value storeObj(kObjectType);
+        m_store[i].SerializeJson(d, storeObj);
+        storeJson.PushBack(storeObj, allocator);
+    }
+    v.AddMember("m_store", storeJson, allocator);
+
     Value vectorJson(kObjectType);
     posAndSpeed.SerializeJson(d, vectorJson);
     v.AddMember("vector", vectorJson, allocator);
@@ -1703,6 +1712,10 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
     trait2.SerializeJsonLoad(v["trait2"]);
 
     m_commandArray2.SerializeJsonLoad(v["m_commandArray2"]);
+
+    const Value &storeArray = v["m_store"];
+    for(int i=0; i<storeArray.Size() and i < MAX_LIMBS; i++)
+        m_store[i].SerializeJsonLoad(storeArray[i]);
 
     posAndSpeed.SerializeJsonLoad(v["vector"]);
 

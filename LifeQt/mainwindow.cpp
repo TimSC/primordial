@@ -226,7 +226,7 @@ MainWindow::MainWindow(QWidget *parent)
     dvb->env = &app.env;
     connect(this->ui->openGLWidget, SIGNAL(ExitFullscreen()), this, SLOT(ExitFullscreen()));
 
-    if(this->app.env.settings.bSaveOnQuit)
+    /*if(this->app.env.settings.bSaveOnQuit)
     {
         QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
         QString fina = QDir(path).filePath("current.plfj");
@@ -234,7 +234,7 @@ MainWindow::MainWindow(QWidget *parent)
         {
             this->app.Load(fina.toStdString());
         }
-    }
+    }*/
 
     installEventFilter(this);
     startTimer(10);     // 10-millisecond timer

@@ -567,6 +567,9 @@ CommandLimbStore::CommandLimbStore()
     m_dwSensor = -1;
     m_pBiot = nullptr;
     m_pArg = nullptr;
+
+    for(int i=0; i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
+        memset(&command[i], 0x00, sizeof(CommandType));
 }
 
 void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
@@ -692,12 +695,40 @@ inline bool CommandLimbStore::IsSensorTrue()
 	return m_pBiot->m_commandArray.IsTrue(m_nLimbType, m_index, m_dwSensor);
 }
 
+void CommandLimbStore::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+{
+    Document::AllocatorType& allocator = d.GetAllocator();
+    v.AddMember("m_nLimbType", m_nLimbType, allocator);
+    v.AddMember("m_nLimb", m_nLimb, allocator);
+
+    /*Value storeJson(kArrayType);
+    for(int i=0; i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
+    CommandType  command[];
+*/
+}
+
+void CommandLimbStore::SerializeJsonLoad(const rapidjson::Value& v)
+{
+    m_nLimbType = v["m_nLimbType"].GetInt();
+    m_nLimb = v["m_nLimb"].GetInt();
+}
 
 // /////////////////////////////////////////////////////////////
 //CommandFlapLine
 //
 // Don't give me no flap!  Flaps an individual line.
 //
+
+/*CommandFlapLimbTypeSegment::CommandFlapLimbTypeSegment()
+{
+    m_nLimbType = -1;
+    m_nSegment = -1;
+    m_nRate = -1;
+    m_nMaxDegrees = -1;
+    m_nAppliedDegrees = -1;
+    m_bGoingUp = false;
+}*/
+
 void CommandFlapLimbTypeSegment::Initialize(CommandLimbStore& store)
 {
 	// Determine limb type to move
@@ -832,6 +863,16 @@ void CommandFlapLimbTypeSegment::Flap(Biot& biot, int nPeno)
 // /////////////////////////////////////////////////////////////
 //Don't give me no flap!
 //
+/*CommandFlapLimbSegment()
+{
+    m_nLimb = -1;
+    m_nSegment = -1;
+    m_nRate = -1;
+    m_nMaxDegrees = -1;
+    m_nAppliedDegrees = -1;
+    m_bGoingUp = false;
+}*/
+
 void CommandFlapLimbSegment::Initialize(CommandLimbStore& store)
 {
 	// Determine limb type to move
@@ -957,6 +998,16 @@ void CommandFlapLimbSegment::Flap(Biot& biot)
 }
 
 // /////////////////////////////////////////////////////////////
+
+/*CommandMoveLimbSegment::CommandMoveLimbSegment()
+{
+    m_nLimb = -1;
+    m_nSegment = -1;
+    m_nRate = -1;
+    m_nMaxDegrees = -1;
+    m_nAppliedDegrees = -1;
+}
+*/
 void CommandMoveLimbSegment::Initialize(CommandLimbStore& store)
 {
 		// Determine limb type to move
@@ -1006,6 +1057,16 @@ void CommandMoveLimbSegment::Execute(CommandLimbStore& store)
 }
 
 // /////////////////////////////////////////////////////////////
+
+/*CommandMoveLimbTypeSegment::CommandMoveLimbTypeSegment()
+{
+    m_nLimbType = -1;
+    m_nSegment = -1;
+    m_nRate = -1;
+    m_nMaxDegrees = -1;
+    m_nAppliedDegrees = -1;
+}*/
+
 void CommandMoveLimbTypeSegment::Initialize(CommandLimbStore& store)
 {
 	// Determine limb type to move
@@ -1056,6 +1117,14 @@ void CommandMoveLimbTypeSegment::Execute(CommandLimbStore& store)
 }
 
 // /////////////////////////////////////////////////////////////
+/*CommandMoveLimbSegments::CommandMoveLimbSegments()
+{
+    m_nLimb = -1;
+    m_nRate = -1;
+    m_nMaxDegrees = -1;
+    m_nAppliedDegrees = -1;
+}*/
+
 void CommandMoveLimbSegments::Initialize(CommandLimbStore& store)
 {
 	// Determine limb type to move
@@ -1105,6 +1174,15 @@ void CommandMoveLimbSegments::Execute(CommandLimbStore& store)
 }
 
 // /////////////////////////////////////////////////////////////
+
+/*CommandMoveLimbTypeSegments::CommandMoveLimbTypeSegments()
+{
+    m_nLimbType = -1;
+    m_nRate = -1;
+    m_nMaxDegrees = -1;
+    m_nAppliedDegrees = -1;
+}*/
+
 void CommandMoveLimbTypeSegments::Initialize(CommandLimbStore& store)
 {
 	// Determine limb type to move
@@ -1154,6 +1232,15 @@ void CommandMoveLimbTypeSegments::Execute(CommandLimbStore& store)
 }
 
 // /////////////////////////////////////////////////////////////
+
+/*CommandRetractLimb::CommandRetractLimb()
+{
+    m_nSegment = -1;
+    m_nLimb = -1;
+    m_nMaxRadius = -1;
+    m_nAppliedRadius = -1;
+}*/
+
 void CommandRetractLimb::Initialize(CommandLimbStore& store)
 {
 	// Lets indicate there is nothing yet to do
@@ -1224,6 +1311,15 @@ void CommandRetractLimb::Execute(CommandLimbStore& store)
 
 // /////////////////////////////////////////////////////////////
 //
+
+/*CommandRetractLimbType::CommandRetractLimbType()
+{
+    m_nSegment = -1;
+    m_nLimbType = -1;
+    m_nMaxRadius = -1;
+    m_nAppliedRadius = -1;
+}*/
+
 // Tell all the limbs of a particular type to retract
 void CommandRetractLimbType::Initialize(CommandLimbStore& store)
 {
@@ -1291,6 +1387,12 @@ void CommandRetractLimbType::Execute(CommandLimbStore& store)
 }
 
 // /////////////////////////////////////////////////////////////
+
+/*CommandNOP::CommandNOP()
+{
+
+}*/
+
 void CommandNOP::Initialize(CommandLimbStore& /*store*/)
 {
  // Nothing to do!
@@ -1304,6 +1406,14 @@ void CommandNOP::Execute(CommandLimbStore& /*store*/)
 
 
 // /////////////////////////////////////////////////////////////
+
+/*CommandMemory::CommandMemory()
+{
+    m_time = -1;
+    m_type = -1;
+    m_bSet = false;
+}*/
+
 void CommandMemory::Initialize(CommandLimbStore& store)
 {
 	CommandArgument& arg = *store.m_pArg;
