@@ -899,7 +899,7 @@ void Environment::SerializeJsonLoad(const rapidjson::Value& v)
 
     m_biotList.SerializeJsonLoad(*this, v["biots"]);
 
-    settings.SerializeJsonLoad(v["setting"]);
+    settings.SerializeJsonLoad(v["settings"]);
 }
 
 void Environment::paintGL(QPainter &painter)

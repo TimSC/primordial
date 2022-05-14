@@ -701,16 +701,34 @@ void CommandLimbStore::SerializeJson(rapidjson::Document &d, rapidjson::Value &v
     v.AddMember("m_nLimbType", m_nLimbType, allocator);
     v.AddMember("m_nLimb", m_nLimb, allocator);
 
-    /*Value storeJson(kArrayType);
+    Value commandJson(kArrayType);
     for(int i=0; i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
-    CommandType  command[];
-*/
+    {
+        QByteArray buff((const char *)&command[i], sizeof(CommandType));
+        std::string buffStr = buff.toBase64().toStdString();
+        Value v2;
+        v2.SetString(buffStr.c_str(), allocator);
+        commandJson.PushBack(v2, allocator);
+    }
+    v.AddMember("command", commandJson, allocator);
+
 }
 
 void CommandLimbStore::SerializeJsonLoad(const rapidjson::Value& v)
 {
     m_nLimbType = v["m_nLimbType"].GetInt();
     m_nLimb = v["m_nLimb"].GetInt();
+
+    const Value &commandJson = v["command"];
+    if(!commandJson.IsArray())
+        throw std::runtime_error("eror parsing json");
+    for(int i=0; i<commandJson.Size() and i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
+    {
+        if(!commandJson[i].IsString()) continue;
+        QByteArray buffStr(commandJson[i].GetString(), commandJson[i].GetStringLength());
+        QByteArray buff = QByteArray::fromBase64(buffStr);
+        memcpy(&command[i], buff.toStdString().c_str(), std::min((int)buff.length(), (int)sizeof(CommandType)));
+    }
 }
 
 // /////////////////////////////////////////////////////////////
