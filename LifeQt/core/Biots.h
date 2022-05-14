@@ -16,7 +16,7 @@
 // Sensor Definitions
 //
 // bit
-// 1	
+// 1    
 const int MAX_ENERGY_HISTORY = 21;
 
 #define DSTERASE  (uint32_t)0x00220326
@@ -74,27 +74,27 @@ class Collision
 class Biot: public BRectItem
 {
   public:
-	Biot(Environment& environment);
+    Biot(Environment& environment);
     virtual ~Biot(void);
 
-	enum {
-		IS_HUNGRY = 0,  // Histeresis
-		IS_INJURED,     // Any injury
-		IS_LOW_ENERGY,	// Has less than genetic energy
-		IS_FERTILE,		// Is fertile
-		IS_MALE,		// Is a male
-		IS_ASEXUAL,		// Is asexual
-		IS_OLD,			// upper genetic
-		IS_YOUNG,		// lower genetic
-		IS_ADULT,		// Full grown
-	};
+    enum {
+        IS_HUNGRY = 0,  // Histeresis
+        IS_INJURED,     // Any injury
+        IS_LOW_ENERGY,    // Has less than genetic energy
+        IS_FERTILE,        // Is fertile
+        IS_MALE,        // Is a male
+        IS_ASEXUAL,        // Is asexual
+        IS_OLD,            // upper genetic
+        IS_YOUNG,        // lower genetic
+        IS_ADULT,        // Full grown
+    };
 
-	enum {
-		PERCENT_AGE,
-		PERCENT_ENERGY,
-	};
+    enum {
+        PERCENT_AGE,
+        PERCENT_ENERGY,
+    };
 
-	// Biot Naming
+    // Biot Naming
     std::string GetName();
     std::string GetWorldName()           { return m_sWorldName;  }
     std::string GetFullName();
@@ -103,29 +103,29 @@ class Biot: public BRectItem
     void SetWorldName(std::string sName) { m_sWorldName = sName; }
 
 
-	void Mutate(int chance);
+    void Mutate(int chance);
 
     void ClearSettings(void);
     void Draw(void);
     void FormMask(void);
     void FreeBitmaps();
-	enum {
-		NORMAL,
-		REDRAW,
-		RECALCULATE,
-		GROW
-	};
+    enum {
+        NORMAL,
+        REDRAW,
+        RECALCULATE,
+        GROW
+    };
     void Prepare(int operation);
     void WallBounce(int x, int y);
-	
-	void Motion(const double deltaX, const double deltaY, double Vx, double Vy, const double radius);
+    
+    void Motion(const double deltaX, const double deltaY, double Vx, double Vy, const double radius);
 
     void MoveBiot(int x, int y);
 
-	void SetScreenRect() 
-	{
+    void SetScreenRect() 
+    {
         Set(leftX + origin.x(), topY + origin.y(), rightX + origin.x() + 1, bottomY + origin.y() + 1);
-	}
+    }
 
 #if defined(_DEBUG)
     void Trace(const std::string & s) { if (m_Id == 22) TRACE(s); }
@@ -137,7 +137,7 @@ class Biot: public BRectItem
 
     bool Move(void);
 
-	void  Reject(int side);
+    void  Reject(int side);
     int   RandomCreate(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
     int   Initialize(bool bRandom = false);
     int   Contacter(Biot* enemy, int dx, int dy, int& x, int& y);
@@ -175,31 +175,31 @@ class Biot: public BRectItem
     PosAndSpeed   posAndSpeed;
 
 
-	short    m_angle[MAX_GENES];
-	short    m_angleDrawn[MAX_GENES];
+    short    m_angle[MAX_GENES];
+    short    m_angleDrawn[MAX_GENES];
 
-	short    m_angleLimbType[MAX_LIMB_TYPES];
-	short    m_angleLimbTypeDrawn[MAX_LIMB_TYPES];
+    short    m_angleLimbType[MAX_LIMB_TYPES];
+    short    m_angleLimbTypeDrawn[MAX_LIMB_TYPES];
 
     short    m_angleLimb[MAX_LIMBS];
     short    m_angleLimbDrawn[MAX_LIMBS];
 
-	short    m_angleLimbTypeSegment[MAX_LIMB_TYPES][MAX_SEGMENTS];
-	short    m_angleLimbTypeSegmentDrawn[MAX_LIMB_TYPES][MAX_SEGMENTS];
+    short    m_angleLimbTypeSegment[MAX_LIMB_TYPES][MAX_SEGMENTS];
+    short    m_angleLimbTypeSegmentDrawn[MAX_LIMB_TYPES][MAX_SEGMENTS];
 
-	short    MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate);
-	short    MoveLimbTypeSegments(int nLimbType, int nRate);
-	short    MoveLimbSegments(int nLimbType, int nRate);
-	short    MoveLimbSegment(int nSegment, int nLimb, int nRate);
+    short    MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate);
+    short    MoveLimbTypeSegments(int nLimbType, int nRate);
+    short    MoveLimbSegments(int nLimbType, int nRate);
+    short    MoveLimbSegment(int nSegment, int nLimb, int nRate);
 
-	// The retraction actually drawn
-	// The retraction requested
-	// The segment being retracted
+    // The retraction actually drawn
+    // The retraction requested
+    // The segment being retracted
     short   m_retractDrawn[MAX_LIMBS];
     short   m_retractRadius[MAX_LIMBS];
     short   m_retractSegment[MAX_LIMBS];
 
-	// Retract or extend the tip of a limb
+    // Retract or extend the tip of a limb
     uint8_t    RetractLine(int nSegment, int nLimb, int maxRadius);
     uint8_t    ExtendLine(int nSegment, int nLimb);
     uint8_t    RetractLimbType(int nSegment, int nLimbType, int maxRadius);
@@ -207,9 +207,9 @@ class Biot: public BRectItem
 
     CommandLimbStore m_store[MAX_LIMBS];
 
-	CommandArray m_commandArray;
-	CommandArray m_commandArray2;
-	int          m_internalState;
+    CommandArray m_commandArray;
+    CommandArray m_commandArray2;
+    int          m_internalState;
 
     uint8_t     geneNo[MAX_GENES];
     uint8_t     lineNo[MAX_GENES];
@@ -219,11 +219,11 @@ class Biot: public BRectItem
     int      m_nSick; //Time until cured
     bool     m_bSelected;
 
-	void MoveArm(int nPeno, short degree);
-	void MoveSegment(int nPeno, short degree);
-	void SeekSegment(int nPeno, short degree, short offset);
-	void SeekArm(int nPeno, short rate, short offset);
-	void IncreaseAngle(int nPeno, short rate);
+    void MoveArm(int nPeno, short degree);
+    void MoveSegment(int nPeno, short degree);
+    void SeekSegment(int nPeno, short degree, short offset);
+    void SeekArm(int nPeno, short rate, short offset);
+    void IncreaseAngle(int nPeno, short rate);
     bool MoveLineType(int nLineType, short rate, short offset);
     bool MoveSegmentType(int nLineType, int nSegment, short rate, short offset);
     bool MoveLine(int nLine, short rate, short offset);
@@ -239,45 +239,45 @@ class Biot: public BRectItem
 
     bool IsSegmentDamaged(int nPeno) { return (state[nPeno] != distance[nPeno]); }
     bool IsSegmentMissing(int nPeno) { return (state[nPeno] <= 0); }
-	short GetSegmentLength(int nPeno) { return distance[nPeno]; }
+    short GetSegmentLength(int nPeno) { return distance[nPeno]; }
 
-	void CheckReproduction();
+    void CheckReproduction();
 
-	// Bonus is related to your total size
-	void SetBonus() { m_dBonusRatio = ((double)Area()) / 40000.0; }
+    // Bonus is related to your total size
+    void SetBonus() { m_dBonusRatio = ((double)Area()) / 40000.0; }
 
     Environment& env;
 
 private:
 
 public:
-	// Do not save these variables
-	float m_statEnergy[MAX_ENERGY_HISTORY];
-	int  m_statIndex;
+    // Do not save these variables
+    float m_statEnergy[MAX_ENERGY_HISTORY];
+    int  m_statIndex;
 
     //HBITMAP  m_hBitmap;
 
-	// Normal Variables
-//	GeneEvent	 event[GeneEvent::EVENT_MAX];
+    // Normal Variables
+//    GeneEvent     event[GeneEvent::EVENT_MAX];
     std::string      m_sName;
     std::string      m_sWorldName;
     std::string      m_sFatherName;
     std::string      m_sFatherWorldName;
 
     // Genes stored from mating
-//	GeneResponse        response2[GeneEvent::RESPONSE_GROUPS];
-//	GeneCommandGroup    group2[GeneCommandGroup::COMMAND_GROUPS];
-//	GeneEvent           event2[GeneEvent::EVENT_MAX];
+//    GeneResponse        response2[GeneEvent::RESPONSE_GROUPS];
+//    GeneCommandGroup    group2[GeneCommandGroup::COMMAND_GROUPS];
+//    GeneEvent           event2[GeneEvent::EVENT_MAX];
     GeneTrait           trait2;
 
-	double m_dBonusRatio;		// Storage for the bonus ratio
-	int    m_livingChildren;	// The number of living children this biot has
-	int    m_totalChildren;		// The number of childen this biot has contributed to
+    double m_dBonusRatio;        // Storage for the bonus ratio
+    int    m_livingChildren;    // The number of living children this biot has
+    int    m_totalChildren;        // The number of childen this biot has contributed to
     uint32_t  m_fatherId;          // The Id of the father (if any)
     uint32_t  m_motherId;
     uint32_t  m_mateId;
     uint32_t  m_Id;
-    uint32_t  m_generation;		// Indicates how far down the line a child is
+    uint32_t  m_generation;        // Indicates how far down the line a child is
     uint32_t  m_fatherGeneration;
 
     QPoint    origin;
@@ -311,15 +311,15 @@ public:
     void CopyGenes(Biot& enemy);
     void InjectGenes(int type, Biot& enemy);
 
-	float PercentEnergy();
+    float PercentEnergy();
     void paintGL(QPainter &painter);
  
-	short CheckWhite(int type)
-	{
-		// If IsMale(), 
+    short CheckWhite(int type)
+    {
+        // If IsMale(), 
         return (short) ((type == WHITE_LEAF && (env.settings.nSexual == 2 || (env.settings.nSexual == 3 && trait.IsAsexual())))?GREEN_LEAF:type);
-//		return (short) ((type == WHITE_LEAF && !trait.IsMale() && trait.IsAsexual())?GREEN_LEAF:type);
-	}
+//        return (short) ((type == WHITE_LEAF && !trait.IsMale() && trait.IsAsexual())?GREEN_LEAF:type);
+    }
 
     //Get world coordinates of gene line
     int x1(int gene)
@@ -360,16 +360,16 @@ public:
       return (enemySpecies <= 1 || enemySpecies >= 15);
     }
 
-	double PercentColor(int color) { return ((double) colorDistance[color]) / ((double) totalDistance); }
+    double PercentColor(int color) { return ((double) colorDistance[color]) / ((double) totalDistance); }
 
     int BaseRatio(void) { return ratio - (trait.GetAdultRatio() - 1); }
 
     void  ValidateBorderMovement(double& dx, double& dy);
 
-	short minShort(int a, short b)
-	{
-		return (((short)a)<b?((short)a):b);
-	}
+    short minShort(int a, short b)
+    {
+        return (((short)a)<b?((short)a):b);
+    }
 };
 
 
@@ -378,7 +378,7 @@ public:
 //
 inline void Biot::MoveBiot(int x, int y)
 {
-	Offset(x, y);
+    Offset(x, y);
     origin.setX(origin.x() + x);
     origin.setY(origin.y() + y);
 }

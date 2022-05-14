@@ -35,7 +35,7 @@ Biot* CBiotList::FindBiotByID(uint32_t id)
     for (int i = 0; i < size(); i++)
         if (this->at(i)->m_Id == id)
             return this->at(i);
-	return NULL;
+    return NULL;
 }
 
 
@@ -50,15 +50,15 @@ Biot* CBiotList::FindBiotByPoint(int x, int y)
     Biot *bestBiot = nullptr;
 
     for (int i = 0; i < size(); i++)
-	{
+    {
         int distance = this->at(i)->Contains(x, y);
-		if (distance >= 0 &&
-			distance < minDist)
-		{
-			minDist = distance;
-			minBiot = i;
+        if (distance >= 0 &&
+            distance < minDist)
+        {
+            minDist = distance;
+            minBiot = i;
             bestBiot = this->at(i);
-		}
+        }
     }
 
     return bestBiot;
@@ -83,24 +83,24 @@ void CBiotList::FreeAll()
 //
 Biot* CBiotList::HitCheck(Biot *me, int* pStart)
 {
-	int i;
+    int i;
 
-	if (pStart)
-		i = *pStart;
-	else
-		i = 0;
+    if (pStart)
+        i = *pStart;
+    else
+        i = 0;
 
     for (; i < size(); i++)
-	{
+    {
         if (this->at(i) != me &&
             this->at(i)->Touches(*me))
-		{
-			if (pStart)
-				*pStart = i + 1;
+        {
+            if (pStart)
+                *pStart = i + 1;
             return this->at(i);
-		}
-	}
-	return NULL;
+        }
+    }
+    return NULL;
 }
 
 
@@ -165,30 +165,30 @@ void CBiotList::RemoveBiot(class Biot *pBiot)
 //
 void CEnvStats::Clear()
 {
-	m_collisionCount = 0;
-	m_births         = 0;
-	m_deaths         = 0;
-	m_arrivals       = 0;
-	m_departures     = 0;
-	m_days           = 0;
-	m_peakPopulation = 0;
-	m_population     = 0;
-	m_extinctions    = 0;
-	m_perWhite       = 0.0;
-	m_perGreen       = 0.0;
-	m_perRed         = 0.0;
-	m_perBlue        = 0.0;
-	m_perLtBlue      = 0.0;
-	m_ageRange       = 0;
-	m_ageIntervals   = INTERVALS;
+    m_collisionCount = 0;
+    m_births         = 0;
+    m_deaths         = 0;
+    m_arrivals       = 0;
+    m_departures     = 0;
+    m_days           = 0;
+    m_peakPopulation = 0;
+    m_population     = 0;
+    m_extinctions    = 0;
+    m_perWhite       = 0.0;
+    m_perGreen       = 0.0;
+    m_perRed         = 0.0;
+    m_perBlue        = 0.0;
+    m_perLtBlue      = 0.0;
+    m_ageRange       = 0;
+    m_ageIntervals   = INTERVALS;
 }
 
 
 std::string CEnvStats::ToDays(uint32_t dwAge)
 {
-	double days = dwAge;
+    double days = dwAge;
 
-	days = (days / GENERATIONS) * 0.05;
+    days = (days / GENERATIONS) * 0.05;
 
     QString sFormat = QString::asprintf("%6.2f", days);
     return sFormat.toStdString();
@@ -205,60 +205,60 @@ uint32_t CEnvStats::ToGenerations(const std::string &szDays)
 //
 void CEnvStats::Sample(Environment& env)
 {
-	m_days += .05;
+    m_days += .05;
 
     m_population = env.m_biotList.size();
 
-	if (m_population > m_peakPopulation)
-		m_peakPopulation = m_population;
+    if (m_population > m_peakPopulation)
+        m_peakPopulation = m_population;
 
-	// Determine color percentages...
+    // Determine color percentages...
     long     colorDistance[WHITE_LEAF + 2];
     for (int i = 0; i < WHITE_LEAF + 2; i++)
         colorDistance[i] = 0;
     uint32_t maxAge = 0;
 
-	for (int j = 0; j < m_population; j++)
-	{
-		Biot* pBiot = env.m_biotList[j];
+    for (int j = 0; j < m_population; j++)
+    {
+        Biot* pBiot = env.m_biotList[j];
 
-		if (pBiot->m_age > maxAge)
-			maxAge = pBiot->m_age;
+        if (pBiot->m_age > maxAge)
+            maxAge = pBiot->m_age;
 
-		for (int i = 0; i < WHITE_LEAF + 1; i++)
-		{
-			colorDistance[i] += pBiot->colorDistance[i];
-			colorDistance[WHITE_LEAF + 1] += pBiot->colorDistance[i];
-		}
-	}
+        for (int i = 0; i < WHITE_LEAF + 1; i++)
+        {
+            colorDistance[i] += pBiot->colorDistance[i];
+            colorDistance[WHITE_LEAF + 1] += pBiot->colorDistance[i];
+        }
+    }
 
     m_ageRange = std::max(maxAge + 1, (uint32_t)(GENERATIONS * INTERVALS));
-	m_ageIntervals = INTERVALS;
+    m_ageIntervals = INTERVALS;
 
     for(int i = 0; i < INTERVALS; i++)
         m_ages[i] = 0;
     for(int i = 0; i < ENERGY_LEVELS; i++)
         m_energy[i] = 0;
 
-	m_totalEnvArea = m_freeEnvArea = env.Area();
+    m_totalEnvArea = m_freeEnvArea = env.Area();
 
-	for (int j = 0; j < m_population; j++)
-	{
-		Biot* pBiot = env.m_biotList[j];
+    for (int j = 0; j < m_population; j++)
+    {
+        Biot* pBiot = env.m_biotList[j];
 
-		m_ages[(pBiot->m_age * m_ageIntervals) / m_ageRange]++;
+        m_ages[(pBiot->m_age * m_ageIntervals) / m_ageRange]++;
         int level = pBiot->PercentEnergy() / (100.0 / ENERGY_LEVELS);
         if (level >= 0 and level < ENERGY_LEVELS)
             m_energy[level]++;
 
-		m_freeEnvArea -= pBiot->Area();
-	}
+        m_freeEnvArea -= pBiot->Area();
+    }
 
-	m_perWhite  = (float) (100 * ((double) colorDistance[WHITE_LEAF] / (double) colorDistance[WHITE_LEAF + 1]));
-	m_perGreen  = (float) (100 * ((double) colorDistance[GREEN_LEAF] / (double) colorDistance[WHITE_LEAF + 1]));
-	m_perRed    = (float) (100 * ((double) colorDistance[RED_LEAF]   / (double) colorDistance[WHITE_LEAF + 1]));
-	m_perBlue   = (float) (100 * ((double) colorDistance[BLUE_LEAF]  / (double) colorDistance[WHITE_LEAF + 1]));
-	m_perLtBlue = (float) (100 * ((double) colorDistance[LBLUE_LEAF] / (double) colorDistance[WHITE_LEAF + 1]));
+    m_perWhite  = (float) (100 * ((double) colorDistance[WHITE_LEAF] / (double) colorDistance[WHITE_LEAF + 1]));
+    m_perGreen  = (float) (100 * ((double) colorDistance[GREEN_LEAF] / (double) colorDistance[WHITE_LEAF + 1]));
+    m_perRed    = (float) (100 * ((double) colorDistance[RED_LEAF]   / (double) colorDistance[WHITE_LEAF + 1]));
+    m_perBlue   = (float) (100 * ((double) colorDistance[BLUE_LEAF]  / (double) colorDistance[WHITE_LEAF + 1]));
+    m_perLtBlue = (float) (100 * ((double) colorDistance[LBLUE_LEAF] / (double) colorDistance[WHITE_LEAF + 1]));
 
 
 }
@@ -267,17 +267,17 @@ void CEnvStats::Sample(Environment& env)
 float CEnvStats::PercentUncoveredByBiots()
 {
     //TRACE("Area free %f\n", (float) m_freeEnvArea / (float) m_totalEnvArea);
-	return (float) m_freeEnvArea / (float) m_totalEnvArea;
+    return (float) m_freeEnvArea / (float) m_totalEnvArea;
 }
 
 
 void CEnvStats::NewSample()
 {
-	m_births         = 0;
-	m_deaths         = 0;
-	m_arrivals       = 0;
-	m_departures     = 0;
-	m_collisionCount = 0;
+    m_births         = 0;
+    m_deaths         = 0;
+    m_arrivals       = 0;
+    m_departures     = 0;
+    m_collisionCount = 0;
 }
 
 
@@ -454,7 +454,7 @@ Environment::Environment()
     tickCount = 0;
     ticksPerSec = 0.0;
 
-	Clear();
+    Clear();
 
 }
 //Fox END
@@ -481,24 +481,24 @@ void Environment::Clear()
     settings.Load();
     settings.SanityCheck();
 
-	// Set up sides
-	side[0] = (Side*) &leftSide;
-	side[1] = (Side*) &rightSide;
-	side[2] = (Side*) &topSide;
-	side[3] = (Side*) &bottomSide;
+    // Set up sides
+    side[0] = (Side*) &leftSide;
+    side[1] = (Side*) &rightSide;
+    side[2] = (Side*) &topSide;
+    side[3] = (Side*) &bottomSide;
 
-	// Save the state of these
-	m_uniqueID  = 0;
+    // Save the state of these
+    m_uniqueID  = 0;
 
-	// Ini File parameters
+    // Ini File parameters
     bNetworkSettingsChange = false;
 
     m_maxBitPadWidth  = 0;
-	m_maxBitPadHeight = 0;
+    m_maxBitPadHeight = 0;
 
     m_bIsSelected = false;
 
-	m_stats.Clear();
+    m_stats.Clear();
     m_statsList.clear();
 
 
@@ -516,7 +516,7 @@ void Environment::PlayResource(const std::string &szSound)
     bool isSmallScreen = false;
 
     if (settings.bSoundOn && !isSmallScreen)
-	{
+    {
         std::string sSound = settings.m_sound.GetPath(szSound);
 
         if (!sSound.empty())
@@ -537,20 +537,20 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 {
     Biot* pNew = nullptr;
 
-//	m_sort.SetIncrementalSort(false);
+//    m_sort.SetIncrementalSort(false);
     for (long lIndex = 0; lIndex < settings.m_initialPopulation; lIndex++)
-	{
-		if ((pNew = new Biot(*this)) != NULL)
-		{
+    {
+        if ((pNew = new Biot(*this)) != NULL)
+        {
             m_biotList.append(pNew);
-			pNew->RandomCreate(nArmsPerBiot, nTypesPerBiot, nSegmentsPerArm);
-			m_sort.Add(pNew);
-//			m_sort.TraceDebug();
-		}
-	}
-//	m_sort.SortAll();
-	m_sort.TraceDebug();
-//	m_sort.SetIncrementalSort(true);
+            pNew->RandomCreate(nArmsPerBiot, nTypesPerBiot, nSegmentsPerArm);
+            m_sort.Add(pNew);
+//            m_sort.TraceDebug();
+        }
+    }
+//    m_sort.SortAll();
+    m_sort.TraceDebug();
+//    m_sort.SetIncrementalSort(true);
 
 }
      
@@ -564,7 +564,7 @@ void Environment::CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegments
 
 void Environment::OnOpen()
 { 
-	// Establish our boundaries
+    // Establish our boundaries
     for(int i=0; i<4; i++)
         side[i]->Clear(this);
     leftSide.SetSize(false);
@@ -574,9 +574,9 @@ void Environment::OnOpen()
 
     settings.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
 
-	// Create our biots
+    // Create our biots
     for (int i = 0; i < m_biotList.size(); i++)
-		m_biotList[i]->OnOpen();
+        m_biotList[i]->OnOpen();
 }
 
 
@@ -590,22 +590,22 @@ void Environment::OnOpen()
 
 void Environment::OnNew(QOpenGLWidget &scene,
                         QRect worldRect, int population, int seed,
-						int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
+                        int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 {
     m_scene = &scene;
-	Clear();
+    Clear();
 
     settings.startNew = 1;
-	Set(&worldRect);
+    Set(&worldRect);
 
     settings.m_initialPopulation  = population;
     settings.maxLineSegments      = (MAX_GENES / MAX_LIMBS);
 
-	m_orginalSeed = seed;
+    m_orginalSeed = seed;
 
-	RandSeed(m_orginalSeed);
+    RandSeed(m_orginalSeed);
 
-	// Establish our boundaries
+    // Establish our boundaries
     for(int i=0; i<4; i++)
         side[i]->Clear(this);
     leftSide.SetSize(false);
@@ -613,27 +613,27 @@ void Environment::OnNew(QOpenGLWidget &scene,
     topSide.SetSize(false);
     bottomSide.SetSize(false);
 /*
-	// Are we being displayed in the small window?
-	if (AfxGetPLife().IsSmall())
-	{
+    // Are we being displayed in the small window?
+    if (AfxGetPLife().IsSmall())
+    {
         settings.startNew            = 1;
         settings.m_initialPopulation = 4;
         settings.maxLineSegments     = 4;
-	}
-	else
-	{
-		sock.StartSession(pView->GetSafeHwnd(), this);
-		sock.Listen();
+    }
+    else
+    {
+        sock.StartSession(pView->GetSafeHwnd(), this);
+        sock.Listen();
     }
 */
-	// Create our biots
-	CreateBiots(nArmsPerBiot, nTypesPerBiot, nSegmentsPerArm);
+    // Create our biots
+    CreateBiots(nArmsPerBiot, nTypesPerBiot, nSegmentsPerArm);
 
     settings.m_generation = 0;
 
-	m_stats.Sample(*this);
+    m_stats.Sample(*this);
     m_statsList.append(m_stats);
-	m_stats.NewSample();
+    m_stats.NewSample();
 }
 
 // ////////////////////////////////////////////////////////////////////
@@ -796,8 +796,8 @@ int Environment::GetNumConnectedSides()
 //
 void Environment::DeleteContents()
 {
-	m_sort.FreeAll();
-	m_biotList.FreeAll();
+    m_sort.FreeAll();
+    m_biotList.FreeAll();
 }
 
 // ////////////////////////////////////////////////////////////////////
@@ -806,23 +806,23 @@ void Environment::DeleteContents()
 //
 void Environment::AddBiot(Biot* pNewBiot)
 {
-	if (pNewBiot)
-	{
-		m_sort.Add(pNewBiot);
+    if (pNewBiot)
+    {
+        m_sort.Add(pNewBiot);
         m_biotList.append(pNewBiot);
-		m_sort.TraceDebug();
-	}
+        m_sort.TraceDebug();
+    }
 }
 
 Biot* Environment::HitCheck(Biot *me, BRectSortPos& pos)
 {
-	Biot* pBiot;
-	do
-	{
-		pBiot = dynamic_cast<Biot*>(m_sort.IterateRects(pos));
-	}
-	while (me == pBiot && me != NULL);
-	return pBiot;
+    Biot* pBiot;
+    do
+    {
+        pBiot = dynamic_cast<Biot*>(m_sort.IterateRects(pos));
+    }
+    while (me == pBiot && me != NULL);
+    return pBiot;
 }
 
 

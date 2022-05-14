@@ -47,14 +47,14 @@ enum {
 
 
 enum {
-	CONTACT_IGNORE = 0,
-	CONTACT_EAT,
-	CONTACT_EATEN,
-	CONTACT_DESTROY,
-	CONTACT_DESTROYED,
-	CONTACT_DEFEND,
-	CONTACT_DEFENDED,
-	CONTACT_ATTACK
+    CONTACT_IGNORE = 0,
+    CONTACT_EAT,
+    CONTACT_EATEN,
+    CONTACT_DESTROY,
+    CONTACT_DESTROYED,
+    CONTACT_DEFEND,
+    CONTACT_DEFENDED,
+    CONTACT_ATTACK
 };
 
 ///////////////////////////////////////////////////////////////////
@@ -68,15 +68,15 @@ class GeneSegment : Randomizer
     uint8_t   m_color[2];
     uint8_t   m_visible;
     uint8_t   m_radius;
-	short  m_angle;
+    short  m_angle;
     uint8_t   m_startSegment;
 
-	enum {
-		MAX_SEGMENT_LENGTH = 16
-	};
+    enum {
+        MAX_SEGMENT_LENGTH = 16
+    };
 
     //static const short redrawAngle[MAX_SEGMENT_LENGTH + 1];
-	
+    
     
   public:
 
@@ -86,18 +86,18 @@ class GeneSegment : Randomizer
     virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
 
-	double GetRadius() { return (double) m_radius; }
+    double GetRadius() { return (double) m_radius; }
     double GetAdjustedRadius(uint8_t radius) { return (double) (m_radius - radius); }
     uint8_t   GetRawRadius() { return m_radius; }
-	short  GetColor(int sex)  { return m_color[sex]; }
-	int    GetAngle()  { return m_angle;           }
+    short  GetColor(int sex)  { return m_color[sex]; }
+    int    GetAngle()  { return m_angle;           }
     bool   IsVisible() { return m_visible;         }
-	int    GetStart()  { return m_startSegment;    }
+    int    GetStart()  { return m_startSegment;    }
 
-	// Looks at the radius and angle difference to determine
-	// if a line should be redrawn
+    // Looks at the radius and angle difference to determine
+    // if a line should be redrawn
     //bool   ShouldRedraw(short angleDifference) {
-    //		return (redrawAngle[m_radius] <= abs(angleDifference));
+    //        return (redrawAngle[m_radius] <= abs(angleDifference));
     //}
 };
 
@@ -141,14 +141,14 @@ public:
     virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
 
-	GeneSegment& GetSegment(int segment) { return m_segment[segment]; }
-	int GetSegmentsVisible();
+    GeneSegment& GetSegment(int segment) { return m_segment[segment]; }
+    int GetSegmentsVisible();
 
-	void ToggleSegments();
+    void ToggleSegments();
     bool m_toggleVisibleSegments[MAX_SEGMENTS];
 
 private:
-	GeneSegment m_segment[MAX_SEGMENTS];
+    GeneSegment m_segment[MAX_SEGMENTS];
 };
 
 
@@ -183,12 +183,12 @@ class GeneTrait : Randomizer
     uint8_t  m_asexual;         // yes or no
     uint8_t  m_chanceMale;      // Determines the chance a biot is a male
     short m_offset;          // Born with an initial orientation
-	short m_maxAge;          // Max age gene (1440 * (m_maxAge + 1))
-	GeneLimb m_geneLine[MAX_LIMB_TYPES]; 
+    short m_maxAge;          // Max age gene (1440 * (m_maxAge + 1))
+    GeneLimb m_geneLine[MAX_LIMB_TYPES]; 
 
-	//Not part of genetic code - just a cache of angles
+    //Not part of genetic code - just a cache of angles
     short m_angle[MAX_LIMBS][MAX_SEGMENTS];
-	
+    
 
     static const int mirrorCoef[MAX_LIMBS];
     static const int mirrorAngle[MAX_LIMBS];
@@ -201,12 +201,12 @@ class GeneTrait : Randomizer
     void Crossover(GeneTrait&  gTrait);
     virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
-	void CalculateAngles();
-	void PickSex()                  { m_sex = ((int) m_chanceMale > Integer(255));  }
+    void CalculateAngles();
+    void PickSex()                  { m_sex = ((int) m_chanceMale > Integer(255));  }
     void SetChanceMale(uint8_t chanceMale) { m_chanceMale = chanceMale; }
-	int  GetChanceMale() { return (int) m_chanceMale; }
+    int  GetChanceMale() { return (int) m_chanceMale; }
 
-	int  GetLineMirror(int nLine)   { return mirrorCoef[nLine];   }
+    int  GetLineMirror(int nLine)   { return mirrorCoef[nLine];   }
     int  GetNumberOfChildren(void)  { return m_children;          }
     int  GetAttackChildren(void)    { return m_attackChildren;    }
     int  GetAttackSiblings(void)    { return m_attackSiblings;    }
@@ -214,8 +214,8 @@ class GeneTrait : Randomizer
     void SetSpecies(int nSpecies)   { m_species = (uint8_t) nSpecies;}
     int  GetAdultRatio()            { return m_adultRatio[m_sex]; }
     int  GetLines(void) const       { return m_lineCount;         }
-	int  GetLineTypeIndex(int line) { return m_lineRef[line];     }
-	int  GetCompressedToggle(int nAngle, int nLine, int nSegment);
+    int  GetLineTypeIndex(int line) { return m_lineRef[line];     }
+    int  GetCompressedToggle(int nAngle, int nLine, int nSegment);
 
     short GetOffset(void)           { return m_offset;            }
     short GetAngle(int line, int segment) { return m_angle[line][segment]; }
@@ -229,25 +229,25 @@ class GeneTrait : Randomizer
 
     void SetMale(bool bMale)        { if (bMale) m_sex = 1; else m_sex = 0; }
     void SetAsexual(bool bAsexual)  { if (bAsexual) m_asexual = 1; else m_asexual = 0; }
-	void SetMaxAge(short maxAge)    { m_maxAge = maxAge; }
+    void SetMaxAge(short maxAge)    { m_maxAge = maxAge; }
 
-	GeneSegment& GetSegment(int line, int segment)
-	{
+    GeneSegment& GetSegment(int line, int segment)
+    {
         assert(line < MAX_LIMBS);
-		return m_geneLine[m_lineRef[line]].GetSegment(segment);
-	}
+        return m_geneLine[m_lineRef[line]].GetSegment(segment);
+    }
 
-	GeneSegment& GetSegmentType(int lineType, int segment)
-	{
+    GeneSegment& GetSegmentType(int lineType, int segment)
+    {
         assert(lineType < MAX_LIMB_TYPES);
-		return m_geneLine[lineType].GetSegment(segment);
-	}
+        return m_geneLine[lineType].GetSegment(segment);
+    }
 
-	GeneLimb& GetLineType(int lineType)
-	{
+    GeneLimb& GetLineType(int lineType)
+    {
         assert(lineType < MAX_LIMB_TYPES);
-		return m_geneLine[lineType];
-	}
+        return m_geneLine[lineType];
+    }
 };
 
 

@@ -36,13 +36,13 @@ class ProductTerm
 public:
     ProductTerm();
 
-	void Mutate(int nChance);
-	void Randomize();
-	void Debug();
+    void Mutate(int nChance);
+    void Randomize();
+    void Debug();
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
     bool IsTrue(uint32_t m_sensor);
-	ProductTerm& operator=(ProductTerm& term);
+    ProductTerm& operator=(ProductTerm& term);
 
 protected:
     uint32_t m_dwMask;
@@ -53,14 +53,14 @@ protected:
 // true or false?
 inline bool ProductTerm::IsTrue(uint32_t dwSensor)
 {
-	return (((dwSensor ^ m_dwInvert) & m_dwMask) == m_dwMask);
+    return (((dwSensor ^ m_dwInvert) & m_dwMask) == m_dwMask);
 }
 
 inline ProductTerm& ProductTerm::operator=(ProductTerm& term)
 {
-	m_dwInvert = term.m_dwInvert;
-	m_dwMask   = term.m_dwMask;
-	return *this;
+    m_dwInvert = term.m_dwInvert;
+    m_dwMask   = term.m_dwMask;
+    return *this;
 }
 
 
@@ -78,21 +78,21 @@ class ProductArray; // Forward declare of the array of ProductTerm's and Product
 class ProductSum
 {
 public:
-	enum {
-		MAX_PRODUCT_SUM_TERMS = 8
-	};
+    enum {
+        MAX_PRODUCT_SUM_TERMS = 8
+    };
 
     ProductSum();
-	int GetCount();
+    int GetCount();
 
-	void Mutate(int nChance);
-	void Randomize();
-	void Debug();
+    void Mutate(int nChance);
+    void Randomize();
+    void Debug();
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
-	void Crossover(ProductSum& productSum);
+    void Crossover(ProductSum& productSum);
 
-	ProductSum& operator=(ProductSum& productSum);
+    ProductSum& operator=(ProductSum& productSum);
 
     bool IsTrue(ProductArray& productArray, uint32_t dwSensor);
 
@@ -103,7 +103,7 @@ protected:
 
 inline int ProductSum::GetCount()
 {
-	return MAX_PRODUCT_SUM_TERMS;
+    return MAX_PRODUCT_SUM_TERMS;
 }
 
 
@@ -118,53 +118,53 @@ inline int ProductSum::GetCount()
 class ProductArray
 {
 public:
-	enum {
-		MAX_PRODUCT_TERMS = 256,
-		MAX_PRODUCT_SUMS  = 64
-	};
+    enum {
+        MAX_PRODUCT_TERMS = 256,
+        MAX_PRODUCT_SUMS  = 64
+    };
 
-	int  GetSumCount();
+    int  GetSumCount();
 
-	void Mutate(int nChance);
-	void Randomize();
-	void Debug();
+    void Mutate(int nChance);
+    void Randomize();
+    void Debug();
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
-	void Crossover(ProductArray& productArray);
-	ProductArray& operator=(ProductArray& productArray);
+    void Crossover(ProductArray& productArray);
+    ProductArray& operator=(ProductArray& productArray);
 
     bool IsTrue(int nProductSum, uint32_t dwSensor);
-	ProductTerm& operator [](int index);
+    ProductTerm& operator [](int index);
 
 protected:
-	int  GetTermCount();
+    int  GetTermCount();
 
 protected:
-	ProductTerm m_productTerm[MAX_PRODUCT_TERMS];
-	ProductSum  m_productSum[MAX_PRODUCT_SUMS];
+    ProductTerm m_productTerm[MAX_PRODUCT_TERMS];
+    ProductSum  m_productSum[MAX_PRODUCT_SUMS];
 };
 
 inline ProductTerm& ProductArray::operator [](int index)
 {
     assert(index < GetTermCount() && index >= 0);
-	return m_productTerm[index];
+    return m_productTerm[index];
 }
 
 inline int ProductArray::GetTermCount()
 {
-	return MAX_PRODUCT_TERMS;
+    return MAX_PRODUCT_TERMS;
 }
 
 inline int ProductArray::GetSumCount()
 {
-	return MAX_PRODUCT_SUMS;
+    return MAX_PRODUCT_SUMS;
 }
 
 inline bool ProductArray::IsTrue(int nProductSum, uint32_t dwSensor)
 {
     assert(nProductSum < GetSumCount() && nProductSum >= 0);
-	BTRACE2("ProductSum %d, Sensor %x, Result ", nProductSum, dwSensor);
-	return m_productSum[nProductSum].IsTrue(*this, dwSensor);
+    BTRACE2("ProductSum %d, Sensor %x, Result ", nProductSum, dwSensor);
+    return m_productSum[nProductSum].IsTrue(*this, dwSensor);
 }
 
 
@@ -180,57 +180,57 @@ struct CommandArgument
 public:
     CommandArgument();
 
-	// Genetic Functions
+    // Genetic Functions
     void Randomize();
     void Mutate(int chance);
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
 
-	enum {
-		COMMAND_FLAP_LIMB_SEGMENT = 0, 
-		COMMAND_FLAP_LIMB_TYPE_SEGMENT, 
-		COMMAND_MOVE_LIMB_SEGMENT,
-		COMMAND_MOVE_LIMB_SEGMENTS,
-		COMMAND_MOVE_LIMB_TYPE_SEGMENT,
-		COMMAND_MOVE_LIMB_TYPE_SEGMENTS,
-		COMMAND_RETRACT_LIMB_TYPE,
-		COMMAND_RETRACT_LIMB,
-		COMMAND_NOP,
-		COMMAND_MEMORY,
-		COMMAND_MAX_TYPES
-	};
+    enum {
+        COMMAND_FLAP_LIMB_SEGMENT = 0, 
+        COMMAND_FLAP_LIMB_TYPE_SEGMENT, 
+        COMMAND_MOVE_LIMB_SEGMENT,
+        COMMAND_MOVE_LIMB_SEGMENTS,
+        COMMAND_MOVE_LIMB_TYPE_SEGMENT,
+        COMMAND_MOVE_LIMB_TYPE_SEGMENTS,
+        COMMAND_RETRACT_LIMB_TYPE,
+        COMMAND_RETRACT_LIMB,
+        COMMAND_NOP,
+        COMMAND_MEMORY,
+        COMMAND_MAX_TYPES
+    };
 
-	// What command?
-	int   m_command;
+    // What command?
+    int   m_command;
 
-	// What relative limb or which limb type
+    // What relative limb or which limb type
     uint8_t  m_limb;
 
-	// What segment of a limb? (limited to MAX_SEGMENTS)
+    // What segment of a limb? (limited to MAX_SEGMENTS)
     uint8_t  m_segment;
 
-	// How fast to move it  (each command interpretes this differently)
+    // How fast to move it  (each command interpretes this differently)
     uint8_t  m_rate;
 
-	// How many degrees to move (each command looks at this differently)
+    // How many degrees to move (each command looks at this differently)
     uint8_t  m_degrees;
 
-	int GetLimb(int actualLimb);
-	short GetSegment()  { return m_segment; }
-	int GetCommand()  { return m_command; }
-	int GetLimbType() { return m_limb & 0x03; } // four limb types
-	short GetRate()     { return (short) (m_rate & 0x03); }
-	short GetDegrees()  { return m_degrees; }
+    int GetLimb(int actualLimb);
+    short GetSegment()  { return m_segment; }
+    int GetCommand()  { return m_command; }
+    int GetLimbType() { return m_limb & 0x03; } // four limb types
+    short GetRate()     { return (short) (m_rate & 0x03); }
+    short GetDegrees()  { return m_degrees; }
 
 
-	// Memory Perspective
-	bool WhatIsConsideredSet() { return (0x10 & m_limb) == 0x10; }
-	int  WhichStateBit()       { return (0x00000001 << ((int)(0x07 & m_limb))); }
-	int  SetDuration()         { return (int) m_degrees * 4; }
-	bool SetAlgorithmOne()     { return (m_segment & 0x02) == 0x02; }
-	int  ClearDuration()       { return (int) m_rate * 4; }
-	bool ClearAlgorithmOne()   { return (m_segment & 0x01) == 0x01; }
-	bool ClearAlgorithmTwo()   { return (m_segment & 0x04) == 0x04; }
+    // Memory Perspective
+    bool WhatIsConsideredSet() { return (0x10 & m_limb) == 0x10; }
+    int  WhichStateBit()       { return (0x00000001 << ((int)(0x07 & m_limb))); }
+    int  SetDuration()         { return (int) m_degrees * 4; }
+    bool SetAlgorithmOne()     { return (m_segment & 0x02) == 0x02; }
+    int  ClearDuration()       { return (int) m_rate * 4; }
+    bool ClearAlgorithmOne()   { return (m_segment & 0x01) == 0x01; }
+    bool ClearAlgorithmTwo()   { return (m_segment & 0x04) == 0x04; }
 
 };
 
@@ -248,22 +248,22 @@ public:
 class CommandLimbType
 {
 public:
-	enum {
-		MAX_COMMANDS_PER_LIMB = 16
-	};
+    enum {
+        MAX_COMMANDS_PER_LIMB = 16
+    };
 
-	int GetCount();
+    int GetCount();
 
-	void Mutate(int nChance);
-	void Randomize();
+    void Mutate(int nChance);
+    void Randomize();
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
-	void Crossover(CommandLimbType& commandLimbType);
+    void Crossover(CommandLimbType& commandLimbType);
 
-	int GetCommand(int index);
-	int GetProductSum(int index);
+    int GetCommand(int index);
+    int GetProductSum(int index);
 
-	CommandLimbType& operator=(CommandLimbType& commandLimbType);
+    CommandLimbType& operator=(CommandLimbType& commandLimbType);
 
 protected:
     uint8_t  m_comref[MAX_COMMANDS_PER_LIMB];
@@ -272,19 +272,19 @@ protected:
 
 inline int CommandLimbType::GetCount()
 {
-	return MAX_COMMANDS_PER_LIMB;
+    return MAX_COMMANDS_PER_LIMB;
 }
 
 inline int CommandLimbType::GetCommand(int index)
 {
     assert(index < MAX_COMMANDS_PER_LIMB  && index >= 0);
-	return m_comref[index];
+    return m_comref[index];
 }
 
 inline int CommandLimbType::GetProductSum(int index)
 {
     assert(index < MAX_COMMANDS_PER_LIMB  && index >= 0);
-	return m_sumref[index];
+    return m_sumref[index];
 }
 
 
@@ -298,48 +298,48 @@ inline int CommandLimbType::GetProductSum(int index)
 class CommandArray
 {
 public:
-	enum {
-		MAX_COMMANDS = 64
-	};
+    enum {
+        MAX_COMMANDS = 64
+    };
 
-	int  GetCommandCount();
-	int  GetTypeCount();
+    int  GetCommandCount();
+    int  GetTypeCount();
 
-	void Mutate(int nChance);
-	void Randomize();
+    void Mutate(int nChance);
+    void Randomize();
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
     void Crossover(CommandArray& commandArray);
-	CommandArray& operator=(CommandArray& commandArray);
-	CommandArgument& GetCommandArgument(int nLimbType, int nCommand);
+    CommandArray& operator=(CommandArray& commandArray);
+    CommandArgument& GetCommandArgument(int nLimbType, int nCommand);
     bool IsTrue(int nLimbType, int nCommand, uint32_t dwSensor);
 
 protected:
-	CommandArgument m_command[MAX_COMMANDS];
-	ProductArray    m_productArray;
-	CommandLimbType m_commandLimbType[MAX_LIMB_TYPES];
+    CommandArgument m_command[MAX_COMMANDS];
+    ProductArray    m_productArray;
+    CommandLimbType m_commandLimbType[MAX_LIMB_TYPES];
 };
 
 inline bool CommandArray::IsTrue(int nLimbType, int nCommand, uint32_t dwSensor)
 {
     assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
-	return m_productArray.IsTrue(m_commandLimbType[nLimbType].GetProductSum(nCommand), dwSensor);
+    return m_productArray.IsTrue(m_commandLimbType[nLimbType].GetProductSum(nCommand), dwSensor);
 }
-	
+    
 inline CommandArgument& CommandArray::GetCommandArgument(int nLimbType, int nCommand)
 { 
     assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
-	return m_command[m_commandLimbType[nLimbType].GetCommand(nCommand)];
+    return m_command[m_commandLimbType[nLimbType].GetCommand(nCommand)];
 }
 
 inline int CommandArray::GetCommandCount()
 {
-	return MAX_COMMANDS;
+    return MAX_COMMANDS;
 }
 
 inline int CommandArray::GetTypeCount()
 {
-	return MAX_LIMB_TYPES;
+    return MAX_LIMB_TYPES;
 }
 
 
@@ -355,16 +355,16 @@ class CommandFlapLimbSegment
 public:
     //CommandFlapLimbSegment();
     void Initialize(CommandLimbStore& store);
-	void Execute(CommandLimbStore& store);
-	void Flap(Biot& biot);
+    void Execute(CommandLimbStore& store);
+    void Flap(Biot& biot);
 
 protected:
-	int   m_nLimb;
-	int   m_nSegment;
-	int   m_nRate;
-	int   m_nMaxDegrees;
-	int   m_nAppliedDegrees;
-	bool  m_bGoingUp;
+    int   m_nLimb;
+    int   m_nSegment;
+    int   m_nRate;
+    int   m_nMaxDegrees;
+    int   m_nAppliedDegrees;
+    bool  m_bGoingUp;
 };
 
 
@@ -375,18 +375,18 @@ class CommandFlapLimbTypeSegment
 {
 public:
     //CommandFlapLimbTypeSegment();
-	void Initialize(CommandLimbStore& store);
-	void Execute(CommandLimbStore& store);
-	void Flap(Biot& biot, int nPeno);
-	void FlapLimbTypeSegments(Biot& biot);
+    void Initialize(CommandLimbStore& store);
+    void Execute(CommandLimbStore& store);
+    void Flap(Biot& biot, int nPeno);
+    void FlapLimbTypeSegments(Biot& biot);
 
 protected:
-	int   m_nLimbType;
-	int   m_nSegment;
-	int   m_nRate;
-	int   m_nMaxDegrees;
-	int   m_nAppliedDegrees;
-	bool  m_bGoingUp;
+    int   m_nLimbType;
+    int   m_nSegment;
+    int   m_nRate;
+    int   m_nMaxDegrees;
+    int   m_nAppliedDegrees;
+    bool  m_bGoingUp;
 };
 
 ///////////////////////////////////////////////////////////////
@@ -394,17 +394,17 @@ class CommandMoveLimbSegment
 {
 public:
     //CommandMoveLimbSegment();
-	void Initialize(CommandLimbStore& store);
-	void Execute(CommandLimbStore& store);
+    void Initialize(CommandLimbStore& store);
+    void Execute(CommandLimbStore& store);
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
-	int   m_nLimb;
-	int   m_nSegment;
-	int   m_nRate;
-	int   m_nMaxDegrees;
-	int   m_nAppliedDegrees;
+    int   m_nLimb;
+    int   m_nSegment;
+    int   m_nRate;
+    int   m_nMaxDegrees;
+    int   m_nAppliedDegrees;
 };
 
 
@@ -414,13 +414,13 @@ class CommandMoveLimbSegments
 public:
     //CommandMoveLimbSegments();
     void Initialize(CommandLimbStore& store);
-	void Execute(CommandLimbStore& store);
+    void Execute(CommandLimbStore& store);
 
 protected:
-	int   m_nLimb;
-	int   m_nRate;
-	int   m_nMaxDegrees;
-	int   m_nAppliedDegrees;
+    int   m_nLimb;
+    int   m_nRate;
+    int   m_nMaxDegrees;
+    int   m_nAppliedDegrees;
 };
 
 ///////////////////////////////////////////////////////////////
@@ -429,14 +429,14 @@ class CommandMoveLimbTypeSegment
 public:
     //CommandMoveLimbTypeSegment();
     void Initialize(CommandLimbStore& store);
-	void Execute(CommandLimbStore& store);
+    void Execute(CommandLimbStore& store);
 
 protected:
-	int   m_nLimbType;
-	int   m_nSegment;
-	int   m_nRate;
-	int   m_nMaxDegrees;
-	int   m_nAppliedDegrees;
+    int   m_nLimbType;
+    int   m_nSegment;
+    int   m_nRate;
+    int   m_nMaxDegrees;
+    int   m_nAppliedDegrees;
 };
 
 
@@ -446,13 +446,13 @@ class CommandMoveLimbTypeSegments
 public:
     //CommandMoveLimbTypeSegments();
     void Initialize(CommandLimbStore& store);
-	void Execute(CommandLimbStore& store);
+    void Execute(CommandLimbStore& store);
 
 protected:
-	int   m_nLimbType;
-	int   m_nRate;
-	int   m_nMaxDegrees;
-	int   m_nAppliedDegrees;
+    int   m_nLimbType;
+    int   m_nRate;
+    int   m_nMaxDegrees;
+    int   m_nAppliedDegrees;
 };
 
 ///////////////////////////////////////////////////////////////
@@ -461,13 +461,13 @@ class CommandRetractLimbType
 public:
     //CommandRetractLimbType();
     void Initialize(CommandLimbStore& store);
-	void Execute(CommandLimbStore& store);
+    void Execute(CommandLimbStore& store);
 
 protected:
-	int   m_nSegment;
-	int   m_nLimbType;
-	int   m_nMaxRadius;
-	int   m_nAppliedRadius;
+    int   m_nSegment;
+    int   m_nLimbType;
+    int   m_nMaxRadius;
+    int   m_nAppliedRadius;
 };
 
 
@@ -477,13 +477,13 @@ class CommandRetractLimb
 public:
     //CommandRetractLimb();
     void Initialize(CommandLimbStore& store);
-	void Execute(CommandLimbStore& store);
+    void Execute(CommandLimbStore& store);
 
 protected:
-	int   m_nSegment;
-	int   m_nLimb;
-	int   m_nMaxRadius;
-	int   m_nAppliedRadius;
+    int   m_nSegment;
+    int   m_nLimb;
+    int   m_nMaxRadius;
+    int   m_nAppliedRadius;
 };
 
 ///////////////////////////////////////////////////////////////
@@ -491,8 +491,8 @@ class CommandNOP
 {
 public:
     //CommandNOP();
-	void Initialize(CommandLimbStore& store);
-	void Execute(CommandLimbStore& store);
+    void Initialize(CommandLimbStore& store);
+    void Execute(CommandLimbStore& store);
 
 protected:
 };
@@ -503,34 +503,34 @@ class CommandMemory
 {
 public:
     //CommandMemory();
-	void Initialize(CommandLimbStore& store);
-	void Execute(CommandLimbStore& store);
+    void Initialize(CommandLimbStore& store);
+    void Execute(CommandLimbStore& store);
 
-	enum {
-		WAIT_FOR_TRUE_SET = 0,
-		WAIT_AND_SET,
-		WAIT_FOR_FALSE_CLEAR,
-		WAIT_AND_CLEAR
-	};
-		
+    enum {
+        WAIT_FOR_TRUE_SET = 0,
+        WAIT_AND_SET,
+        WAIT_FOR_FALSE_CLEAR,
+        WAIT_AND_CLEAR
+    };
+        
 protected:
-	int   m_time;
-	int   m_type;
-	bool  m_bSet;
+    int   m_time;
+    int   m_type;
+    bool  m_bSet;
 };
 
 
 union CommandType {
-	CommandFlapLimbSegment         flapLimbSegment;
-	CommandFlapLimbTypeSegment     flapLimbTypeSegment;
-	CommandMoveLimbSegment         moveLimbSegment;
-	CommandMoveLimbSegments        moveLimbSegments;
-	CommandMoveLimbTypeSegment     moveLimbTypeSegment;
-	CommandMoveLimbTypeSegments    moveLimbTypeSegments;
-	CommandRetractLimbType         retractLimbType;
- 	CommandRetractLimb             retractLimb;
-	CommandNOP                     nop;
-	CommandMemory                  memory;
+    CommandFlapLimbSegment         flapLimbSegment;
+    CommandFlapLimbTypeSegment     flapLimbTypeSegment;
+    CommandMoveLimbSegment         moveLimbSegment;
+    CommandMoveLimbSegments        moveLimbSegments;
+    CommandMoveLimbTypeSegment     moveLimbTypeSegment;
+    CommandMoveLimbTypeSegments    moveLimbTypeSegments;
+    CommandRetractLimbType         retractLimbType;
+     CommandRetractLimb             retractLimb;
+    CommandNOP                     nop;
+    CommandMemory                  memory;
 };
 
 
@@ -544,28 +544,28 @@ class CommandLimbStore
 {
 public:
     CommandLimbStore();
-	void Initialize(int nLimbType, int nLimb, Biot& biot);
+    void Initialize(int nLimbType, int nLimb, Biot& biot);
     void Execute(Biot& biot, uint32_t dwSensor);
 
-	// These need to be serialized
-	int              m_nLimbType;
-	int              m_nLimb;
+    // These need to be serialized
+    int              m_nLimbType;
+    int              m_nLimb;
 
-	// These do not require serialization
-	int              m_index;
+    // These do not require serialization
+    int              m_index;
     uint32_t            m_dwSensor;
-	Biot*            m_pBiot;
-	CommandArgument* m_pArg;
+    Biot*            m_pBiot;
+    CommandArgument* m_pArg;
 
-	// Callback for each
-	bool IsSensorTrue();
+    // Callback for each
+    bool IsSensorTrue();
 
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
-	// This requires serialization
-	CommandType  command[CommandLimbType::MAX_COMMANDS_PER_LIMB];
+    // This requires serialization
+    CommandType  command[CommandLimbType::MAX_COMMANDS_PER_LIMB];
 };
 
 

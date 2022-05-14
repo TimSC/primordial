@@ -38,8 +38,8 @@ void SideListener::ReadyToReceive(int sideId, bool ready)
 Side::Side()
 {
     m_sideId = -1;
-	m_lines = 0;
-	m_pEnv = NULL;
+    m_lines = 0;
+    m_pEnv = NULL;
     m_isConnected = false;
     m_listener = nullptr;
     m_readyToReceive = true;
@@ -48,11 +48,11 @@ Side::Side()
 
 void Side::Clear(BRect* pEnvRect)
 {
-	// Initially we have not connected, thus set up without connection
-	Set(0,0,0,0);
+    // Initially we have not connected, thus set up without connection
+    Set(0,0,0,0);
 
-	m_pEnv  = pEnvRect;
-	m_lines = 1;
+    m_pEnv  = pEnvRect;
+    m_lines = 1;
     m_inComing.clear();
 }
 
@@ -131,7 +131,7 @@ RightSide::RightSide() : Side()
 
 int RightSide::SideSize()
 {
-	return m_bottom - m_top;
+    return m_bottom - m_top;
 }
 
 void RightSide::AdjustBiot(Biot& biot)

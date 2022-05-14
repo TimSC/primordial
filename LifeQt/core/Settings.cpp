@@ -112,29 +112,29 @@ void CSettings::SanityCheck()
         this->m_initialPopulation = 1;
 
     for (int i = 0; i < SIDES; i++)
-	{
+    {
         if (m_sSideAddress[i].empty())
             m_bSideEnable[i]  = false;
     }
 
-	if (m_nHeight > 4000)
-		m_nHeight = 4000;
+    if (m_nHeight > 4000)
+        m_nHeight = 4000;
 
-	if (m_nWidth > 4000)
-		m_nWidth = 4000;
+    if (m_nWidth > 4000)
+        m_nWidth = 4000;
 
-	if (m_nSizeChoice  > 3 ||
-		m_nSizeChoice < 0)
+    if (m_nSizeChoice  > 3 ||
+        m_nSizeChoice < 0)
         m_nSizeChoice = 2;
 }
 
 
 CSettings& CSettings::operator=(CSettings& s)
 {
-	m_nSick               = s.m_nSick;
-	m_initialPopulation   = s.m_initialPopulation;
-	m_leafEnergy          = s.m_leafEnergy;
-	m_sound               = s.m_sound;
+    m_nSick               = s.m_nSick;
+    m_initialPopulation   = s.m_initialPopulation;
+    m_leafEnergy          = s.m_leafEnergy;
+    m_sound               = s.m_sound;
     //hPen                  = s.hPen;
     startNew              = s.startNew;    
     chance                = s.chance;
@@ -156,46 +156,46 @@ CSettings& CSettings::operator=(CSettings& s)
     regenCost             = s.regenCost;
     regenTime             = s.regenTime;
 
-  	m_nSeed                 = s.m_nSeed;                
-	m_nArmTypesPerBiot      = s.m_nArmTypesPerBiot;     
-	m_nSegmentsPerArm       = s.m_nSegmentsPerArm;      
-	m_nArmsPerBiot          = s.m_nArmsPerBiot;         
-	m_bGenerateOnExtinction = s.m_bGenerateOnExtinction;
+      m_nSeed                 = s.m_nSeed;                
+    m_nArmTypesPerBiot      = s.m_nArmTypesPerBiot;     
+    m_nSegmentsPerArm       = s.m_nSegmentsPerArm;      
+    m_nArmsPerBiot          = s.m_nArmsPerBiot;         
+    m_bGenerateOnExtinction = s.m_bGenerateOnExtinction;
 
-	for (int i = 0; i < SIDES; i++)
-	{
-		m_sSideAddress[i] = s.m_sSideAddress[i];
-		m_bSideEnable[i]  = s.m_bSideEnable[i];
-	}
+    for (int i = 0; i < SIDES; i++)
+    {
+        m_sSideAddress[i] = s.m_sSideAddress[i];
+        m_bSideEnable[i]  = s.m_bSideEnable[i];
+    }
 
-	m_nHeight     = s.m_nHeight;
-	m_nWidth      = s.m_nWidth;
-	m_nSizeChoice = s.m_nSizeChoice;
+    m_nHeight     = s.m_nHeight;
+    m_nWidth      = s.m_nWidth;
+    m_nSizeChoice = s.m_nSizeChoice;
 
     m_enableNetworking = s.m_enableNetworking;
     m_networkPort = s.m_networkPort;
     m_connectList = s.m_connectList;
 
-	return *this;
+    return *this;
 }
 
 void CSettings::Reset(int nWidth, int nHeight)
 {
     m_nSeed                 = QDateTime::currentMSecsSinceEpoch();
-	m_nArmTypesPerBiot      = 1;
-	m_nSegmentsPerArm       = 10;
-	m_nArmsPerBiot          = 0;
+    m_nArmTypesPerBiot      = 1;
+    m_nSegmentsPerArm       = 10;
+    m_nArmsPerBiot          = 0;
     m_bGenerateOnExtinction = true;
 
-	for (int i = 0; i < SIDES; i++)
-	{
+    for (int i = 0; i < SIDES; i++)
+    {
         m_sSideAddress[i] = "";
         m_bSideEnable[i]  = false;
-	}
+    }
 
-	m_nHeight     = nWidth;
-	m_nWidth      = nHeight;
-	m_nSizeChoice = 1;
+    m_nHeight     = nWidth;
+    m_nWidth      = nHeight;
+    m_nSizeChoice = 1;
 
 }
 

@@ -81,9 +81,9 @@ Randomizer::Randomizer(void)
 //
 void Randomizer::RandSeed(int seed)
 {
-	randrsl[0] = seed;
-	for (int i = 1; i < RANDSIZ; i++)
-		randrsl[i] = (randrsl[i - 1] + 1) * randrsl[i - 1];
+    randrsl[0] = seed;
+    for (int i = 1; i < RANDSIZ; i++)
+        randrsl[i] = (randrsl[i - 1] + 1) * randrsl[i - 1];
 
     RandInit(true);
 }
@@ -96,43 +96,43 @@ void Randomizer::RandSeed(int seed)
 //
 void Randomizer::RandInit(int seed)
 {
-	int i;
-	ub4 a,b,c,d,e,f,g,h;
+    int i;
+    ub4 a,b,c,d,e,f,g,h;
 
-	aa=bb=cc=0;
-	a=b=c=d=e=f=g=h=0x9e3779b9;  /* the golden ratio */
+    aa=bb=cc=0;
+    a=b=c=d=e=f=g=h=0x9e3779b9;  /* the golden ratio */
 
-	for (i=0; i<4; ++i)          /* scramble it */
-	{
-		mix(a,b,c,d,e,f,g,h);
-	}
+    for (i=0; i<4; ++i)          /* scramble it */
+    {
+        mix(a,b,c,d,e,f,g,h);
+    }
 
-	for (i=0; i<RANDSIZ; i+=8)   /* fill in mm[] with messy stuff */
-	{
-		if (seed)                  /* use all the information in the seed */
-		{
-			a+=randrsl[i  ]; b+=randrsl[i+1]; c+=randrsl[i+2]; d+=randrsl[i+3];
-			e+=randrsl[i+4]; f+=randrsl[i+5]; g+=randrsl[i+6]; h+=randrsl[i+7];
-		}
-		mix(a,b,c,d,e,f,g,h);
-		mm[i  ]=a; mm[i+1]=b; mm[i+2]=c; mm[i+3]=d;
-		mm[i+4]=e; mm[i+5]=f; mm[i+6]=g; mm[i+7]=h;
-	}
+    for (i=0; i<RANDSIZ; i+=8)   /* fill in mm[] with messy stuff */
+    {
+        if (seed)                  /* use all the information in the seed */
+        {
+            a+=randrsl[i  ]; b+=randrsl[i+1]; c+=randrsl[i+2]; d+=randrsl[i+3];
+            e+=randrsl[i+4]; f+=randrsl[i+5]; g+=randrsl[i+6]; h+=randrsl[i+7];
+        }
+        mix(a,b,c,d,e,f,g,h);
+        mm[i  ]=a; mm[i+1]=b; mm[i+2]=c; mm[i+3]=d;
+        mm[i+4]=e; mm[i+5]=f; mm[i+6]=g; mm[i+7]=h;
+    }
 
-	if (seed) 
-	{        /* do a second pass to make all of the seed affect all of mm */
-		for (i=0; i<RANDSIZ; i+=8)
-		{
-			a+=mm[i  ]; b+=mm[i+1]; c+=mm[i+2]; d+=mm[i+3];
-			e+=mm[i+4]; f+=mm[i+5]; g+=mm[i+6]; h+=mm[i+7];
-			mix(a,b,c,d,e,f,g,h);
-			mm[i  ]=a; mm[i+1]=b; mm[i+2]=c; mm[i+3]=d;
-			mm[i+4]=e; mm[i+5]=f; mm[i+6]=g; mm[i+7]=h;
-		}
-	}
+    if (seed) 
+    {        /* do a second pass to make all of the seed affect all of mm */
+        for (i=0; i<RANDSIZ; i+=8)
+        {
+            a+=mm[i  ]; b+=mm[i+1]; c+=mm[i+2]; d+=mm[i+3];
+            e+=mm[i+4]; f+=mm[i+5]; g+=mm[i+6]; h+=mm[i+7];
+            mix(a,b,c,d,e,f,g,h);
+            mm[i  ]=a; mm[i+1]=b; mm[i+2]=c; mm[i+3]=d;
+            mm[i+4]=e; mm[i+5]=f; mm[i+6]=g; mm[i+7]=h;
+        }
+    }
 
-	Isaac();            /* fill in the first set of results */
-	randcnt=RANDSIZ;    /* prepare to use the first set of results */
+    Isaac();            /* fill in the first set of results */
+    randcnt=RANDSIZ;    /* prepare to use the first set of results */
 }
 
 
@@ -145,26 +145,26 @@ void Randomizer::Isaac()
 {
     ub4 a,b,x,y,*m,*m2,*r,*mend;
 
-	m=mm; r=randrsl;
-	a = aa; b = bb + (++cc);
+    m=mm; r=randrsl;
+    a = aa; b = bb + (++cc);
 
-	for (m = mm, mend = m2 = m+(RANDSIZ/2); m<mend; )
-	{
-		rngstep( a<<13, a, b, mm, m, m2, r, x);
-		rngstep( a>>6 , a, b, mm, m, m2, r, x);
-		rngstep( a<<2 , a, b, mm, m, m2, r, x);
-		rngstep( a>>16, a, b, mm, m, m2, r, x);
-	}
+    for (m = mm, mend = m2 = m+(RANDSIZ/2); m<mend; )
+    {
+        rngstep( a<<13, a, b, mm, m, m2, r, x);
+        rngstep( a>>6 , a, b, mm, m, m2, r, x);
+        rngstep( a<<2 , a, b, mm, m, m2, r, x);
+        rngstep( a>>16, a, b, mm, m, m2, r, x);
+    }
 
-	for (m2 = mm; m2<mend; )
-	{
-		rngstep( a<<13, a, b, mm, m, m2, r, x);
-		rngstep( a>>6 , a, b, mm, m, m2, r, x);
-		rngstep( a<<2 , a, b, mm, m, m2, r, x);
-		rngstep( a>>16, a, b, mm, m, m2, r, x);
-	}
+    for (m2 = mm; m2<mend; )
+    {
+        rngstep( a<<13, a, b, mm, m, m2, r, x);
+        rngstep( a>>6 , a, b, mm, m, m2, r, x);
+        rngstep( a<<2 , a, b, mm, m, m2, r, x);
+        rngstep( a>>16, a, b, mm, m, m2, r, x);
+    }
 
-	bb = b; aa = a;
+    bb = b; aa = a;
 }
 
 
@@ -216,7 +216,7 @@ void Randomizer::SerializeJsonLoad(const rapidjson::Value& v)
 
 short Randomizer::Short(int max)
 {
-	return (short) (rand() % max);
+    return (short) (rand() % max);
 }
 
 
@@ -241,9 +241,9 @@ ub4 RandomKey::mm[RANDSIZ];
 //
 void RandomKey::RandSeed(int seed)
 {
-	randrsl[0] = seed;
-	for (int i = 1; i < RANDSIZ; i++)
-		randrsl[i] = (randrsl[i - 1] + 1) * randrsl[i - 1];
+    randrsl[0] = seed;
+    for (int i = 1; i < RANDSIZ; i++)
+        randrsl[i] = (randrsl[i - 1] + 1) * randrsl[i - 1];
 
     RandInit(true);
 }
@@ -256,43 +256,43 @@ void RandomKey::RandSeed(int seed)
 //
 void RandomKey::RandInit(int seed)
 {
-	int i;
-	ub4 a,b,c,d,e,f,g,h;
+    int i;
+    ub4 a,b,c,d,e,f,g,h;
 
-	aa=bb=cc=0;
-	a=b=c=d=e=f=g=h=0x9e3779b9;  /* the golden ratio */
+    aa=bb=cc=0;
+    a=b=c=d=e=f=g=h=0x9e3779b9;  /* the golden ratio */
 
-	for (i=0; i<4; ++i)          /* scramble it */
-	{
-		mix(a,b,c,d,e,f,g,h);
-	}
+    for (i=0; i<4; ++i)          /* scramble it */
+    {
+        mix(a,b,c,d,e,f,g,h);
+    }
 
-	for (i=0; i<RANDSIZ; i+=8)   /* fill in mm[] with messy stuff */
-	{
-		if (seed)                  /* use all the information in the seed */
-		{
-			a+=randrsl[i  ]; b+=randrsl[i+1]; c+=randrsl[i+2]; d+=randrsl[i+3];
-			e+=randrsl[i+4]; f+=randrsl[i+5]; g+=randrsl[i+6]; h+=randrsl[i+7];
-		}
-		mix(a,b,c,d,e,f,g,h);
-		mm[i  ]=a; mm[i+1]=b; mm[i+2]=c; mm[i+3]=d;
-		mm[i+4]=e; mm[i+5]=f; mm[i+6]=g; mm[i+7]=h;
-	}
+    for (i=0; i<RANDSIZ; i+=8)   /* fill in mm[] with messy stuff */
+    {
+        if (seed)                  /* use all the information in the seed */
+        {
+            a+=randrsl[i  ]; b+=randrsl[i+1]; c+=randrsl[i+2]; d+=randrsl[i+3];
+            e+=randrsl[i+4]; f+=randrsl[i+5]; g+=randrsl[i+6]; h+=randrsl[i+7];
+        }
+        mix(a,b,c,d,e,f,g,h);
+        mm[i  ]=a; mm[i+1]=b; mm[i+2]=c; mm[i+3]=d;
+        mm[i+4]=e; mm[i+5]=f; mm[i+6]=g; mm[i+7]=h;
+    }
 
-	if (seed) 
-	{        /* do a second pass to make all of the seed affect all of mm */
-		for (i=0; i<RANDSIZ; i+=8)
-		{
-			a+=mm[i  ]; b+=mm[i+1]; c+=mm[i+2]; d+=mm[i+3];
-			e+=mm[i+4]; f+=mm[i+5]; g+=mm[i+6]; h+=mm[i+7];
-			mix(a,b,c,d,e,f,g,h);
-			mm[i  ]=a; mm[i+1]=b; mm[i+2]=c; mm[i+3]=d;
-			mm[i+4]=e; mm[i+5]=f; mm[i+6]=g; mm[i+7]=h;
-		}
-	}
+    if (seed) 
+    {        /* do a second pass to make all of the seed affect all of mm */
+        for (i=0; i<RANDSIZ; i+=8)
+        {
+            a+=mm[i  ]; b+=mm[i+1]; c+=mm[i+2]; d+=mm[i+3];
+            e+=mm[i+4]; f+=mm[i+5]; g+=mm[i+6]; h+=mm[i+7];
+            mix(a,b,c,d,e,f,g,h);
+            mm[i  ]=a; mm[i+1]=b; mm[i+2]=c; mm[i+3]=d;
+            mm[i+4]=e; mm[i+5]=f; mm[i+6]=g; mm[i+7]=h;
+        }
+    }
 
-	Isaac();            /* fill in the first set of results */
-	randcnt=RANDSIZ;    /* prepare to use the first set of results */
+    Isaac();            /* fill in the first set of results */
+    randcnt=RANDSIZ;    /* prepare to use the first set of results */
 }
 
 
@@ -305,38 +305,38 @@ void RandomKey::Isaac()
 {
     ub4 a,b,x,y,*m,*m2,*r,*mend;
 
-	m=mm; r=randrsl;
-	a = aa; b = bb + (++cc);
+    m=mm; r=randrsl;
+    a = aa; b = bb + (++cc);
 
-	for (m = mm, mend = m2 = m+(RANDSIZ/2); m<mend; )
-	{
-		rngstep( a<<13, a, b, mm, m, m2, r, x);
-		rngstep( a>>6 , a, b, mm, m, m2, r, x);
-		rngstep( a<<2 , a, b, mm, m, m2, r, x);
-		rngstep( a>>16, a, b, mm, m, m2, r, x);
-	}
+    for (m = mm, mend = m2 = m+(RANDSIZ/2); m<mend; )
+    {
+        rngstep( a<<13, a, b, mm, m, m2, r, x);
+        rngstep( a>>6 , a, b, mm, m, m2, r, x);
+        rngstep( a<<2 , a, b, mm, m, m2, r, x);
+        rngstep( a>>16, a, b, mm, m, m2, r, x);
+    }
 
-	for (m2 = mm; m2<mend; )
-	{
-		rngstep( a<<13, a, b, mm, m, m2, r, x);
-		rngstep( a>>6 , a, b, mm, m, m2, r, x);
-		rngstep( a<<2 , a, b, mm, m, m2, r, x);
-		rngstep( a>>16, a, b, mm, m, m2, r, x);
-	}
+    for (m2 = mm; m2<mend; )
+    {
+        rngstep( a<<13, a, b, mm, m, m2, r, x);
+        rngstep( a>>6 , a, b, mm, m, m2, r, x);
+        rngstep( a<<2 , a, b, mm, m, m2, r, x);
+        rngstep( a>>16, a, b, mm, m, m2, r, x);
+    }
 
-	bb = b; aa = a;
+    bb = b; aa = a;
 }
 
 bool RandomKey::CheckKey(long lKey)
 {
-	RandSeed(lKey & 0x0000FFFF);
-	return ((short) (lKey >> 16) == (short) (rand() & 0x0000FFFF));
+    RandSeed(lKey & 0x0000FFFF);
+    return ((short) (lKey >> 16) == (short) (rand() & 0x0000FFFF));
 }
 
 void RandomKey::SetKey(long& lKey)
 {
-	RandSeed(lKey & 0x0000FFFF);
+    RandSeed(lKey & 0x0000FFFF);
 
-	long l = (rand() & 0x0000FFFF);
-	lKey |= (l << 16);
+    long l = (rand() & 0x0000FFFF);
+    lKey |= (l << 16);
 }

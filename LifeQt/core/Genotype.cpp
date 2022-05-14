@@ -47,24 +47,24 @@ void GeneSegment::SerializeJsonLoad(const rapidjson::Value& v)
 
 void GeneSegment::Randomize(int segment, bool bIsVisible)
 {
-	// Perhaps we just do 16 next time, or 32
+    // Perhaps we just do 16 next time, or 32
     m_radius = (uint8_t)  (Integer(MAX_SEGMENT_LENGTH - 1) + 2);
 
-	if (segment == 0)
-		m_angle  = (short) (Integer(45) + 1);
-	else
-		m_angle  = (short) (Integer(350) - 175);
+    if (segment == 0)
+        m_angle  = (short) (Integer(45) + 1);
+    else
+        m_angle  = (short) (Integer(350) - 175);
   
     m_visible = (uint8_t) bIsVisible;
 
     m_startSegment = Byte(MAX_SEGMENTS);
 
     m_color[0]   = Byte(DIM_COLOR - 1);
-//	if (m_color[0] != GREEN_LEAF)
-//		m_color[0]  = Byte(DIM_COLOR);
+//    if (m_color[0] != GREEN_LEAF)
+//        m_color[0]  = Byte(DIM_COLOR);
 
     m_color[1]   = Byte(DIM_COLOR);
-	if (m_color[1] != WHITE_LEAF && m_color[1] != GREEN_LEAF)
+    if (m_color[1] != WHITE_LEAF && m_color[1] != GREEN_LEAF)
         m_color[1]  = Byte(DIM_COLOR);
 }
 
@@ -73,47 +73,47 @@ void GeneSegment::Randomize(int segment, bool bIsVisible)
 void GeneSegment::Debug(int segment, bool bIsVisible)
 {
     m_radius = (uint8_t) MAX_SEGMENT_LENGTH;
-	m_angle = 0;//5;
-	// 0 and 45 put the legs right on top of each other for 8 legs
+    m_angle = 0;//5;
+    // 0 and 45 put the legs right on top of each other for 8 legs
 
     m_visible = (uint8_t) bIsVisible;
-	m_startSegment = segment - 1;
-	if (segment != 2)
-	{
-		m_color[0]   = GREEN_LEAF;
-		m_color[1]   = WHITE_LEAF;
-	}
-	else
-	{
-		m_color[0]   = BLUE_LEAF;
-		m_color[1]   = RED_LEAF;
-	}
+    m_startSegment = segment - 1;
+    if (segment != 2)
+    {
+        m_color[0]   = GREEN_LEAF;
+        m_color[1]   = WHITE_LEAF;
+    }
+    else
+    {
+        m_color[0]   = BLUE_LEAF;
+        m_color[1]   = RED_LEAF;
+    }
 }
 
 
 void GeneSegment::Mutate(int chance, int segment)
 {
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_radius = (uint8_t) (Integer(MAX_SEGMENT_LENGTH - 1) + 2);
 
-	if (Int1024() < chance)
-	{
-		if (segment == 0)
-			m_angle  = (short)(Integer(45) + 1);
-		else
-			m_angle = (short)(Integer(350) - 175);
-	}
+    if (Int1024() < chance)
+    {
+        if (segment == 0)
+            m_angle  = (short)(Integer(45) + 1);
+        else
+            m_angle = (short)(Integer(350) - 175);
+    }
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_startSegment = Byte(MAX_SEGMENTS);
 
-	if (Int1024() < chance)
-		m_visible = !m_visible;
+    if (Int1024() < chance)
+        m_visible = !m_visible;
   
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_color[0]   = Byte(DIM_COLOR - 1);
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_color[1]   = Byte(DIM_COLOR);
 
 }
@@ -126,80 +126,80 @@ void GeneSegment::Mutate(int chance, int segment)
 //
 void GeneLimb::Randomize(int nSegmentsPerArm)
 {
-	for (int i = 0; i < MAX_SEGMENTS; i++)
-	{
-		switch (nSegmentsPerArm)
-		{
-		default:
-		case 0:
+    for (int i = 0; i < MAX_SEGMENTS; i++)
+    {
+        switch (nSegmentsPerArm)
+        {
+        default:
+        case 0:
             m_segment[i].Randomize(i, Bool());
-			break;
+            break;
 
-		case 1:
+        case 1:
             m_segment[i].Randomize(i, (i < 3)?Bool():false);
-			break;
+            break;
 
-		case 2:
-			if (i < 4)
+        case 2:
+            if (i < 4)
                 m_segment[i].Randomize(i, true);
-			else
+            else
                 m_segment[i].Randomize(i, (i < 7)?Bool():false);
-			break;
+            break;
 
-		case 3:
-			if (i < 7)
+        case 3:
+            if (i < 7)
                 m_segment[i].Randomize(i, true);
-			else
+            else
                 m_segment[i].Randomize(i, (i < 10)?Bool():false);
-			break;
-		}
-	}
-	ToggleSegments();
+            break;
+        }
+    }
+    ToggleSegments();
 }
 
 
 void GeneLimb::Debug(int nSegmentsPerArm)
 {
-	for (int i = 0; i < MAX_SEGMENTS; i++)
-	{
+    for (int i = 0; i < MAX_SEGMENTS; i++)
+    {
         m_segment[i].Debug(i, (i < MAX_SEGMENTS/2)?true:false);
-	}
-/*		switch (nSegmentsPerArm)
-		{
-		default:
-		case 0:
+    }
+/*        switch (nSegmentsPerArm)
+        {
+        default:
+        case 0:
             m_segment[i].Debug(i, true);
-			break;
+            break;
 
-		case 1:
+        case 1:
             m_segment[i].Debug(i, (i < 3)?true:false);
-			break;
+            break;
 
-		case 2:
-			if (i < 4)
+        case 2:
+            if (i < 4)
                 m_segment[i].Debug(i, true);
-			else
+            else
                 m_segment[i].Debug(i, (i < 7)?true:false);
-			break;
+            break;
 
-		case 3:
-			if (i < 7)
+        case 3:
+            if (i < 7)
                 m_segment[i].Debug(i, true);
-			else
+            else
                 m_segment[i].Debug(i, (i < 10)?true:false);
-			break;
-		}
-*/	
-	ToggleSegments();
+            break;
+        }
+*/    
+    ToggleSegments();
 }
 
 
 void GeneLimb::Mutate(int chance)
 {
-	for (int i = 0; i < MAX_SEGMENTS; i++)
-		m_segment[i].Mutate(chance, i);
+    for (int i = 0; i < MAX_SEGMENTS; i++)
+        m_segment[i].Mutate(chance, i);
 
-	ToggleSegments();
+    ToggleSegments();
 }
 
 
@@ -209,7 +209,7 @@ void GeneLimb::Crossover(GeneLimb&  gLine)
     if (Bool())
       m_segment[i] = gLine.m_segment[i];
 
-	ToggleSegments();
+    ToggleSegments();
 }
 
 void GeneLimb::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
@@ -240,12 +240,12 @@ void GeneLimb::SerializeJsonLoad(const rapidjson::Value& v)
 
 int GeneLimb::GetSegmentsVisible()
 {
-	int j = 0;
-	for (int i = 0; i < MAX_SEGMENTS; i++)
-		if (m_segment[i].IsVisible())
-			j++;
+    int j = 0;
+    for (int i = 0; i < MAX_SEGMENTS; i++)
+        if (m_segment[i].IsVisible())
+            j++;
 
-	return j;
+    return j;
 }
 
 // This method is saving 0 for non-visible segments
@@ -253,19 +253,19 @@ int GeneLimb::GetSegmentsVisible()
 void GeneLimb::ToggleSegments()
 {
     bool bToggle = false;
-	for (int i = 0; i < MAX_SEGMENTS; i++)
-	{
-		if (m_segment[i].IsVisible())
-		{
-			m_toggleVisibleSegments[i] = bToggle;
+    for (int i = 0; i < MAX_SEGMENTS; i++)
+    {
+        if (m_segment[i].IsVisible())
+        {
+            m_toggleVisibleSegments[i] = bToggle;
 
-			bToggle = !bToggle;
-		}
-		else
-		{
+            bToggle = !bToggle;
+        }
+        else
+        {
             m_toggleVisibleSegments[i] = false;
-		}
-	}
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -387,51 +387,51 @@ int GeneTrait::GetCompressedToggle(int nAngle, int nLine, int nSegment)
     assert(nLine < MAX_LIMBS);
     assert(nSegment < MAX_SEGMENTS);
 
-	if (IsMirrored())
-	{
-		if (mirrorCoef[nLine] == -1)
-			if (m_geneLine[m_lineRef[nLine]].m_toggleVisibleSegments[nSegment])
-				return -nAngle;
-			else
-				return nAngle;
-	}
+    if (IsMirrored())
+    {
+        if (mirrorCoef[nLine] == -1)
+            if (m_geneLine[m_lineRef[nLine]].m_toggleVisibleSegments[nSegment])
+                return -nAngle;
+            else
+                return nAngle;
+    }
 
-	if (m_geneLine[m_lineRef[nLine]].m_toggleVisibleSegments[nSegment])
-		return nAngle;
-	else
-		return -nAngle;
+    if (m_geneLine[m_lineRef[nLine]].m_toggleVisibleSegments[nSegment])
+        return nAngle;
+    else
+        return -nAngle;
 }
 
 
 void GeneTrait::CalculateAngles()
 {
-	const int* pAngle;
-	if (GetLines() == 6)
-		pAngle = &mirrorSix[0];
-	else
-		pAngle = &mirrorAngle[0];
+    const int* pAngle;
+    if (GetLines() == 6)
+        pAngle = &mirrorSix[0];
+    else
+        pAngle = &mirrorAngle[0];
 
-	for (int line = 0; line < GetLines(); line++)
-	{
-		GeneLimb& gLine = m_geneLine[m_lineRef[line]];
-		for (int segment = 0; segment < MAX_SEGMENTS; segment++)
-		{
-			GeneSegment& gSegment = gLine.GetSegment(segment);
-			if (gSegment.IsVisible())
-			{
-				if (IsMirrored())
-					m_angle[line][segment] = (short) (GetOffset() + (gSegment.GetAngle() * mirrorCoef[line]) + pAngle[line]);
-				else
-					m_angle[line][segment] = (short) (GetOffset() + gSegment.GetAngle() + (line * 360) / GetLines());
-			}
-		}	
-	}
+    for (int line = 0; line < GetLines(); line++)
+    {
+        GeneLimb& gLine = m_geneLine[m_lineRef[line]];
+        for (int segment = 0; segment < MAX_SEGMENTS; segment++)
+        {
+            GeneSegment& gSegment = gLine.GetSegment(segment);
+            if (gSegment.IsVisible())
+            {
+                if (IsMirrored())
+                    m_angle[line][segment] = (short) (GetOffset() + (gSegment.GetAngle() * mirrorCoef[line]) + pAngle[line]);
+                else
+                    m_angle[line][segment] = (short) (GetOffset() + gSegment.GetAngle() + (line * 360) / GetLines());
+            }
+        }    
+    }
 }
 
 
 void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 {
-	int i;
+    int i;
 
     m_disperse       = (uint8_t) Bool();
     m_children       = (uint8_t) (Integer(8) + 1);
@@ -442,58 +442,58 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
     m_adultRatio[1]  = (uint8_t) (Integer(6) + 1);
     m_mirrored       = (uint8_t) Bool();
 
-	switch(nArmsPerBiot)
-	{
-	default:
-	case 0:
+    switch(nArmsPerBiot)
+    {
+    default:
+    case 0:
         m_lineCount  = (uint8_t) (Integer(MAX_LIMBS) + 1);
-		break;
+        break;
 
-	case 1:
+    case 1:
         m_lineCount  = (uint8_t) (Integer(2) + 1);
-		break;
+        break;
 
-	case 2:
+    case 2:
         m_lineCount  = (uint8_t) (Integer(2) + 3);
-		break;
+        break;
 
-	case 3:
+    case 3:
         m_lineCount  = (uint8_t) (Integer(2) + 5);
-		break;
+        break;
 
-	case 4:
+    case 4:
         m_lineCount  = (uint8_t) (Integer(2) + 7);
-		break;
-	}
+        break;
+    }
 
-	// Initially,we don't want odd mirrored creatures
-	if ((m_lineCount  & 0x01) == 0x01)
+    // Initially,we don't want odd mirrored creatures
+    if ((m_lineCount  & 0x01) == 0x01)
         m_mirrored = false;
 
-	m_offset         = (short) Integer(360);
+    m_offset         = (short) Integer(360);
 
-	for (i = 0; i < MAX_LIMB_TYPES; i++)
-		m_geneLine[i].Randomize(nSegmentsPerArm);
+    for (i = 0; i < MAX_LIMB_TYPES; i++)
+        m_geneLine[i].Randomize(nSegmentsPerArm);
 
     m_sex        = (uint8_t) Bool();
     m_asexual    = (uint8_t) Bool();
     m_chanceMale = (uint8_t) (Int256() / 2 + 64);
-	m_maxAge     = (short) Int256();
+    m_maxAge     = (short) Int256();
 
-	// We start out with uniform appearance
+    // We start out with uniform appearance
     for (i = 0; i < MAX_LIMBS; i++)
     {
         m_lineRef[i] = Byte(nTypesPerBiot + 1);
         assert(m_lineRef[i] < MAX_LIMB_TYPES && m_lineRef[i] >= 0);
-	}
+    }
 
-	CalculateAngles();
+    CalculateAngles();
 }
 
 
 void GeneTrait::Debug(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 {
-	int i;
+    int i;
 
     m_disperse       = (uint8_t) true;
     m_children       = (uint8_t) 1;
@@ -505,174 +505,174 @@ void GeneTrait::Debug(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
     m_mirrored       = (uint8_t) true;
 
     m_lineCount  = 1;//(uint8_t) MAX_LIMBS;
-/*	switch(nArmsPerBiot)
-	{
-	default:
-	case 0:
+/*    switch(nArmsPerBiot)
+    {
+    default:
+    case 0:
         m_lineCount  = (uint8_t) MAX_LIMBS;
-		break;
+        break;
 
-	case 1:
+    case 1:
         m_lineCount  = (uint8_t) 2;
-		break;
+        break;
 
-	case 2:
+    case 2:
         m_lineCount  = (uint8_t) 4;
-		break;
+        break;
 
-	case 3:
+    case 3:
         m_lineCount  = (uint8_t) 6;
-		break;
+        break;
 
-	case 4:
+    case 4:
         m_lineCount  = (uint8_t) 8;
-		break;
-	}
+        break;
+    }
 */
-	// Initially,we don't want odd mirrored creatures
-	if ((m_lineCount  & 0x01) == 0x01)
+    // Initially,we don't want odd mirrored creatures
+    if ((m_lineCount  & 0x01) == 0x01)
         m_mirrored = false;
 
-	m_offset         = (short) 0; 
+    m_offset         = (short) 0; 
 
-	for (i = 0; i < MAX_LIMB_TYPES; i++)
-		m_geneLine[i].Debug(nSegmentsPerArm);
+    for (i = 0; i < MAX_LIMB_TYPES; i++)
+        m_geneLine[i].Debug(nSegmentsPerArm);
 
     m_sex        = (uint8_t) false;
     m_asexual    = (uint8_t) true;
     m_chanceMale = (uint8_t) 0;
-	m_maxAge     = (short) 255;
+    m_maxAge     = (short) 255;
 
-	// We start out with uniform appearance
+    // We start out with uniform appearance
     for (i = 0; i < MAX_LIMBS; i++)
-	{
-		m_lineRef[i] = 0;
-	}
+    {
+        m_lineRef[i] = 0;
+    }
 
-	CalculateAngles();
+    CalculateAngles();
 }
 
 
 void GeneTrait::Mutate(int chance)
 {
-	int i;
+    int i;
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_disperse       = (uint8_t) Bool();
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_children       = (uint8_t) (Integer(8) + 1);
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_attackChildren = (uint8_t) Bool();
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_attackSiblings = (uint8_t) Bool();
 
-	if (Int1024() < chance)
-	{
-		if (Sign() > 0)
-			m_species++;
-		else
-			m_species--;
-	}
+    if (Int1024() < chance)
+    {
+        if (Sign() > 0)
+            m_species++;
+        else
+            m_species--;
+    }
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_adultRatio[0]     = (uint8_t) (Integer(6) + 1);
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_adultRatio[1]     = (uint8_t) (Integer(6) + 1);
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_lineCount         = (uint8_t) (Integer(8) + 1);
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_mirrored       = (uint8_t) Bool();
 
-	if (Int1024() < chance)
-		m_offset         = (short) Integer(360);
+    if (Int1024() < chance)
+        m_offset         = (short) Integer(360);
 
-	for (i = 0; i < MAX_LIMB_TYPES; i++)
-		m_geneLine[i].Mutate(chance);
+    for (i = 0; i < MAX_LIMB_TYPES; i++)
+        m_geneLine[i].Mutate(chance);
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_sex = (uint8_t) Bool();
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_asexual = (uint8_t) Bool();
 
-	if (Int1024() < chance)
+    if (Int1024() < chance)
         m_chanceMale = Byte();
 
-	if (Int1024() < chance)
-		m_maxAge = (short) Int256();
+    if (Int1024() < chance)
+        m_maxAge = (short) Int256();
 
     for (i = 0; i < MAX_LIMBS; i++)
-		if (Int1024() < chance)
+        if (Int1024() < chance)
             m_lineRef[i] = Byte(MAX_LIMB_TYPES);
 
-	CalculateAngles();
+    CalculateAngles();
 }
 
 
 void GeneTrait::Crossover(GeneTrait&  gTrait)
 {
-	int i;
+    int i;
 
-	for (i = 0; i < MAX_LIMB_TYPES; i++)
-		m_geneLine[i].Crossover(gTrait.m_geneLine[i]);
+    for (i = 0; i < MAX_LIMB_TYPES; i++)
+        m_geneLine[i].Crossover(gTrait.m_geneLine[i]);
 
     for (i = 0; i < MAX_LIMBS; i++)
         if (Bool())
         {
-			m_lineRef[i] = gTrait.m_lineRef[i];
+            m_lineRef[i] = gTrait.m_lineRef[i];
             assert(m_lineRef[i] < MAX_LIMB_TYPES && m_lineRef[i] >= 0);
         }
 
     if (Bool())
-		m_offset = gTrait.m_offset;
-	
+        m_offset = gTrait.m_offset;
+    
     if (Bool())
-		m_disperse       = gTrait.m_disperse;
+        m_disperse       = gTrait.m_disperse;
 
     if (Bool())
-	    m_children       = gTrait.m_children;
+        m_children       = gTrait.m_children;
 
     if (Bool())
-		m_attackChildren = gTrait.m_attackChildren;
+        m_attackChildren = gTrait.m_attackChildren;
 
     if (Bool())
-		m_attackSiblings = gTrait.m_attackSiblings;
+        m_attackSiblings = gTrait.m_attackSiblings;
 
     if (Bool())
-		m_species        = gTrait.m_species;
+        m_species        = gTrait.m_species;
 
     if (Bool())
-		m_adultRatio[0]  = gTrait.m_adultRatio[0];
+        m_adultRatio[0]  = gTrait.m_adultRatio[0];
 
     if (Bool())
-		m_adultRatio[1]  = gTrait.m_adultRatio[1];
+        m_adultRatio[1]  = gTrait.m_adultRatio[1];
 
     if (Bool())
-		m_lineCount      = gTrait.m_lineCount;
+        m_lineCount      = gTrait.m_lineCount;
 
     if (Bool())
-		m_mirrored       = gTrait.m_mirrored;
+        m_mirrored       = gTrait.m_mirrored;
 
     if (Bool())
-		m_asexual        = gTrait.m_asexual;
+        m_asexual        = gTrait.m_asexual;
 
     if (Bool())
-		m_chanceMale     = gTrait.m_chanceMale;
+        m_chanceMale     = gTrait.m_chanceMale;
 
-	CalculateAngles();
+    CalculateAngles();
 }
 
 
 bool GeneTrait::IsLineTypeVisible(int lineType)
 {
-	for (int i = 0; i < m_lineCount; i++)
-		if (lineType == m_lineRef[i])
+    for (int i = 0; i < m_lineCount; i++)
+        if (lineType == m_lineRef[i])
             return true;
 
     return false;

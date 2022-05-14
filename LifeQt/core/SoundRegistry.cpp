@@ -121,7 +121,7 @@ std::string CSoundRegistry::GetPath(const std::string &szEvent)
 //
 CSoundRegistry::CSoundRegistry(const std::string &szScheme, const std::string &szSchemeName)
 {
-	SetScheme(szScheme, szSchemeName);
+    SetScheme(szScheme, szSchemeName);
 }
 
 
@@ -131,8 +131,8 @@ CSoundRegistry::CSoundRegistry(const std::string &szScheme, const std::string &s
 //
 void CSoundRegistry::SetScheme(const std::string &szScheme, const std::string &szSchemeName)
 {
-	m_sScheme     = szScheme;
-	m_sSchemeName = szSchemeName;
+    m_sScheme     = szScheme;
+    m_sSchemeName = szSchemeName;
     m_bSetScheme  = false;
 }
 

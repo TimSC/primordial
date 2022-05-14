@@ -32,12 +32,12 @@ class CSettings;
 class CEnvStats
 {
 public:
-	CEnvStats() { Clear(); }
+    CEnvStats() { Clear(); }
 
-	void Clear();
-	void Sample(Environment& env);
-	void NewSample();
-	
+    void Clear();
+    void Sample(Environment& env);
+    void NewSample();
+    
     std::string GetDaysStr() const;
     std::string GetPopulationStr() const;
     std::string GetExtinctionsStr() const;
@@ -47,15 +47,15 @@ public:
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
 
-	enum {
-		SAMPLES     = 100,
-		INTERVALS   = 20,
-		GENERATIONS = 512,
-		SAMPLE_TIME = 0x000001FF,
-		ENERGY_LEVELS = 20
-	};
+    enum {
+        SAMPLES     = 100,
+        INTERVALS   = 20,
+        GENERATIONS = 512,
+        SAMPLE_TIME = 0x000001FF,
+        ENERGY_LEVELS = 20
+    };
 
-	float PercentUncoveredByBiots();
+    float PercentUncoveredByBiots();
 
 
 public:
@@ -76,13 +76,13 @@ public:
     int64_t  m_ages[INTERVALS];
     int64_t  m_energy[ENERGY_LEVELS];
 
-	float m_perWhite;
-	float m_perGreen;
-	float m_perRed;
-	float m_perBlue;
-	float m_perLtBlue;
+    float m_perWhite;
+    float m_perGreen;
+    float m_perRed;
+    float m_perBlue;
+    float m_perLtBlue;
 
-	double m_days;
+    double m_days;
 };
 
 
@@ -95,7 +95,7 @@ public:
 class CEnvStatsList : public QList<CEnvStats>
 {
 public:
-	CEnvStatsList(){};
+    CEnvStatsList(){};
     virtual ~CEnvStatsList();
 
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
@@ -116,12 +116,12 @@ public:
     Biot* FindBiotByID(uint32_t id);
     Biot* FindBiotByPoint(int x, int y);
 
-	Biot* HitCheck(Biot *me, int* pStart);
+    Biot* HitCheck(Biot *me, int* pStart);
     //Biot* NextBiot();
     void RemoveBiot(class Biot *pBiot);
     //bool Looped() { return m_bLooped; }
 
-	void FreeAll();
+    void FreeAll();
 
     void SerializeJson(class Environment &env, rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(class Environment &env, const rapidjson::Value& v);
@@ -153,38 +153,38 @@ public:
 class Environment : public BRect, Randomizer
 {
 public:                  
-	Environment();
-	~Environment(void);
+    Environment();
+    ~Environment(void);
 
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
 
-	Biot* HitCheck(Biot *me, BRectSortPos& pos);
+    Biot* HitCheck(Biot *me, BRectSortPos& pos);
     Biot* FindBiotByID(uint32_t id) { return m_biotList.FindBiotByID(id); }
     Biot* FindBiotByPoint(int x, int y) { return m_biotList.FindBiotByPoint(x, y); };
 
-	void  AddBiot(Biot* newBiot);
+    void  AddBiot(Biot* newBiot);
 
-	void Clear();
+    void Clear();
 
     void PlayResource(const std::string & sound);
 
     void lights(bool bOn);
-	void NoRoomToGiveBirth(){/*m_stats.m_collisionCount += 4;*/};
-	void FreeBitPadDC();
+    void NoRoomToGiveBirth(){/*m_stats.m_collisionCount += 4;*/};
+    void FreeBitPadDC();
 
-    uint32_t	GetID(void){return ++m_uniqueID; }
+    uint32_t    GetID(void){return ++m_uniqueID; }
 
-	void MoveBiot(Biot* pBiot) { m_sort.Move((BRectItem*) pBiot); }
-	void MoveBiot(Biot* pBiot, BRect* pOrigRect) { m_sort.Move((BRectItem*) pBiot, pOrigRect); }
-		
+    void MoveBiot(Biot* pBiot) { m_sort.Move((BRectItem*) pBiot); }
+    void MoveBiot(Biot* pBiot, BRect* pOrigRect) { m_sort.Move((BRectItem*) pBiot, pOrigRect); }
+        
     int  GetPopulation() { return m_biotList.size(); }
     int  GetNumConnectedSides();
-	void DeleteContents();
+    void DeleteContents();
     void Update();
 
     bool  BiotShouldBox(uint32_t biotId) { return (biotId == m_selectedId && m_bIsSelected); }
-	Biot* GetSelectedBiot()           { return m_biotList.FindBiotByID(m_selectedId); }
+    Biot* GetSelectedBiot()           { return m_biotList.FindBiotByID(m_selectedId); }
     void SetSelectedBiot(uint32_t biotId);
 
     bool IsIntersect(CLine& bLine, int& x, int& y)
@@ -199,9 +199,9 @@ public:
 
     void OnNew(QOpenGLWidget &scene, QRect worldRect, int population, int seed,
                int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
-	void OnRestart();
+    void OnRestart();
     void OnOpen();
-	void OnStop();
+    void OnStop();
 
     void paintGL(QPainter &painter);
     void AddListener(class EnvironmentListener *listener);
@@ -209,10 +209,10 @@ public:
 public:
 
     QOpenGLWidget *  m_scene;
-	BRectSort         m_sort;
+    BRectSort         m_sort;
 
-	CEnvStats         m_stats;
-	CEnvStatsList     m_statsList;
+    CEnvStats         m_stats;
+    CEnvStatsList     m_statsList;
 
     CSettings settings;
 
@@ -221,29 +221,29 @@ public:
     TopSide    topSide;
     BottomSide bottomSide;
 
-	int m_orginalSeed;				//Seed used on restart    
+    int m_orginalSeed;                //Seed used on restart    
 
-	// What biot is selected and for what operation
+    // What biot is selected and for what operation
     uint32_t m_selectedId;
     bool  m_bIsSelected;
 
-	int   m_operation;
+    int   m_operation;
 
     Side*   side[4];
     bool    bNetworkSettingsChange;
 
-	// Save the state of these variables	
+    // Save the state of these variables    
 
     CBiotList   m_biotList;
 
   private:
-	void CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
+    void CreateBiots(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
 
   private:
-	// For generating unique ids for the environment biots
+    // For generating unique ids for the environment biots
     uint32_t   m_uniqueID;
 
-	// Global scratch pad for flicker free drawing
+    // Global scratch pad for flicker free drawing
     int     m_maxBitPadWidth;
     int     m_maxBitPadHeight;
 
@@ -256,28 +256,28 @@ public:
 
 inline bool Environment::WithinBorders(BRect& rect)
 {
-	if (!(Inside(rect.m_left, rect.m_top) ||
-			rightSide.Inside(rect.m_left, rect.m_top) ||
-			leftSide.Inside(rect.m_left, rect.m_top)  ||
-			topSide.Inside(rect.m_left, rect.m_top)  ||
-			bottomSide.Inside(rect.m_left, rect.m_top)))
+    if (!(Inside(rect.m_left, rect.m_top) ||
+            rightSide.Inside(rect.m_left, rect.m_top) ||
+            leftSide.Inside(rect.m_left, rect.m_top)  ||
+            topSide.Inside(rect.m_left, rect.m_top)  ||
+            bottomSide.Inside(rect.m_left, rect.m_top)))
         return false;
 
-	if (!(Inside(rect.m_left, rect.m_bottom) ||
-			rightSide.Inside(rect.m_left, rect.m_bottom) ||
-			leftSide.Inside(rect.m_left, rect.m_bottom)  ||
-			topSide.Inside(rect.m_left, rect.m_bottom)  ||
-			bottomSide.Inside(rect.m_left, rect.m_bottom)))
+    if (!(Inside(rect.m_left, rect.m_bottom) ||
+            rightSide.Inside(rect.m_left, rect.m_bottom) ||
+            leftSide.Inside(rect.m_left, rect.m_bottom)  ||
+            topSide.Inside(rect.m_left, rect.m_bottom)  ||
+            bottomSide.Inside(rect.m_left, rect.m_bottom)))
         return false;
 
-	if (!(Inside(rect.m_right, rect.m_bottom) ||
+    if (!(Inside(rect.m_right, rect.m_bottom) ||
             rightSide.Inside(rect.m_right, rect.m_bottom) ||
             leftSide.Inside(rect.m_right, rect.m_bottom)  ||
             topSide.Inside(rect.m_right, rect.m_bottom)  ||
             bottomSide.Inside(rect.m_right, rect.m_bottom)))
         return false;
 
-	if (!(Inside(rect.m_right, rect.m_top) ||
+    if (!(Inside(rect.m_right, rect.m_top) ||
             rightSide.Inside(rect.m_right, rect.m_top) ||
             leftSide.Inside(rect.m_right, rect.m_top)  ||
             topSide.Inside(rect.m_right, rect.m_top)  ||
