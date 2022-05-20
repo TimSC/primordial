@@ -1,6 +1,6 @@
 # Primordial Life 
 
-Copyright (C) 1996-1998 Jason Spofford, Ported to Qt5 by Tim Sheerman-Chase 2021
+Copyright (c) 1996-1998 Jason Spofford, Ported to Qt5 by Tim Sheerman-Chase (c) 2021-2022
 
 Primordial Life presents an environment filled with artificially living creatures called biots. Like their biological counterparts, each biot has a genetic code that serves as a blueprint for constructing it. It is this blueprint which lays the foundation for their evolution.
 
