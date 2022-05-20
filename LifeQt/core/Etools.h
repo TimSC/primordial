@@ -32,7 +32,7 @@ public:
     int m_top;
 
 public:
-
+    BRect(const BRect& rect) { *this = rect; }
     BRect(const BRect* pRect) { *this = *pRect; }
     BRect(const QRect* pRect)  { Set(pRect);     }
     BRect() : m_left(0), m_right(0), m_bottom(0), m_top(0) { };

@@ -29,7 +29,7 @@ public:
     class SidesManager sidesManager;
     class AutoConnect autoConnect;
 
-    void TimedUpdate(bool simRunning);
+    void TimedUpdate(bool running);
     void timerEvent(QTimerEvent *event) override;
 
     void closeEvent(QCloseEvent *bar);

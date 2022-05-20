@@ -28,8 +28,6 @@ MainApp::MainApp(): sidesManager(env),
     autoConnect(env, sidesManager)
 {
     lastSimUpdate = 0;
-
-    startTimer(10);
 }
 
 MainApp::~MainApp()
@@ -38,11 +36,11 @@ MainApp::~MainApp()
 
 }
 
-void MainApp::TimedUpdate(bool simRunning)
+void MainApp::TimedUpdate(bool running)
 {
     int64_t now = QDateTime::currentMSecsSinceEpoch();
 
-    if(simRunning)
+    if(running)
     {
         uint64_t elapsed = now - lastSimUpdate;
         if(elapsed > 20)
@@ -51,11 +49,13 @@ void MainApp::TimedUpdate(bool simRunning)
             this->env.Update();
         }
     }
+    else
+        lastSimUpdate = now;
 }
 
 void MainApp::timerEvent(QTimerEvent *event)
 {
-    TimedUpdate(true);
+
 }
 
 void MainApp::closeEvent(QCloseEvent *ev)
@@ -488,3 +488,4 @@ void MainWindow::closeEvent(QCloseEvent *ev)
 {
     app.closeEvent(ev);
 }
+

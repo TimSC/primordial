@@ -19,8 +19,8 @@ void SettingsHabitat::Init(class CSettings &settingsIn)
     this->ui->mouseCheckBox->setChecked(settingsIn.bMouse);
     QString popString = QString::asprintf("%d", settingsIn.m_initialPopulation);
     this->ui->populationLineEdit->setText(popString);
-    this->ui->frictionComboBox->setCurrentText(SettingFindClosestTextByValue(frictionList, FRICTION_OPTIONS, settingsIn.friction));
-    this->ui->solarComboBox->setCurrentText(SettingFindClosestTextByValue(benefitList, BENEFIT_OPTIONS, settingsIn.m_leafEnergy));
+    this->ui->frictionComboBox->setCurrentText(SettingFindClosestTextByFloat(frictionList, FRICTION_OPTIONS, settingsIn.friction));
+    this->ui->solarComboBox->setCurrentText(SettingFindClosestTextByInt(benefitList, BENEFIT_OPTIONS, settingsIn.m_leafEnergy));
     this->ui->saveOnQuit->setChecked(settingsIn.bSaveOnQuit);
 }
 

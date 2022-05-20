@@ -250,7 +250,7 @@ void CSettings::SetToDefaults()
     newType[GREEN_LEAF]  = YELLOW_LEAF;
     newType[LBLUE_LEAF]  = LBLUE_LEAF;
 
-    m_leafEnergy = 2;
+    m_leafEnergy = 4;
     regenCost  = 200;
     regenTime  = 0x00000007;
 
@@ -265,7 +265,7 @@ void CSettings::SetToDefaults()
     bSiblingsAttack     = true;
     bSaveOnQuit     = true;
 
-    friction            = 0.005f;
+    friction            = 5.0f;
     bBarrier            = true;
     bMouse              = true;
 
@@ -428,7 +428,23 @@ const ListEntry settingsSexualList[SETTINGS_SEXUAL_OPTIONS] = {
   { "Both asexual and sexual",  2}
 };
 
-QString SettingFindClosestTextByValue(const ListEntry *list, int listSize, int value)
+QString SettingFindClosestTextByInt(const ListEntry *list, int listSize, int value)
+{
+    int bestIndex = -1;
+    int bestDist = 0;
+    for(int i=0; i<listSize; i++)
+    {
+        int dist = abs(list[i].second - value);
+        if(bestIndex < 0 or dist < bestDist)
+        {
+            bestDist = dist;
+            bestIndex = i;
+        }
+    }
+    return list[bestIndex].first;
+}
+
+QString SettingFindClosestTextByFloat(const ListEntry *list, int listSize, float value)
 {
     int bestIndex = -1;
     int bestDist = 0;

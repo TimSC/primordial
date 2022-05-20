@@ -18,10 +18,10 @@ SettingsBiot::~SettingsBiot()
 
 void SettingsBiot::Init(class CSettings &settingsIn)
 {
-    this->ui->mutationComboBox->setCurrentText(SettingFindClosestTextByValue(mutationList, MUTATION_OPTIONS, settingsIn.chance));
-    this->ui->regenCostcomboBox->setCurrentText(SettingFindClosestTextByValue(regenCostList, REGENCOST_OPTIONS, settingsIn.regenCost));
-    this->ui->regenRateComboBox->setCurrentText(SettingFindClosestTextByValue(regenTimeList, REGENTIME_OPTIONS, settingsIn.regenTime));
-    this->ui->reproductionComboBox->setCurrentText(SettingFindClosestTextByValue(settingsSexualList, SETTINGS_SEXUAL_OPTIONS, settingsIn.nSexual));
+    this->ui->mutationComboBox->setCurrentText(SettingFindClosestTextByInt(mutationList, MUTATION_OPTIONS, settingsIn.chance));
+    this->ui->regenCostcomboBox->setCurrentText(SettingFindClosestTextByInt(regenCostList, REGENCOST_OPTIONS, settingsIn.regenCost));
+    this->ui->regenRateComboBox->setCurrentText(SettingFindClosestTextByInt(regenTimeList, REGENTIME_OPTIONS, settingsIn.regenTime));
+    this->ui->reproductionComboBox->setCurrentText(SettingFindClosestTextByInt(settingsSexualList, SETTINGS_SEXUAL_OPTIONS, settingsIn.nSexual));
 
     this->ui->parentAttackCheckBox->setChecked(settingsIn.bParentAttack);
     this->ui->siblingAttackCheckBox->setChecked(settingsIn.bSiblingsAttack);

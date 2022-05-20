@@ -116,7 +116,8 @@ extern const ListEntry frictionList[];
 extern const int SETTINGS_SEXUAL_OPTIONS;
 extern const ListEntry settingsSexualList[];
 
-QString SettingFindClosestTextByValue(const ListEntry *list, int listSize, int value);
+QString SettingFindClosestTextByInt(const ListEntry *list, int listSize, int value);
+QString SettingFindClosestTextByFloat(const ListEntry *list, int listSize, float value);
 int SettingFindValueByText(const ListEntry *list, int listSize, const QString &text);
 
 #endif //SETTINGS_H
