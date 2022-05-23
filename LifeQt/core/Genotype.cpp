@@ -1,5 +1,6 @@
 #include "Environ.h"
 #include "Biots.h"
+#include <stdexcept>
 
 using namespace rapidjson;
 
@@ -8,6 +9,16 @@ using namespace rapidjson;
 //
 // Defines a segment of a line
 //
+
+GeneSegment::GeneSegment()
+{
+    m_color[0] = 0;
+    m_color[1] = 0;
+    m_visible = 0;
+    m_radius = 0;
+    m_angle = -1;
+    m_startSegment = 0;
+}
 
 void GeneSegment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
@@ -124,6 +135,13 @@ void GeneSegment::Mutate(int chance, int segment)
 //
 // Contains GeneSegments
 //
+
+GeneLimb::GeneLimb()
+{
+
+
+}
+
 void GeneLimb::Randomize(int nSegmentsPerArm)
 {
     for (int i = 0; i < MAX_SEGMENTS; i++)
@@ -343,9 +361,15 @@ void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
     m_lineCount = v["m_lineCount"].GetUint();
     m_offset = v["m_offset"].GetInt();
 
+    for (int i = 0; i < MAX_LIMBS; i++)
+        m_lineRef[i] = 0;
     const Value &lr = v["m_lineRef"];
     for(int i=0; i<lr.Size() and i<MAX_LIMBS; i++)
-        m_lineRef[i] = lr[i].GetUint();
+    {
+        uint8_t val = lr[i].GetUint(); //Can't be negative due to unsigned type
+        if(val >= MAX_LIMB_TYPES) throw std::range_error("Invalid limb type in m_lineRef");
+        m_lineRef[i] = val;
+    }
 
     m_mirrored = v["m_mirrored"].GetUint();
     m_sex = v["m_sex"].GetUint();
@@ -373,10 +397,6 @@ void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
 
     if (m_asexual > 1)
         m_asexual = 1;
-
-    for (int i = 0; i < MAX_LIMBS; i++)
-        if (m_lineRef[i] >= MAX_LIMB_TYPES)
-            m_lineRef[i] = 0;
 
     CalculateAngles();
 

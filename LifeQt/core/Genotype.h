@@ -79,7 +79,7 @@ class GeneSegment : Randomizer
     
     
   public:
-
+    GeneSegment();
     void Randomize(int segment, bool bIsVisible);
     void Debug(int segment, bool bIsVisible);
     void Mutate(int chance, int segment);
@@ -134,6 +134,7 @@ enum {
 class GeneLimb : Randomizer
 {
 public:
+    GeneLimb();
     void Randomize(int nSegmentsPerArm);
     void Debug(int nSegmentsPerArm);
     void Mutate(int chance);
