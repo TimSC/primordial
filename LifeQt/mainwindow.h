@@ -25,6 +25,7 @@ public:
     class Environment env;
 
     int64_t lastSimUpdate;
+    int64_t lastFuzz;
 
     class SidesManager sidesManager;
     class AutoConnect autoConnect;

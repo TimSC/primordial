@@ -28,6 +28,7 @@ MainApp::MainApp(): sidesManager(env),
     autoConnect(env, sidesManager)
 {
     lastSimUpdate = 0;
+    lastFuzz = 0;
 }
 
 MainApp::~MainApp()
@@ -47,6 +48,13 @@ void MainApp::TimedUpdate(bool running)
         {
             lastSimUpdate = now;
             this->env.Update();
+        }
+
+        uint64_t elapsed2 = now - lastFuzz;
+        if(elapsed2 > 1000)
+        {
+            lastFuzz = now;
+            this->env.Fuzz();
         }
     }
     else

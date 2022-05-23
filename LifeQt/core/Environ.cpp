@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sstream>
 #include <math.h>
 #include <algorithm>
 #include <iostream>
@@ -922,3 +923,43 @@ void Environment::AddListener(class EnvironmentListener *listener)
     listeners.push_back(listener);
 }
 
+void Environment::Fuzz()
+{
+    std::cout << "fuzz" << std::endl;
+    if(this->m_biotList.size() > 0)
+    {
+        //Pick random biot
+        Biot* biot = this->m_biotList[Integer(this->m_biotList.size())];
+
+        //Serialize to buffer
+        Document d;
+        d.SetObject();
+        Value bJson(kObjectType);
+        biot->SerializeJson(d, bJson);
+        d.AddMember("biot", bJson, d.GetAllocator());
+
+        std::stringstream ss;
+        OStreamWrapper osw(ss);
+        Writer<OStreamWrapper> writer(osw);
+        d.Accept(writer);
+        std::string buff = ss.str();
+
+        //Add noise
+        int corruptBytes = 1+Integer(3);
+        for(int i=0; i<corruptBytes; i++)
+        {
+            int byteIndex = Integer(buff.size());
+            buff[byteIndex] = (char)Integer(255);
+        }
+
+        //Load from buffer
+        //QSharedPointer<IStreamWrapper> isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(ss.str()));
+        //IStreamWrapper *pisw = isw.data();
+        StringStream ss2(buff.data());
+        ParseResult ok = d.ParseStream(ss2);
+        if (!ok)
+            std::cout << "Fuzzed json is corrupt" << std::endl;
+        if (ok and d.IsObject() and d.HasMember("biot"))
+            biot->SerializeJsonLoad(d["biot"]);
+    }
+}

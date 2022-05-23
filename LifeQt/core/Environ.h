@@ -17,6 +17,10 @@
 #include "Connect.h"
 #include "Genotype.h"
 #include "Settings.h"
+#include "core/json.h"
+#include <rapidjson/writer.h>
+#include <rapidjson/ostreamwrapper.h>
+#include <rapidjson/istreamwrapper.h>
 
 // Predefine Biot to the Environment
 class Biot;
@@ -205,6 +209,8 @@ public:
 
     void paintGL(QPainter &painter);
     void AddListener(class EnvironmentListener *listener);
+
+    void Fuzz();
 
 public:
 

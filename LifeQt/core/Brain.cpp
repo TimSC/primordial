@@ -61,8 +61,10 @@ void ProductTerm::SerializeJsonLoad(const rapidjson::Value& v)
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");
 
-    m_dwMask = v["m_dwMask"].GetUint();
-    m_dwInvert = v["m_dwInvert"].GetUint();
+    if (v.HasMember("m_dwMask"))
+        m_dwMask = v["m_dwMask"].GetUint();
+    if (v.HasMember("m_dwInvert"))
+        m_dwInvert = v["m_dwInvert"].GetUint();
 }
 
 //
@@ -299,11 +301,16 @@ void CommandArgument::SerializeJsonLoad(const rapidjson::Value& v)
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");
 
-    m_command = v["m_command"].GetInt();
-    m_limb = v["m_limb"].GetUint();
-    m_segment = v["m_segment"].GetUint();
-    m_rate = v["m_rate"].GetUint();
-    m_degrees = v["m_degrees"].GetUint();
+    if (v.HasMember("m_command"))
+        m_command = v["m_command"].GetInt();
+    if (v.HasMember("m_limb"))
+        m_limb = v["m_limb"].GetUint();
+    if (v.HasMember("m_segment"))
+        m_segment = v["m_segment"].GetUint();
+    if (v.HasMember("m_rate"))
+        m_rate = v["m_rate"].GetUint();
+    if (v.HasMember("m_degrees"))
+        m_degrees = v["m_degrees"].GetUint();
 }
 
 void CommandArgument::Randomize(void)
