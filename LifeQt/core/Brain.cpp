@@ -61,10 +61,8 @@ void ProductTerm::SerializeJsonLoad(const rapidjson::Value& v)
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");
 
-    if (v.HasMember("m_dwMask"))
-        m_dwMask = v["m_dwMask"].GetUint();
-    if (v.HasMember("m_dwInvert"))
-        m_dwInvert = v["m_dwInvert"].GetUint();
+    m_dwMask = v["m_dwMask"].GetUint();
+    m_dwInvert = v["m_dwInvert"].GetUint();
 }
 
 //
@@ -301,16 +299,14 @@ void CommandArgument::SerializeJsonLoad(const rapidjson::Value& v)
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");
 
-    if (v.HasMember("m_command"))
-        m_command = v["m_command"].GetInt();
-    if (v.HasMember("m_limb"))
-        m_limb = v["m_limb"].GetUint();
-    if (v.HasMember("m_segment"))
-        m_segment = v["m_segment"].GetUint();
-    if (v.HasMember("m_rate"))
-        m_rate = v["m_rate"].GetUint();
-    if (v.HasMember("m_degrees"))
-        m_degrees = v["m_degrees"].GetUint();
+    m_command = v["m_command"].GetInt();
+    if(m_command < 0 or m_command >= COMMAND_MAX_TYPES) throw std::range_error("biot m_command out of range");
+    m_limb = v["m_limb"].GetUint();
+    if(m_limb >= MAX_LIMBS) throw std::range_error("biot m_limb out of range");
+    m_segment = v["m_segment"].GetUint();
+    if(m_segment >= MAX_SEGMENTS) throw std::range_error("biot m_segment out of range");
+    m_rate = v["m_rate"].GetUint();
+    m_degrees = v["m_degrees"].GetUint();
 }
 
 void CommandArgument::Randomize(void)
@@ -348,13 +344,47 @@ void CommandArgument::Mutate(int chance)
 
 int CommandArgument::GetLimb(int actualLimb)
 { 
+    int out = 0;
     if (m_limb == MAX_LIMBS)
-        return (int) m_limb;
+        out = (int) m_limb;
+    else
+    {
+        if ((int) m_limb + actualLimb >= MAX_LIMBS)
+            out = (int) m_limb + actualLimb - MAX_LIMBS;
+        else
+            out = (int) m_limb + actualLimb;
+    }
+    assert (out < MAX_LIMBS && out >= 0);
+    return out;
+}
 
-    if ((int) m_limb + actualLimb >= MAX_LIMBS)
-        return (int) m_limb + actualLimb - MAX_LIMBS;
-     else
-        return (int) m_limb + actualLimb;
+short CommandArgument::GetSegment()
+{
+    assert (m_segment < MAX_SEGMENTS && m_segment >= 0);
+    return m_segment;
+}
+
+int CommandArgument::GetCommand()
+{
+    assert (m_command < COMMAND_MAX_TYPES && m_command >= 0);
+    return m_command;
+}
+
+int CommandArgument::GetLimbType()
+{
+    int out = m_limb & 0x03; // four limb types
+    assert (out < MAX_LIMB_TYPES && out >= 0);
+    return out;
+}
+
+uint8_t CommandArgument::GetRate()
+{
+    return (short) (m_rate & 0x03);
+}
+
+uint8_t CommandArgument::GetDegrees()
+{
+    return m_degrees;
 }
 
 //

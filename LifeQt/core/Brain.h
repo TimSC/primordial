@@ -216,11 +216,11 @@ public:
     uint8_t  m_degrees;
 
     int GetLimb(int actualLimb);
-    short GetSegment()  { return m_segment; }
-    int GetCommand()  { return m_command; }
-    int GetLimbType() { return m_limb & 0x03; } // four limb types
-    short GetRate()     { return (short) (m_rate & 0x03); }
-    short GetDegrees()  { return m_degrees; }
+    short GetSegment();
+    int GetCommand();
+    int GetLimbType(); // four limb types
+    uint8_t GetRate();
+    uint8_t GetDegrees();
 
 
     // Memory Perspective

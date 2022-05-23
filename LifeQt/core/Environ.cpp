@@ -945,7 +945,7 @@ void Environment::Fuzz()
         std::string buff = ss.str();
 
         //Add noise
-        int corruptBytes = 1+Integer(3);
+        int corruptBytes = 1;//+Integer(3);
         for(int i=0; i<corruptBytes; i++)
         {
             int byteIndex = Integer(buff.size());
@@ -960,6 +960,16 @@ void Environment::Fuzz()
         if (!ok)
             std::cout << "Fuzzed json is corrupt" << std::endl;
         if (ok and d.IsObject() and d.HasMember("biot"))
-            biot->SerializeJsonLoad(d["biot"]);
+        {
+            try {
+                biot->SerializeJsonLoad(d["biot"]);
+            }
+            catch (std::runtime_error &err) {
+                std::cout << "Fuzzed json failed to load" << std::endl;
+            }
+            catch (std::range_error &err) {
+                std::cout << "Fuzzed json out of range" << std::endl;
+            }
+        }
     }
 }

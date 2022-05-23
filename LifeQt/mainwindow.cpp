@@ -50,12 +50,12 @@ void MainApp::TimedUpdate(bool running)
             this->env.Update();
         }
 
-        uint64_t elapsed2 = now - lastFuzz;
-        if(elapsed2 > 1000)
+        /*uint64_t elapsed2 = now - lastFuzz;
+        if(elapsed2 > 20)
         {
             lastFuzz = now;
             this->env.Fuzz();
-        }
+        }*/
     }
     else
         lastSimUpdate = now;
