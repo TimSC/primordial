@@ -1715,7 +1715,7 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
 
     const Value &storeArray = v["m_store"];
     for(int i=0; i<storeArray.Size() and i < MAX_LIMBS; i++)
-        m_store[i].SerializeJsonLoad(storeArray[i]);
+        m_store[i].SerializeJsonLoad(*this, storeArray[i]);
 
     posAndSpeed.SerializeJsonLoad(v["vector"]);
 
@@ -2025,7 +2025,7 @@ void Biot::IncreaseAngle(int nPeno, short rate)
 //
 // Retracts the tip segment on a particular limb.  
 //
-uint8_t Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
+short Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
 {
    if (m_retractDrawn[nLimb] == m_retractRadius[nLimb] &&
        m_retractDrawn[nLimb] < maxRadius)
@@ -2043,7 +2043,7 @@ uint8_t Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
 //
 // Extends the tip segment on a particular limb.  
 //
-uint8_t Biot::ExtendLine(int nSegment, int nLimb)
+short Biot::ExtendLine(int nSegment, int nLimb)
 {
    if (m_retractDrawn[nLimb] == m_retractRadius[nLimb] &&
        m_retractDrawn[nLimb] > 0)
@@ -2067,7 +2067,7 @@ uint8_t Biot::ExtendLine(int nSegment, int nLimb)
 //
 // Returns 1 or 0 for the distance retracted.
 //
-uint8_t Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
+short Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
 {
     bool bOneLine = false;
     for (int i = 0; i < trait.GetLines(); i++)
@@ -2104,7 +2104,7 @@ uint8_t Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
 //
 // Returns 1 or 0 for the distance extended.
 //
-uint8_t Biot::ExtendLimbType(int nSegment, int nLimbType)
+short Biot::ExtendLimbType(int nSegment, int nLimbType)
 {
     bool bOneLine = false;
     for (int i = 0; i < trait.GetLines(); i++)
@@ -2141,27 +2141,26 @@ uint8_t Biot::ExtendLimbType(int nSegment, int nLimbType)
 //
 short Biot::MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate)
 {
-    static const short maxRate = 3;
     assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
     assert(nSegment < MAX_SEGMENTS && nSegment >= 0);
-    assert(nRate <= maxRate && nRate >= -maxRate);
 
     short delta = m_angleLimbTypeSegment[nLimbType][nSegment] - m_angleLimbTypeSegmentDrawn[nLimbType][nSegment];
 
     if (nRate < 0)
     {
-        if (delta <= -maxRate)
+        if (delta <= -MAX_RATE)
             return 0;
 
-        nRate = std::max(nRate, -maxRate - delta);
+        nRate = std::max(nRate, -MAX_RATE - delta);
     }
     else
     {
-        if (delta >= maxRate)
+        if (delta >= MAX_RATE)
             return 0;
 
-        nRate = std::min(nRate, maxRate - delta);
+        nRate = std::min(nRate, MAX_RATE - delta);
     }
+    assert(nRate <= MAX_RATE && nRate >= -MAX_RATE);
 
     m_angleLimbTypeSegment[nLimbType][nSegment] += nRate;     
     return nRate;
@@ -2175,26 +2174,25 @@ short Biot::MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate)
 //
 short Biot::MoveLimbTypeSegments(int nLimbType, int nRate)
 {
-    static const short maxRate = 3;
     assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
-    assert(nRate <= maxRate && nRate >= -maxRate);
 
     short delta = m_angleLimbType[nLimbType] - m_angleLimbTypeDrawn[nLimbType];
 
     if (nRate < 0)
     {
-        if (delta <= -maxRate)
+        if (delta <= -MAX_RATE)
             return 0;
 
-        nRate = std::max(nRate, -maxRate - delta);
+        nRate = std::max(nRate, -MAX_RATE - delta);
     }
     else
     {
-        if (delta >= maxRate)
+        if (delta >= MAX_RATE)
             return 0;
 
-        nRate = std::min(nRate, maxRate - delta);
+        nRate = std::min(nRate, MAX_RATE - delta);
     }
+    assert(nRate <= MAX_RATE && nRate >= -MAX_RATE);
 
     m_angleLimbType[nLimbType] += nRate;     
     return nRate;
@@ -2208,26 +2206,25 @@ short Biot::MoveLimbTypeSegments(int nLimbType, int nRate)
 //
 short Biot::MoveLimbSegments(int nLimb, int nRate)
 {
-    static const short maxRate = 3;
     assert(nLimb < MAX_LIMBS && nLimb >= 0);
-    assert(nRate <= maxRate && nRate >= -maxRate);
 
     short delta = m_angleLimb[nLimb] - m_angleLimbDrawn[nLimb];
 
     if (nRate < 0)
     {
-        if (delta <= -maxRate)
+        if (delta <= -MAX_RATE)
             return 0;
 
-        nRate = std::max(nRate, -maxRate - delta);
+        nRate = std::max(nRate, -MAX_RATE - delta);
     }
     else
     {
-        if (delta >= maxRate)
+        if (delta >= MAX_RATE)
             return 0;
 
-        nRate = std::min(nRate, maxRate - delta);
+        nRate = std::min(nRate, MAX_RATE - delta);
     }
+    assert(nRate <= MAX_RATE && nRate >= -MAX_RATE);
 
     m_angleLimb[nLimb] += nRate;     
     return nRate;
@@ -2241,28 +2238,27 @@ short Biot::MoveLimbSegments(int nLimb, int nRate)
 //
 short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 {
-    static const short maxRate = 3;
     assert(nLimb < MAX_LIMBS && nLimb >= 0);
     assert(nSegment < MAX_SEGMENTS && nSegment >= 0);
-    assert(nRate <= maxRate && nRate >= -maxRate);
 
     int nPeno = nLimb + nSegment * MAX_LIMBS;
     short delta = m_angle[nPeno] - m_angleDrawn[nPeno];
 
     if (nRate < 0)
     {
-        if (delta <= -maxRate)
+        if (delta <= -MAX_RATE)
             return 0;
 
-        nRate = std::max(nRate, -maxRate - delta);
+        nRate = std::max(nRate, -MAX_RATE - delta);
     }
     else
     {
-        if (delta >= maxRate)
+        if (delta >= MAX_RATE)
             return 0;
 
-        nRate = std::min(nRate, maxRate - delta);
+        nRate = std::min(nRate, MAX_RATE - delta);
     }
+    assert(nRate <= MAX_RATE && nRate >= -MAX_RATE);
 
     m_angleLimb[nPeno] += nRate;     
     return nRate;

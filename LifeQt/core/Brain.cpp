@@ -8,6 +8,7 @@
 #include "Environ.h"
 #include "Biots.h"
 #include <iostream>
+#include <cassert>
 
 using namespace rapidjson;
 
@@ -276,9 +277,9 @@ bool ProductSum::IsTrue(ProductArray& productArray, uint32_t dwSensor)
 
 CommandArgument::CommandArgument()
 {
-    m_command = -1;
-    m_limb = -1;
-    m_segment = -1;
+    m_command = 0;
+    m_limb = 0;
+    m_segment = 0;
     m_rate = 0;
     m_degrees = 0;
 }
@@ -300,11 +301,23 @@ void CommandArgument::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
 
     m_command = v["m_command"].GetInt();
-    if(m_command < 0 or m_command >= COMMAND_MAX_TYPES) throw std::range_error("biot m_command out of range");
+    if(m_command < 0 or m_command >= COMMAND_MAX_TYPES)
+    {
+        m_command = 0;
+        throw std::range_error("biot m_command out of range");
+    }
     m_limb = v["m_limb"].GetUint();
-    if(m_limb >= MAX_LIMBS) throw std::range_error("biot m_limb out of range");
+    if(m_limb >= MAX_LIMBS)
+    {
+        m_limb = 0;
+        throw std::range_error("biot m_limb out of range");
+    }
     m_segment = v["m_segment"].GetUint();
-    if(m_segment >= MAX_SEGMENTS) throw std::range_error("biot m_segment out of range");
+    if(m_segment >= MAX_SEGMENTS)
+    {
+        m_segment = 0;
+        throw std::range_error("biot m_segment out of range");
+    }
     m_rate = v["m_rate"].GetUint();
     m_degrees = v["m_degrees"].GetUint();
 }
@@ -377,12 +390,14 @@ int CommandArgument::GetLimbType()
     return out;
 }
 
-uint8_t CommandArgument::GetRate()
+short CommandArgument::GetRate()
 {
-    return (short) (m_rate & 0x03);
+    short out = (m_rate & 0x03);
+    assert(out <= MAX_RATE && out >= -MAX_RATE);
+    return (short) out;
 }
 
-uint8_t CommandArgument::GetDegrees()
+short CommandArgument::GetDegrees()
 {
     return m_degrees;
 }
@@ -669,6 +684,62 @@ void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
     }
 }
 
+void CommandLimbStore::Validate(Biot& biot)
+{
+    m_pBiot     = &biot;
+
+    for (m_index = 0; m_index < CommandLimbType::MAX_COMMANDS_PER_LIMB; m_index++)
+    {
+        m_pArg = &biot.m_commandArray.GetCommandArgument(m_nLimbType, m_index);
+        switch (m_pArg->GetCommand())
+        {
+            case CommandArgument::COMMAND_FLAP_LIMB_SEGMENT:
+                command[m_index].flapLimbSegment.Validate(*this);
+                break;
+
+            case CommandArgument::COMMAND_FLAP_LIMB_TYPE_SEGMENT:
+                command[m_index].flapLimbTypeSegment.Validate(*this);
+                break;
+
+            case CommandArgument::COMMAND_MOVE_LIMB_SEGMENT:
+                command[m_index].moveLimbSegment.Validate(*this);
+                break;
+
+            case CommandArgument::COMMAND_MOVE_LIMB_SEGMENTS:
+                command[m_index].moveLimbSegments.Validate(*this);
+                break;
+
+            case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENT:
+                command[m_index].moveLimbTypeSegment.Validate(*this);
+                break;
+
+            case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENTS:
+                command[m_index].moveLimbTypeSegments.Validate(*this);
+                break;
+
+            case CommandArgument::COMMAND_RETRACT_LIMB_TYPE:
+                command[m_index].retractLimbType.Validate(*this);
+                break;
+
+            case CommandArgument::COMMAND_RETRACT_LIMB:
+                command[m_index].retractLimb.Validate(*this);
+                break;
+
+            case CommandArgument::COMMAND_NOP:
+//                command[m_index].nop.Validate(*this);
+                break;
+
+            case CommandArgument::COMMAND_MEMORY:
+                command[m_index].memory.Validate(*this);
+                break;
+
+            default:
+                assert(0);
+                break;
+        }
+    }
+}
+
 void CommandLimbStore::Execute(Biot& biot, uint32_t dwSensor)
 {
     m_pBiot     = &biot;
@@ -748,10 +819,9 @@ void CommandLimbStore::SerializeJson(rapidjson::Document &d, rapidjson::Value &v
         commandJson.PushBack(v2, allocator);
     }
     v.AddMember("command", commandJson, allocator);
-
 }
 
-void CommandLimbStore::SerializeJsonLoad(const rapidjson::Value& v)
+void CommandLimbStore::SerializeJsonLoad(Biot& biot, const rapidjson::Value& v)
 {
     m_nLimbType = v["m_nLimbType"].GetInt();
     m_nLimb = v["m_nLimb"].GetInt();
@@ -761,11 +831,14 @@ void CommandLimbStore::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
     for(int i=0; i<commandJson.Size() and i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
     {
+        //Store binary data as base64 encoded string
         if(!commandJson[i].IsString()) continue;
         QByteArray buffStr(commandJson[i].GetString(), commandJson[i].GetStringLength());
         QByteArray buff = QByteArray::fromBase64(buffStr);
         memcpy(&command[i], buff.toStdString().c_str(), std::min((int)buff.length(), (int)sizeof(CommandType)));
     }
+
+    this->Validate(biot);
 }
 
 // /////////////////////////////////////////////////////////////
@@ -809,6 +882,36 @@ void CommandFlapLimbTypeSegment::Initialize(CommandLimbStore& store)
     m_nRate = store.m_pArg->GetRate();
 
     m_bGoingUp = true;
+}
+
+void CommandFlapLimbTypeSegment::Validate(CommandLimbStore& store)
+{
+    if(m_nLimbType > MAX_LIMB_TYPES || m_nLimbType < 0)
+    {
+        m_nLimbType = 0;
+        throw std::range_error("m_nLimb out of range");
+    }
+    if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
+    {
+        m_nRate = 0;
+        throw std::range_error("m_nRate out of range");
+    }
+    if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
+    {
+        m_nSegment = 0;
+        throw std::range_error("nSegment out of range");
+    }
+    if(m_nMaxDegrees > 90 || m_nMaxDegrees < 0)
+    {
+        m_nMaxDegrees = 0;
+        throw std::range_error("m_nMaxDegrees out of range");
+    }
+    if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < 0)
+    {
+        m_nAppliedDegrees = 0;
+        throw std::range_error("m_nAppliedDegrees out of range");
+    }
+    m_bGoingUp = (bool)m_bGoingUp;
 }
 
 void CommandFlapLimbTypeSegment::Execute(CommandLimbStore& store)
@@ -955,6 +1058,45 @@ void CommandFlapLimbSegment::Initialize(CommandLimbStore& store)
     m_bGoingUp = true;
 }
 
+void CommandFlapLimbSegment::Validate(CommandLimbStore& store)
+{
+    if(m_nLimb > MAX_LIMBS || m_nLimb < 0)
+    {
+        m_nLimb = 0;
+        throw std::range_error("m_nLimb out of range");
+    }
+    if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
+    {
+        m_nRate = 0;
+        throw std::range_error("m_nRate out of range");
+    }
+    if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
+    {
+        m_nSegment = 0;
+        throw std::range_error("nSegment out of range");
+    }
+    if(m_nMaxDegrees > 90 || m_nMaxDegrees < 0)
+    {
+        m_nMaxDegrees = 0;
+        throw std::range_error("m_nMaxDegrees out of range");
+    }
+    if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < 0)
+    {
+        m_nAppliedDegrees = 0;
+        throw std::range_error("m_nAppliedDegrees out of range");
+    }
+    m_bGoingUp = (bool)m_bGoingUp;
+
+    // Is this line type even visible?
+    if (m_nLimb >= store.m_pBiot->trait.GetLines() ||
+        !store.m_pBiot->trait.GetLineType(store.m_pBiot->trait.GetLineTypeIndex(m_nLimb)).GetSegment(m_nSegment).IsVisible())
+    {
+        // Record we should ignore this command
+        m_nLimb = MAX_LIMBS;
+    }
+
+}
+
 void CommandFlapLimbSegment::Execute(CommandLimbStore& store)
 {
     if (m_nLimb == MAX_LIMBS)
@@ -1088,6 +1230,44 @@ void CommandMoveLimbSegment::Initialize(CommandLimbStore& store)
     m_nRate = store.m_pArg->GetRate();
 }
 
+void CommandMoveLimbSegment::Validate(CommandLimbStore& store)
+{
+    if(m_nLimb > MAX_LIMBS || m_nLimb < 0)
+    {
+        m_nLimb = 0;
+        throw std::range_error("m_nLimb out of range");
+    }
+    if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
+    {
+        m_nRate = 0;
+        throw std::range_error("m_nRate out of range");
+    }
+    if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
+    {
+        m_nSegment = 0;
+        throw std::range_error("nSegment out of range");
+    }
+    if(m_nMaxDegrees > 16 || m_nMaxDegrees < 0)
+    {
+        m_nMaxDegrees = 0;
+        throw std::range_error("m_nMaxDegrees out of range");
+    }
+    if(m_nAppliedDegrees > 16 || m_nAppliedDegrees < 0)
+    {
+        m_nAppliedDegrees = 0;
+        throw std::range_error("m_nAppliedDegrees out of range");
+    }
+
+    // Is this line type even visible?
+    if (m_nLimb >= store.m_pBiot->trait.GetLines() ||
+        !store.m_pBiot->trait.GetLineType(store.m_pBiot->trait.GetLineTypeIndex(m_nLimb)).GetSegment(m_nSegment).IsVisible())
+    {
+        // Record we should ignore this command
+        m_nLimb = MAX_LIMBS;
+    }
+
+}
+
 void CommandMoveLimbSegment::Execute(CommandLimbStore& store)
 {
     if (m_nLimb == MAX_LIMBS)
@@ -1147,6 +1327,43 @@ void CommandMoveLimbTypeSegment::Initialize(CommandLimbStore& store)
     m_nRate = store.m_pArg->GetRate();
 }
 
+void CommandMoveLimbTypeSegment::Validate(CommandLimbStore& store)
+{
+    if(m_nLimbType > MAX_LIMB_TYPES || m_nLimbType < 0)
+    {
+        m_nLimbType = 0;
+        throw std::range_error("m_nLimb out of range");
+    }
+    if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
+    {
+        m_nRate = 0;
+        throw std::range_error("m_nRate out of range");
+    }
+    if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
+    {
+        m_nSegment = 0;
+        throw std::range_error("nSegment out of range");
+    }
+    if(m_nMaxDegrees > 90 || m_nMaxDegrees < 0)
+    {
+        m_nMaxDegrees = 0;
+        throw std::range_error("m_nMaxDegrees out of range");
+    }
+    if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < 0)
+    {
+        m_nAppliedDegrees = 0;
+        throw std::range_error("m_nAppliedDegrees out of range");
+    }
+
+    // Is this line type even visible?
+    if (!store.m_pBiot->trait.IsLineTypeVisible(m_nLimbType) ||
+        !store.m_pBiot->trait.GetLineType(m_nLimbType).GetSegment(m_nSegment).IsVisible())
+    {
+        // Record we should ignore this command
+        m_nLimbType = MAX_LIMB_TYPES;
+        return;
+    }
+}
 
 void CommandMoveLimbTypeSegment::Execute(CommandLimbStore& store)
 {
@@ -1204,11 +1421,45 @@ void CommandMoveLimbSegments::Initialize(CommandLimbStore& store)
 
 }
 
+void CommandMoveLimbSegments::Validate(CommandLimbStore& store)
+{
+
+    if(m_nLimb > MAX_LIMBS || m_nLimb < 0)
+    {
+        m_nLimb = 0;
+        throw std::range_error("m_nLimb out of range");
+    }
+    if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
+    {
+        m_nRate = 0;
+        throw std::range_error("m_nRate out of range");
+    }
+    if(m_nMaxDegrees > 16 || m_nMaxDegrees < 0)
+    {
+        m_nMaxDegrees = 0;
+        throw std::range_error("m_nMaxDegrees out of range");
+    }
+    if(m_nAppliedDegrees > 16 || m_nAppliedDegrees < 0)
+    {
+        m_nAppliedDegrees = 0;
+        throw std::range_error("m_nAppliedDegrees out of range");
+    }
+
+    // Is this line type even visible?
+    if (m_nLimb >= store.m_pBiot->trait.GetLines())
+    {
+        // Record we should ignore this command
+        m_nLimb = MAX_LIMBS;
+        return;
+    }
+}
+
 void CommandMoveLimbSegments::Execute(CommandLimbStore& store)
 {
     if (m_nLimb == MAX_LIMBS)
         return;
-    assert (m_nLimb < MAX_LIMBS && m_nLimb >= 0);
+    assert(m_nLimb < MAX_LIMBS && m_nLimb >= 0);
+    assert(m_nRate <= MAX_RATE && m_nRate >= -MAX_RATE);
 
     if (store.IsSensorTrue())
     {
@@ -1260,6 +1511,38 @@ void CommandMoveLimbTypeSegments::Initialize(CommandLimbStore& store)
     // What rate?
     m_nRate = store.m_pArg->GetRate();
 
+}
+
+void CommandMoveLimbTypeSegments::Validate(CommandLimbStore& store)
+{
+    if(m_nLimbType > MAX_LIMB_TYPES || m_nLimbType < 0)
+    {
+        m_nLimbType = 0;
+        throw std::range_error("m_nLimb out of range");
+    }
+    if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
+    {
+        m_nRate = 0;
+        throw std::range_error("m_nRate out of range");
+    }
+    if(m_nMaxDegrees > 16 || m_nMaxDegrees < 0)
+    {
+        m_nMaxDegrees = 0;
+        throw std::range_error("m_nMaxDegrees out of range");
+    }
+    if(m_nAppliedDegrees > 16 || m_nAppliedDegrees < 0)
+    {
+        m_nAppliedDegrees = 0;
+        throw std::range_error("m_nAppliedDegrees out of range");
+    }
+
+    // Is this line type even visible?
+    if (!store.m_pBiot->trait.IsLineTypeVisible(m_nLimbType))
+    {
+        // Record we should ignore this command
+        m_nLimbType = MAX_LIMB_TYPES;
+        return;
+    }
 }
 
 void CommandMoveLimbTypeSegments::Execute(CommandLimbStore& store)
@@ -1341,6 +1624,31 @@ void CommandRetractLimb::Initialize(CommandLimbStore& store)
     }
 }
 
+void CommandRetractLimb::Validate(CommandLimbStore& store)
+{
+
+    if(m_nLimb > MAX_LIMBS || m_nLimb < 0)
+    {
+        m_nLimb = 0;
+        throw std::range_error("m_nLimb out of range");
+    }
+    if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
+    {
+        m_nSegment = 0;
+        throw std::range_error("nSegment out of range");
+    }
+    if(m_nMaxRadius > 16 || m_nMaxRadius < 0)
+    {
+        m_nMaxRadius = 0;
+        throw std::range_error("m_nMaxRadius out of range");
+    }
+    if(m_nAppliedRadius > 16 || m_nAppliedRadius < 0)
+    {
+        m_nAppliedRadius = 0;
+        throw std::range_error("m_nAppliedRadius out of range");
+    }
+}
+
 void CommandRetractLimb::Execute(CommandLimbStore& store)
 {
     if (m_nSegment == MAX_SEGMENTS)
@@ -1417,6 +1725,30 @@ void CommandRetractLimbType::Initialize(CommandLimbStore& store)
     }
 }
 
+void CommandRetractLimbType::Validate(CommandLimbStore& store)
+{
+    if(m_nLimbType > MAX_LIMB_TYPES || m_nLimbType < 0)
+    {
+        m_nLimbType = 0;
+        throw std::range_error("m_nLimb out of range");
+    }
+    if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
+    {
+        m_nSegment = 0;
+        throw std::range_error("nSegment out of range");
+    }
+    if(m_nMaxRadius > 16 || m_nMaxRadius < 0)
+    {
+        m_nMaxRadius = 0;
+        throw std::range_error("m_nMaxRadius out of range");
+    }
+    if(m_nAppliedRadius > 16 || m_nAppliedRadius < 0)
+    {
+        m_nAppliedRadius = 0;
+        throw std::range_error("m_nAppliedRadius out of range");
+    }
+
+}
 
 void CommandRetractLimbType::Execute(CommandLimbStore& store)
 {
@@ -1453,6 +1785,11 @@ void CommandNOP::Initialize(CommandLimbStore& /*store*/)
  // Nothing to do!
 }
 
+void CommandNOP::Validate(CommandLimbStore& store)
+{
+
+}
+
 void CommandNOP::Execute(CommandLimbStore& /*store*/)
 {
      BTRACE0("CommandNOP::Execute\n");
@@ -1481,6 +1818,21 @@ void CommandMemory::Initialize(CommandLimbStore& store)
 
     m_time   = arg.SetDuration();
 
+}
+
+void CommandMemory::Validate(CommandLimbStore& store)
+{
+    if(m_time > 64 || m_time < 0)
+    {
+        m_time = 0;
+        throw std::range_error("m_time out of range");
+    }
+    if(m_type > WAIT_AND_CLEAR || m_type < 0)
+    {
+        m_type = 0;
+        throw std::range_error("m_type out of range");
+    }
+    m_bSet = (bool)m_bSet;
 }
 
 void CommandMemory::Execute(CommandLimbStore& store)

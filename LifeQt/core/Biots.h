@@ -200,10 +200,10 @@ class Biot: public BRectItem
     short   m_retractSegment[MAX_LIMBS];
 
     // Retract or extend the tip of a limb
-    uint8_t    RetractLine(int nSegment, int nLimb, int maxRadius);
-    uint8_t    ExtendLine(int nSegment, int nLimb);
-    uint8_t    RetractLimbType(int nSegment, int nLimbType, int maxRadius);
-    uint8_t    ExtendLimbType(int nSegment, int nLimbType);
+    short    RetractLine(int nSegment, int nLimb, int maxRadius);
+    short    ExtendLine(int nSegment, int nLimb);
+    short    RetractLimbType(int nSegment, int nLimbType, int maxRadius);
+    short    ExtendLimbType(int nSegment, int nLimbType);
 
     CommandLimbStore m_store[MAX_LIMBS];
 
