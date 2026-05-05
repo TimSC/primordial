@@ -15,6 +15,11 @@ using namespace rapidjson;
 
 const rapidjson::SizeType MAX_BIOT_STRING_LENGTH = 256;
 
+static void LogInvalidIndex(const char *functionName, const char *indexName, int value)
+{
+    std::cerr << functionName << ": invalid " << indexName << " index " << value << std::endl;
+}
+
 static std::string LoadBiotString(const rapidjson::Value& v, const char *name)
 {
     const rapidjson::Value& value = v[name];
@@ -1860,7 +1865,11 @@ void Biot::MoveSegment(int nPeno, short degree)
 //
 bool Biot::MoveLineType(int nLineType, short rate, short offset)
 {
-    assert(nLineType < MAX_LIMB_TYPES && nLineType >= 0);
+    if(nLineType >= MAX_LIMB_TYPES || nLineType < 0)
+    {
+        LogInvalidIndex("Biot::MoveLineType", "line type", nLineType);
+        return true;
+    }
 
     short& nAngle = m_angleLimbType[nLineType];
     if (offset != nAngle)
@@ -1899,7 +1908,11 @@ bool Biot::MoveLineType(int nLineType, short rate, short offset)
 //
 bool Biot::MoveLine(int nLine, short rate, short offset)
 {
-    assert(nLine < MAX_LIMBS && nLine >= 0);
+    if(nLine >= MAX_LIMBS || nLine < 0)
+    {
+        LogInvalidIndex("Biot::MoveLine", "line", nLine);
+        return true;
+    }
 
     short& nAngle = m_angleLimb[nLine];
     if (offset != nAngle)
@@ -1938,8 +1951,15 @@ bool Biot::MoveLine(int nLine, short rate, short offset)
 //
 bool Biot::MoveSegmentType(int nLineType, int nSegment, short rate, short offset)
 {
-    assert(nLineType < MAX_LIMB_TYPES && nLineType >= 0);
-    assert(nSegment < MAX_SEGMENTS && nSegment >= 0);
+    if(nLineType >= MAX_LIMB_TYPES || nLineType < 0 ||
+       nSegment >= MAX_SEGMENTS || nSegment < 0)
+    {
+        if(nLineType >= MAX_LIMB_TYPES || nLineType < 0)
+            LogInvalidIndex("Biot::MoveSegmentType", "line type", nLineType);
+        if(nSegment >= MAX_SEGMENTS || nSegment < 0)
+            LogInvalidIndex("Biot::MoveSegmentType", "segment", nSegment);
+        return true;
+    }
 
     short& nAngle = m_angleLimbTypeSegment[nLineType][nSegment];
     if (offset != nAngle)
@@ -2043,6 +2063,16 @@ void Biot::IncreaseAngle(int nPeno, short rate)
 //
 short Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
 {
+   if(nLimb >= MAX_LIMBS || nLimb < 0 ||
+      nSegment >= MAX_SEGMENTS || nSegment < 0)
+   {
+       if(nLimb >= MAX_LIMBS || nLimb < 0)
+           LogInvalidIndex("Biot::RetractLine", "limb", nLimb);
+       if(nSegment >= MAX_SEGMENTS || nSegment < 0)
+           LogInvalidIndex("Biot::RetractLine", "segment", nSegment);
+       return (uint8_t) 0;
+   }
+
    if (m_retractDrawn[nLimb] == m_retractRadius[nLimb] &&
        m_retractDrawn[nLimb] < maxRadius)
    {
@@ -2061,6 +2091,16 @@ short Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
 //
 short Biot::ExtendLine(int nSegment, int nLimb)
 {
+   if(nLimb >= MAX_LIMBS || nLimb < 0 ||
+      nSegment >= MAX_SEGMENTS || nSegment < 0)
+   {
+       if(nLimb >= MAX_LIMBS || nLimb < 0)
+           LogInvalidIndex("Biot::ExtendLine", "limb", nLimb);
+       if(nSegment >= MAX_SEGMENTS || nSegment < 0)
+           LogInvalidIndex("Biot::ExtendLine", "segment", nSegment);
+       return (uint8_t) 0;
+   }
+
    if (m_retractDrawn[nLimb] == m_retractRadius[nLimb] &&
        m_retractDrawn[nLimb] > 0)
    {
@@ -2085,6 +2125,16 @@ short Biot::ExtendLine(int nSegment, int nLimb)
 //
 short Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
 {
+    if(nLimbType >= MAX_LIMB_TYPES || nLimbType < 0 ||
+       nSegment >= MAX_SEGMENTS || nSegment < 0)
+    {
+        if(nLimbType >= MAX_LIMB_TYPES || nLimbType < 0)
+            LogInvalidIndex("Biot::RetractLimbType", "limb type", nLimbType);
+        if(nSegment >= MAX_SEGMENTS || nSegment < 0)
+            LogInvalidIndex("Biot::RetractLimbType", "segment", nSegment);
+        return (uint8_t) 0;
+    }
+
     bool bOneLine = false;
     for (int i = 0; i < trait.GetLines(); i++)
     {
@@ -2122,6 +2172,16 @@ short Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
 //
 short Biot::ExtendLimbType(int nSegment, int nLimbType)
 {
+    if(nLimbType >= MAX_LIMB_TYPES || nLimbType < 0 ||
+       nSegment >= MAX_SEGMENTS || nSegment < 0)
+    {
+        if(nLimbType >= MAX_LIMB_TYPES || nLimbType < 0)
+            LogInvalidIndex("Biot::ExtendLimbType", "limb type", nLimbType);
+        if(nSegment >= MAX_SEGMENTS || nSegment < 0)
+            LogInvalidIndex("Biot::ExtendLimbType", "segment", nSegment);
+        return (uint8_t) 0;
+    }
+
     bool bOneLine = false;
     for (int i = 0; i < trait.GetLines(); i++)
     {
@@ -2157,8 +2217,15 @@ short Biot::ExtendLimbType(int nSegment, int nLimbType)
 //
 short Biot::MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate)
 {
-    assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
-    assert(nSegment < MAX_SEGMENTS && nSegment >= 0);
+    if(nLimbType >= MAX_LIMB_TYPES || nLimbType < 0 ||
+       nSegment >= MAX_SEGMENTS || nSegment < 0)
+    {
+        if(nLimbType >= MAX_LIMB_TYPES || nLimbType < 0)
+            LogInvalidIndex("Biot::MoveLimbTypeSegment", "limb type", nLimbType);
+        if(nSegment >= MAX_SEGMENTS || nSegment < 0)
+            LogInvalidIndex("Biot::MoveLimbTypeSegment", "segment", nSegment);
+        return 0;
+    }
 
     short delta = m_angleLimbTypeSegment[nLimbType][nSegment] - m_angleLimbTypeSegmentDrawn[nLimbType][nSegment];
 
@@ -2190,7 +2257,11 @@ short Biot::MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate)
 //
 short Biot::MoveLimbTypeSegments(int nLimbType, int nRate)
 {
-    assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
+    if(nLimbType >= MAX_LIMB_TYPES || nLimbType < 0)
+    {
+        LogInvalidIndex("Biot::MoveLimbTypeSegments", "limb type", nLimbType);
+        return 0;
+    }
 
     short delta = m_angleLimbType[nLimbType] - m_angleLimbTypeDrawn[nLimbType];
 
@@ -2222,7 +2293,11 @@ short Biot::MoveLimbTypeSegments(int nLimbType, int nRate)
 //
 short Biot::MoveLimbSegments(int nLimb, int nRate)
 {
-    assert(nLimb < MAX_LIMBS && nLimb >= 0);
+    if(nLimb >= MAX_LIMBS || nLimb < 0)
+    {
+        LogInvalidIndex("Biot::MoveLimbSegments", "limb", nLimb);
+        return 0;
+    }
 
     short delta = m_angleLimb[nLimb] - m_angleLimbDrawn[nLimb];
 
@@ -2254,8 +2329,15 @@ short Biot::MoveLimbSegments(int nLimb, int nRate)
 //
 short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 {
-    assert(nLimb < MAX_LIMBS && nLimb >= 0);
-    assert(nSegment < MAX_SEGMENTS && nSegment >= 0);
+    if(nLimb >= MAX_LIMBS || nLimb < 0 ||
+       nSegment >= MAX_SEGMENTS || nSegment < 0)
+    {
+        if(nLimb >= MAX_LIMBS || nLimb < 0)
+            LogInvalidIndex("Biot::MoveLimbSegment", "limb", nLimb);
+        if(nSegment >= MAX_SEGMENTS || nSegment < 0)
+            LogInvalidIndex("Biot::MoveLimbSegment", "segment", nSegment);
+        return 0;
+    }
 
     int nPeno = nLimb + nSegment * MAX_LIMBS;
     short delta = m_angle[nPeno] - m_angleDrawn[nPeno];

@@ -12,6 +12,16 @@
 
 using namespace rapidjson;
 
+static void LogInvalidDeserializedIndex(const char *context, const char *field, int value)
+{
+    std::cerr << context << ": invalid " << field << " index " << value << std::endl;
+}
+
+static void LogInvalidDeserializedValue(const char *context, const char *field, int value)
+{
+    std::cerr << context << ": invalid " << field << " value " << value << std::endl;
+}
+
 //
 // ProductTerm (Picks a subset sensor bits that must be true or false)
 //
@@ -303,18 +313,21 @@ void CommandArgument::SerializeJsonLoad(const rapidjson::Value& v)
     m_command = v["m_command"].GetInt();
     if(m_command < 0 or m_command >= COMMAND_MAX_TYPES)
     {
+        LogInvalidDeserializedIndex("CommandArgument::SerializeJsonLoad", "m_command", m_command);
         m_command = 0;
         throw std::range_error("biot m_command out of range");
     }
     m_limb = v["m_limb"].GetUint();
     if(m_limb >= MAX_LIMBS)
     {
+        LogInvalidDeserializedIndex("CommandArgument::SerializeJsonLoad", "m_limb", m_limb);
         m_limb = 0;
         throw std::range_error("biot m_limb out of range");
     }
     m_segment = v["m_segment"].GetUint();
     if(m_segment >= MAX_SEGMENTS)
     {
+        LogInvalidDeserializedIndex("CommandArgument::SerializeJsonLoad", "m_segment", m_segment);
         m_segment = 0;
         throw std::range_error("biot m_segment out of range");
     }
@@ -367,33 +380,34 @@ int CommandArgument::GetLimb(int actualLimb)
         else
             out = (int) m_limb + actualLimb;
     }
-    assert (out < MAX_LIMBS && out >= 0);
+    if(out >= MAX_LIMBS || out < 0)
+        return 0;
     return out;
 }
 
 short CommandArgument::GetSegment()
 {
-    assert (m_segment < MAX_SEGMENTS && m_segment >= 0);
+    if(m_segment >= MAX_SEGMENTS)
+        return 0;
     return m_segment;
 }
 
 int CommandArgument::GetCommand()
 {
-    assert (m_command < COMMAND_MAX_TYPES && m_command >= 0);
+    if(m_command >= COMMAND_MAX_TYPES || m_command < 0)
+        return 0;
     return m_command;
 }
 
 int CommandArgument::GetLimbType()
 {
     int out = m_limb & 0x03; // four limb types
-    assert (out < MAX_LIMB_TYPES && out >= 0);
     return out;
 }
 
 short CommandArgument::GetRate()
 {
     short out = (m_rate & 0x03);
-    assert(out <= MAX_RATE && out >= -MAX_RATE);
     return (short) out;
 }
 
@@ -567,13 +581,19 @@ void CommandLimbType::SerializeJsonLoad(const rapidjson::Value& v)
     for(int i=0; i < MAX_COMMANDS_PER_LIMB; i++)
     {
         if(m_comref[i] >= CommandArray::MAX_COMMANDS)
+        {
+            LogInvalidDeserializedIndex("CommandLimbType::SerializeJsonLoad", "m_comref", m_comref[i]);
             m_comref[i] = rand.Byte(CommandArray::MAX_COMMANDS);
+        }
     }
 
     for(int i=0; i < MAX_COMMANDS_PER_LIMB; i++)
     {
         if(m_sumref[i] >= ProductArray::MAX_PRODUCT_SUMS)
+        {
+            LogInvalidDeserializedIndex("CommandLimbType::SerializeJsonLoad", "m_sumref", m_sumref[i]);
             m_sumref[i] = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
+        }
     }
 }
 
@@ -596,8 +616,17 @@ CommandLimbType& CommandLimbType::operator=(CommandLimbType& commandLimbType)
     for (int i = 0; i < GetCount(); i++)
     {
         m_comref[i] = commandLimbType.m_comref[i];
-        assert(m_comref[i] < 64);
+        if(m_comref[i] >= CommandArray::MAX_COMMANDS)
+        {
+            LogInvalidDeserializedIndex("CommandLimbType::operator=", "m_comref", m_comref[i]);
+            m_comref[i] = 0;
+        }
         m_sumref[i]    = commandLimbType.m_sumref[i];
+        if(m_sumref[i] >= ProductArray::MAX_PRODUCT_SUMS)
+        {
+            LogInvalidDeserializedIndex("CommandLimbType::operator=", "m_sumref", m_sumref[i]);
+            m_sumref[i] = 0;
+        }
     }
     return *this;
 }
@@ -626,7 +655,12 @@ CommandLimbStore::CommandLimbStore()
 
 void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
 {
-    assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
+    if(nLimbType >= MAX_LIMB_TYPES || nLimbType < 0)
+    {
+        LogInvalidDeserializedIndex("CommandLimbStore::Initialize", "nLimbType", nLimbType);
+        return;
+    }
+
     m_nLimbType = nLimbType;
     m_nLimb     = nLimb;
     m_pBiot     = &biot;
@@ -678,7 +712,7 @@ void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
                 break;
 
             default:
-                assert(0);
+                LogInvalidDeserializedIndex("CommandLimbStore::Initialize", "command", m_pArg->GetCommand());
                 break;
         }
     }
@@ -687,6 +721,18 @@ void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
 void CommandLimbStore::Validate(Biot& biot)
 {
     m_pBiot     = &biot;
+
+    if(m_nLimbType < 0 || m_nLimbType >= MAX_LIMB_TYPES)
+    {
+        LogInvalidDeserializedIndex("CommandLimbStore::Validate", "m_nLimbType", m_nLimbType);
+        throw std::range_error("m_nLimbType out of range");
+    }
+
+    if(m_nLimb < 0 || m_nLimb >= MAX_LIMBS)
+    {
+        LogInvalidDeserializedIndex("CommandLimbStore::Validate", "m_nLimb", m_nLimb);
+        throw std::range_error("m_nLimb out of range");
+    }
 
     for (m_index = 0; m_index < CommandLimbType::MAX_COMMANDS_PER_LIMB; m_index++)
     {
@@ -734,7 +780,7 @@ void CommandLimbStore::Validate(Biot& biot)
                 break;
 
             default:
-                assert(0);
+                LogInvalidDeserializedIndex("CommandLimbStore::Validate", "command", m_pArg->GetCommand());
                 break;
         }
     }
@@ -791,7 +837,7 @@ void CommandLimbStore::Execute(Biot& biot, uint32_t dwSensor)
                 break;
 
             default:
-                assert(0);
+                LogInvalidDeserializedIndex("CommandLimbStore::Execute", "command", m_pArg->GetCommand());
                 break;
         }
     }
@@ -829,16 +875,38 @@ void CommandLimbStore::SerializeJsonLoad(Biot& biot, const rapidjson::Value& v)
     const Value &commandJson = v["command"];
     if(!commandJson.IsArray())
         throw std::runtime_error("eror parsing json");
+    if(commandJson.Size() != CommandLimbType::MAX_COMMANDS_PER_LIMB)
+    {
+        LogInvalidDeserializedValue("CommandLimbStore::SerializeJsonLoad", "command count", commandJson.Size());
+        throw std::range_error("command count out of range");
+    }
     for(rapidjson::SizeType i=0; i<commandJson.Size() and i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
     {
         //Store binary data as base64 encoded string
-        if(!commandJson[i].IsString()) continue;
+        if(!commandJson[i].IsString())
+        {
+            LogInvalidDeserializedIndex("CommandLimbStore::SerializeJsonLoad", "command", (int)i);
+            throw std::range_error("command entry is not a string");
+        }
         QByteArray buffStr(commandJson[i].GetString(), commandJson[i].GetStringLength());
         QByteArray buff = QByteArray::fromBase64(buffStr);
-        memcpy(&command[i], buff.toStdString().c_str(), std::min((int)buff.length(), (int)sizeof(CommandType)));
+        if(buff.length() != (int)sizeof(CommandType))
+        {
+            LogInvalidDeserializedValue("CommandLimbStore::SerializeJsonLoad", "command byte length", buff.length());
+            throw std::range_error("command byte length out of range");
+        }
+
+        memset(&command[i], 0x00, sizeof(CommandType));
+        memcpy(&command[i], buff.constData(), sizeof(CommandType));
     }
 
-    this->Validate(biot);
+    try {
+        this->Validate(biot);
+    }
+    catch (const std::range_error &err) {
+        std::cerr << "CommandLimbStore::SerializeJsonLoad: " << err.what() << std::endl;
+        throw;
+    }
 }
 
 // /////////////////////////////////////////////////////////////
@@ -889,26 +957,34 @@ void CommandFlapLimbTypeSegment::Validate(CommandLimbStore& store)
     (void)store;
     if(m_nLimbType > MAX_LIMB_TYPES || m_nLimbType < 0)
     {
+        LogInvalidDeserializedIndex("CommandFlapLimbTypeSegment::Validate", "m_nLimbType", m_nLimbType);
         m_nLimbType = 0;
         throw std::range_error("m_nLimb out of range");
     }
+    if(m_nLimbType == MAX_LIMB_TYPES)
+        return;
+
     if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
     {
+        LogInvalidDeserializedValue("CommandFlapLimbTypeSegment::Validate", "m_nRate", m_nRate);
         m_nRate = 0;
         throw std::range_error("m_nRate out of range");
     }
     if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
     {
+        LogInvalidDeserializedIndex("CommandFlapLimbTypeSegment::Validate", "m_nSegment", m_nSegment);
         m_nSegment = 0;
         throw std::range_error("nSegment out of range");
     }
     if(m_nMaxDegrees > 90 || m_nMaxDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandFlapLimbTypeSegment::Validate", "m_nMaxDegrees", m_nMaxDegrees);
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
     if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandFlapLimbTypeSegment::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
@@ -1063,26 +1139,34 @@ void CommandFlapLimbSegment::Validate(CommandLimbStore& store)
 {
     if(m_nLimb > MAX_LIMBS || m_nLimb < 0)
     {
+        LogInvalidDeserializedIndex("CommandFlapLimbSegment::Validate", "m_nLimb", m_nLimb);
         m_nLimb = 0;
         throw std::range_error("m_nLimb out of range");
     }
+    if(m_nLimb == MAX_LIMBS)
+        return;
+
     if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
     {
+        LogInvalidDeserializedValue("CommandFlapLimbSegment::Validate", "m_nRate", m_nRate);
         m_nRate = 0;
         throw std::range_error("m_nRate out of range");
     }
     if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
     {
+        LogInvalidDeserializedIndex("CommandFlapLimbSegment::Validate", "m_nSegment", m_nSegment);
         m_nSegment = 0;
         throw std::range_error("nSegment out of range");
     }
     if(m_nMaxDegrees > 90 || m_nMaxDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandFlapLimbSegment::Validate", "m_nMaxDegrees", m_nMaxDegrees);
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
     if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandFlapLimbSegment::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
@@ -1235,26 +1319,34 @@ void CommandMoveLimbSegment::Validate(CommandLimbStore& store)
 {
     if(m_nLimb > MAX_LIMBS || m_nLimb < 0)
     {
+        LogInvalidDeserializedIndex("CommandMoveLimbSegment::Validate", "m_nLimb", m_nLimb);
         m_nLimb = 0;
         throw std::range_error("m_nLimb out of range");
     }
+    if(m_nLimb == MAX_LIMBS)
+        return;
+
     if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbSegment::Validate", "m_nRate", m_nRate);
         m_nRate = 0;
         throw std::range_error("m_nRate out of range");
     }
     if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
     {
+        LogInvalidDeserializedIndex("CommandMoveLimbSegment::Validate", "m_nSegment", m_nSegment);
         m_nSegment = 0;
         throw std::range_error("nSegment out of range");
     }
     if(m_nMaxDegrees > 16 || m_nMaxDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbSegment::Validate", "m_nMaxDegrees", m_nMaxDegrees);
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
     if(m_nAppliedDegrees > 16 || m_nAppliedDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbSegment::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
@@ -1332,26 +1424,34 @@ void CommandMoveLimbTypeSegment::Validate(CommandLimbStore& store)
 {
     if(m_nLimbType > MAX_LIMB_TYPES || m_nLimbType < 0)
     {
+        LogInvalidDeserializedIndex("CommandMoveLimbTypeSegment::Validate", "m_nLimbType", m_nLimbType);
         m_nLimbType = 0;
         throw std::range_error("m_nLimb out of range");
     }
+    if(m_nLimbType == MAX_LIMB_TYPES)
+        return;
+
     if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbTypeSegment::Validate", "m_nRate", m_nRate);
         m_nRate = 0;
         throw std::range_error("m_nRate out of range");
     }
     if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
     {
+        LogInvalidDeserializedIndex("CommandMoveLimbTypeSegment::Validate", "m_nSegment", m_nSegment);
         m_nSegment = 0;
         throw std::range_error("nSegment out of range");
     }
     if(m_nMaxDegrees > 90 || m_nMaxDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbTypeSegment::Validate", "m_nMaxDegrees", m_nMaxDegrees);
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
     if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbTypeSegment::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
@@ -1427,21 +1527,28 @@ void CommandMoveLimbSegments::Validate(CommandLimbStore& store)
 
     if(m_nLimb > MAX_LIMBS || m_nLimb < 0)
     {
+        LogInvalidDeserializedIndex("CommandMoveLimbSegments::Validate", "m_nLimb", m_nLimb);
         m_nLimb = 0;
         throw std::range_error("m_nLimb out of range");
     }
+    if(m_nLimb == MAX_LIMBS)
+        return;
+
     if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbSegments::Validate", "m_nRate", m_nRate);
         m_nRate = 0;
         throw std::range_error("m_nRate out of range");
     }
     if(m_nMaxDegrees > 16 || m_nMaxDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbSegments::Validate", "m_nMaxDegrees", m_nMaxDegrees);
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
     if(m_nAppliedDegrees > 16 || m_nAppliedDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbSegments::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
@@ -1459,8 +1566,17 @@ void CommandMoveLimbSegments::Execute(CommandLimbStore& store)
 {
     if (m_nLimb == MAX_LIMBS)
         return;
-    assert(m_nLimb < MAX_LIMBS && m_nLimb >= 0);
-    assert(m_nRate <= MAX_RATE && m_nRate >= -MAX_RATE);
+
+    if(m_nLimb >= MAX_LIMBS || m_nLimb < 0)
+    {
+        LogInvalidDeserializedIndex("CommandMoveLimbSegments::Execute", "m_nLimb", m_nLimb);
+        return;
+    }
+    if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
+    {
+        LogInvalidDeserializedIndex("CommandMoveLimbSegments::Execute", "m_nRate", m_nRate);
+        return;
+    }
 
     if (store.IsSensorTrue())
     {
@@ -1518,21 +1634,28 @@ void CommandMoveLimbTypeSegments::Validate(CommandLimbStore& store)
 {
     if(m_nLimbType > MAX_LIMB_TYPES || m_nLimbType < 0)
     {
+        LogInvalidDeserializedIndex("CommandMoveLimbTypeSegments::Validate", "m_nLimbType", m_nLimbType);
         m_nLimbType = 0;
         throw std::range_error("m_nLimb out of range");
     }
+    if(m_nLimbType == MAX_LIMB_TYPES)
+        return;
+
     if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbTypeSegments::Validate", "m_nRate", m_nRate);
         m_nRate = 0;
         throw std::range_error("m_nRate out of range");
     }
     if(m_nMaxDegrees > 16 || m_nMaxDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbTypeSegments::Validate", "m_nMaxDegrees", m_nMaxDegrees);
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
     if(m_nAppliedDegrees > 16 || m_nAppliedDegrees < 0)
     {
+        LogInvalidDeserializedValue("CommandMoveLimbTypeSegments::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
@@ -1550,7 +1673,17 @@ void CommandMoveLimbTypeSegments::Execute(CommandLimbStore& store)
 {
     if (m_nLimbType == MAX_LIMB_TYPES)
         return;
-    assert (m_nLimbType < MAX_LIMB_TYPES && MAX_LIMB_TYPES >= 0);
+
+    if(m_nLimbType >= MAX_LIMB_TYPES || m_nLimbType < 0)
+    {
+        LogInvalidDeserializedIndex("CommandMoveLimbTypeSegments::Execute", "m_nLimbType", m_nLimbType);
+        return;
+    }
+    if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
+    {
+        LogInvalidDeserializedIndex("CommandMoveLimbTypeSegments::Execute", "m_nRate", m_nRate);
+        return;
+    }
 
     if (store.IsSensorTrue())
     {
@@ -1629,23 +1762,30 @@ void CommandRetractLimb::Validate(CommandLimbStore& store)
 {
     (void)store;
 
-    if(m_nLimb > MAX_LIMBS || m_nLimb < 0)
+    if(m_nLimb >= MAX_LIMBS || m_nLimb < 0)
     {
+        LogInvalidDeserializedIndex("CommandRetractLimb::Validate", "m_nLimb", m_nLimb);
         m_nLimb = 0;
         throw std::range_error("m_nLimb out of range");
     }
-    if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
+    if(m_nSegment > MAX_SEGMENTS || m_nSegment < 0)
     {
+        LogInvalidDeserializedIndex("CommandRetractLimb::Validate", "m_nSegment", m_nSegment);
         m_nSegment = 0;
         throw std::range_error("nSegment out of range");
     }
+    if(m_nSegment == MAX_SEGMENTS)
+        return;
+
     if(m_nMaxRadius > 16 || m_nMaxRadius < 0)
     {
+        LogInvalidDeserializedValue("CommandRetractLimb::Validate", "m_nMaxRadius", m_nMaxRadius);
         m_nMaxRadius = 0;
         throw std::range_error("m_nMaxRadius out of range");
     }
     if(m_nAppliedRadius > 16 || m_nAppliedRadius < 0)
     {
+        LogInvalidDeserializedValue("CommandRetractLimb::Validate", "m_nAppliedRadius", m_nAppliedRadius);
         m_nAppliedRadius = 0;
         throw std::range_error("m_nAppliedRadius out of range");
     }
@@ -1732,21 +1872,31 @@ void CommandRetractLimbType::Validate(CommandLimbStore& store)
     (void)store;
     if(m_nLimbType > MAX_LIMB_TYPES || m_nLimbType < 0)
     {
+        LogInvalidDeserializedIndex("CommandRetractLimbType::Validate", "m_nLimbType", m_nLimbType);
         m_nLimbType = 0;
         throw std::range_error("m_nLimb out of range");
     }
-    if(m_nSegment >= MAX_SEGMENTS || m_nSegment < 0)
+    if(m_nLimbType == MAX_LIMB_TYPES)
+        return;
+
+    if(m_nSegment > MAX_SEGMENTS || m_nSegment < 0)
     {
+        LogInvalidDeserializedIndex("CommandRetractLimbType::Validate", "m_nSegment", m_nSegment);
         m_nSegment = 0;
         throw std::range_error("nSegment out of range");
     }
+    if(m_nSegment == MAX_SEGMENTS)
+        return;
+
     if(m_nMaxRadius > 16 || m_nMaxRadius < 0)
     {
+        LogInvalidDeserializedValue("CommandRetractLimbType::Validate", "m_nMaxRadius", m_nMaxRadius);
         m_nMaxRadius = 0;
         throw std::range_error("m_nMaxRadius out of range");
     }
     if(m_nAppliedRadius > 16 || m_nAppliedRadius < 0)
     {
+        LogInvalidDeserializedValue("CommandRetractLimbType::Validate", "m_nAppliedRadius", m_nAppliedRadius);
         m_nAppliedRadius = 0;
         throw std::range_error("m_nAppliedRadius out of range");
     }
@@ -1922,7 +2072,3 @@ void CommandMemory::Execute(CommandLimbStore& store)
         }
     }
 }
-
-
-
-

@@ -960,12 +960,13 @@ void Environment::Fuzz()
         {
             try {
                 biot->SerializeJsonLoad(d["biot"]);
+                biot->OnOpen();
             }
             catch (std::range_error &err) {
-                std::cout << "Fuzzed json out of range" << std::endl;
+                std::cout << "Fuzzed json out of range: " << err.what() << std::endl;
             }
             catch (std::runtime_error &err) {
-                std::cout << "Fuzzed json failed to load" << std::endl;
+                std::cout << "Fuzzed json failed to load: " << err.what() << std::endl;
             }
         }
     }
