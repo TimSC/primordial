@@ -54,15 +54,19 @@ MainApp::MainApp(): sidesManager(env),
     autoConnect(env, sidesManager)
 {
     lastSimUpdate = 0;
-#if defined(ENABLE_PRIMORDIAL_FUZZ)
     lastFuzz = 0;
-#endif
+    fuzzEnabled = false;
 }
 
 MainApp::~MainApp()
 {
 
 
+}
+
+void MainApp::SetFuzzEnabled(bool enabled)
+{
+    fuzzEnabled = enabled;
 }
 
 void MainApp::TimedUpdate(bool running)
@@ -78,14 +82,15 @@ void MainApp::TimedUpdate(bool running)
             this->env.Update();
         }
 
-#if defined(ENABLE_PRIMORDIAL_FUZZ)
-        uint64_t elapsed2 = now - lastFuzz;
-        if(elapsed2 > 20)
+        if(fuzzEnabled)
         {
-            lastFuzz = now;
-            this->env.Fuzz();
+            uint64_t elapsed2 = now - lastFuzz;
+            if(elapsed2 > 20)
+            {
+                lastFuzz = now;
+                this->env.Fuzz();
+            }
         }
-#endif
     }
     else
         lastSimUpdate = now;
@@ -203,15 +208,16 @@ void MainApp::Load(const std::string &fileName)
 
 // *******************************************
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(bool fuzzEnabled, QWidget *parent)
     : QMainWindow(parent),
-    ui(new Ui::MainWindow)
+      ui(new Ui::MainWindow)
 {
     lastGraphicsUpdate = 0;
     lastStatsUpdate = 0;
 
     ui->setupUi(this);
     this->setWindowIcon(QIcon(":/res/icon.ico"));
+    app.SetFuzzEnabled(fuzzEnabled);
 
     QSize size = qApp->screens()[0]->size();
 

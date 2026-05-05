@@ -6,8 +6,9 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    const bool fuzzEnabled = a.arguments().contains("--fuzz");
 #if 1
-    MainWindow w;
+    MainWindow w(fuzzEnabled);
     w.show();
 #else
     //Run with no graphics or UI

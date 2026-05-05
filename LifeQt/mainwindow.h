@@ -25,13 +25,13 @@ public:
     class Environment env;
 
     int64_t lastSimUpdate;
-#if defined(ENABLE_PRIMORDIAL_FUZZ)
     int64_t lastFuzz;
-#endif
+    bool fuzzEnabled;
 
     class SidesManager sidesManager;
     class AutoConnect autoConnect;
 
+    void SetFuzzEnabled(bool enabled);
     void TimedUpdate(bool running);
     void timerEvent(QTimerEvent *event) override;
 
@@ -47,7 +47,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(bool fuzzEnabled = false, QWidget *parent = nullptr);
     ~MainWindow();
 
     void timerEvent(QTimerEvent *event);

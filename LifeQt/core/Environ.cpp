@@ -132,10 +132,11 @@ void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value
     FreeAll();
 
     const Value &biotsJson = v["biots"];
-    if(!biotsJson.IsArray() || biotsJson.Size() > MAX_BIOTS_IN_SAVE)
+    if(!biotsJson.IsArray())
         throw std::runtime_error("eror parsing json");
 
-    for (rapidjson::SizeType i = 0; i < biotsJson.Size(); i++)
+    const rapidjson::SizeType biotsToLoad = std::min(biotsJson.Size(), MAX_BIOTS_IN_SAVE);
+    for (rapidjson::SizeType i = 0; i < biotsToLoad; i++)
     {
         std::unique_ptr<Biot> pBiot(new Biot(env));
         pBiot->SerializeJsonLoad(biotsJson[i]);
