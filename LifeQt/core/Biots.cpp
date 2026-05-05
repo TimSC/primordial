@@ -1660,11 +1660,17 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("m_commandArray", commJson, allocator);
 
     Value trait2Json(kObjectType);
-    trait2.SerializeJson(d, trait2Json);
+    if(genes2 > 0)
+        trait2.SerializeJson(d, trait2Json);
+    else
+        trait.SerializeJson(d, trait2Json);
     v.AddMember("trait2", trait2Json, allocator);
 
     Value comm2Json(kObjectType);
-    m_commandArray2.SerializeJson(d, comm2Json);
+    if(genes2 > 0)
+        m_commandArray2.SerializeJson(d, comm2Json);
+    else
+        m_commandArray.SerializeJson(d, comm2Json);
     v.AddMember("m_commandArray2", comm2Json, allocator);
 
     Value storeJson(kArrayType);
@@ -2243,7 +2249,11 @@ short Biot::MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate)
 
         nRate = std::min(nRate, MAX_RATE - delta);
     }
-    assert(nRate <= MAX_RATE && nRate >= -MAX_RATE);
+    if(nRate > MAX_RATE || nRate < -MAX_RATE)
+    {
+        LogInvalidIndex("Biot::MoveLimbTypeSegment", "rate", nRate);
+        return 0;
+    }
 
     m_angleLimbTypeSegment[nLimbType][nSegment] += nRate;     
     return nRate;
@@ -2279,7 +2289,11 @@ short Biot::MoveLimbTypeSegments(int nLimbType, int nRate)
 
         nRate = std::min(nRate, MAX_RATE - delta);
     }
-    assert(nRate <= MAX_RATE && nRate >= -MAX_RATE);
+    if(nRate > MAX_RATE || nRate < -MAX_RATE)
+    {
+        LogInvalidIndex("Biot::MoveLimbTypeSegments", "rate", nRate);
+        return 0;
+    }
 
     m_angleLimbType[nLimbType] += nRate;     
     return nRate;
@@ -2315,7 +2329,11 @@ short Biot::MoveLimbSegments(int nLimb, int nRate)
 
         nRate = std::min(nRate, MAX_RATE - delta);
     }
-    assert(nRate <= MAX_RATE && nRate >= -MAX_RATE);
+    if(nRate > MAX_RATE || nRate < -MAX_RATE)
+    {
+        LogInvalidIndex("Biot::MoveLimbSegments", "rate", nRate);
+        return 0;
+    }
 
     m_angleLimb[nLimb] += nRate;     
     return nRate;
@@ -2356,7 +2374,11 @@ short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 
         nRate = std::min(nRate, MAX_RATE - delta);
     }
-    assert(nRate <= MAX_RATE && nRate >= -MAX_RATE);
+    if(nRate > MAX_RATE || nRate < -MAX_RATE)
+    {
+        LogInvalidIndex("Biot::MoveLimbSegment", "rate", nRate);
+        return 0;
+    }
 
     m_angleLimb[nPeno] += nRate;     
     return nRate;
@@ -2403,6 +2425,12 @@ void Biot::paintGL(QPainter &painter)
 
             if (flashCol)
                 aPen = newType;
+
+            if(aPen < 0 || aPen >= env.settings.pens.size())
+            {
+                LogInvalidIndex("Biot::paintGL", "pen", aPen);
+                aPen = GREEN_LEAF;
+            }
 
             painter.setPen(env.settings.pens[aPen]);
 

@@ -121,39 +121,42 @@ void MainApp::closeEvent(QCloseEvent *ev)
 
 void MainApp::Save(const std::string &filename)
 {
-    QFileInfo fi(filename.c_str());
-    QString compSuffix2 = fi.completeSuffix();
+    try {
+        QFileInfo fi(filename.c_str());
+        QString compSuffix2 = fi.completeSuffix();
 
-    Document d;
-    d.SetObject();
-    Value envJson(kObjectType);
-    this->env.SerializeJson(d, envJson);
-    d.AddMember("environment", envJson, d.GetAllocator());
+        Document d;
+        d.SetObject();
+        Value envJson(kObjectType);
+        this->env.SerializeJson(d, envJson);
+        d.AddMember("environment", envJson, d.GetAllocator());
 
-    if(compSuffix2 == "plfc")
-    {
-        //Write compressed
-        stringstream ss;
-        OStreamWrapper osw(ss);
-        Writer<OStreamWrapper> writer(osw);
-        d.Accept(writer);
+        if(compSuffix2 == "plfc")
+        {
+            //Write compressed
+            stringstream ss;
+            OStreamWrapper osw(ss);
+            Writer<OStreamWrapper> writer(osw);
+            d.Accept(writer);
 
-        string dat = ss.str();
-        QByteArray dat2(qCompress(dat.data(), dat.size()));
+            string dat = ss.str();
+            QByteArray dat2(qCompress(dat.data(), dat.size()));
 
-        ofstream myfile(filename.c_str(), std::ios::binary);
+            ofstream myfile(filename.c_str(), std::ios::binary);
 
-        myfile.write(dat2.data(), dat2.size());
+            myfile.write(dat2.data(), dat2.size());
+        }
+        else
+        {
+            //Write uncompressed
+            ofstream myfile(filename.c_str());
+            OStreamWrapper osw(myfile);
+            Writer<OStreamWrapper> writer(osw);
+            d.Accept(writer);
+        }
+    } catch (exception &err) {
+        std::cout << "Save failed: " << err.what() << std::endl;
     }
-    else
-    {
-        //Write uncompressed
-        ofstream myfile(filename.c_str());
-        OStreamWrapper osw(myfile);
-        Writer<OStreamWrapper> writer(osw);
-        d.Accept(writer);
-    }
-
 }
 
 void MainApp::Load(const std::string &fileName)
@@ -334,27 +337,45 @@ void MainWindow::timerEvent(QTimerEvent *event)
 
 void MainWindow::on_actionOpen_triggered()
 {
+    const bool wasRunning = this->ui->actionStart_Simulation->isChecked();
+    if(wasRunning)
+        this->ui->actionStart_Simulation->setChecked(false);
+
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Open Address Book"), this->currentFilename.c_str(),
-        tr("Primordial Life Files (*.plfc, *.plfj);;All Files (*)"));
+        tr("Primordial Life Files (*.plfc *.plfj);;All Files (*)"));
 
     if (fileName.isEmpty())
-            return;
+    {
+        if(wasRunning)
+            this->ui->actionStart_Simulation->setChecked(true);
+        return;
+    }
 
     this->app.Load(fileName.toStdString());
 
     this->currentFilename = fileName.toStdString();
 
+    if(wasRunning)
+        this->ui->actionStart_Simulation->setChecked(true);
 }
 
 void MainWindow::on_actionSave_As_triggered()
 {
+    const bool wasRunning = this->ui->actionStart_Simulation->isChecked();
+    if(wasRunning)
+        this->ui->actionStart_Simulation->setChecked(false);
+
     QString fileName = QFileDialog::getSaveFileName(this,
         tr("Save As"), this->currentFilename.c_str(),
-        tr("Primordial Life Files (*.plfc, *.plfj);;All Files (*)"));
+        tr("Primordial Life Files (*.plfc *.plfj);;All Files (*)"));
 
     if (fileName.isEmpty())
-            return;
+    {
+        if(wasRunning)
+            this->ui->actionStart_Simulation->setChecked(true);
+        return;
+    }
 
     this->currentFilename = fileName.toStdString();
     QFileInfo fi(this->currentFilename.c_str());
@@ -363,6 +384,9 @@ void MainWindow::on_actionSave_As_triggered()
         this->currentFilename += ".plfc";
 
     this->app.Save(this->currentFilename);
+
+    if(wasRunning)
+        this->ui->actionStart_Simulation->setChecked(true);
 }
 
 void MainWindow::on_actionNew_triggered()

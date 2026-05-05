@@ -1,8 +1,27 @@
 #include "Environ.h"
 #include "Biots.h"
+#include <sstream>
 #include <stdexcept>
 
 using namespace rapidjson;
+
+static std::range_error InvalidGeneTraitValue(const char *context, const char *field, unsigned value)
+{
+    std::ostringstream err;
+    err << context << ": invalid " << field << " value=" << value;
+    return std::range_error(err.str());
+}
+
+static std::range_error InvalidLineRefValue(const char *context, rapidjson::SizeType index, unsigned value, unsigned lineCount)
+{
+    std::ostringstream err;
+    err << context << ": invalid m_lineRef"
+        << " index=" << index
+        << ", value=" << value
+        << ", validRange=0.." << (MAX_LIMB_TYPES - 1)
+        << ", lineCount=" << lineCount;
+    return std::range_error(err.str());
+}
 
 ////////////////////////////////////////////////////////
 // GeneSegment
@@ -26,10 +45,10 @@ void GeneSegment::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
     v.AddMember("m_angle", m_angle, allocator);
     v.AddMember("m_radius", m_radius, allocator);
-    v.AddMember("m_visible", m_visible, allocator);
-    v.AddMember("m_startSegment", m_startSegment, allocator);
-    v.AddMember("m_color0", m_color[0], allocator);
-    v.AddMember("m_color1", m_color[1], allocator);
+    v.AddMember("m_visible", Value((unsigned)m_visible), allocator);
+    v.AddMember("m_startSegment", Value((unsigned)m_startSegment), allocator);
+    v.AddMember("m_color0", Value((unsigned)m_color[0]), allocator);
+    v.AddMember("m_color1", Value((unsigned)m_color[1]), allocator);
 
 }
 
@@ -50,10 +69,10 @@ void GeneSegment::SerializeJsonLoad(const rapidjson::Value& v)
         m_radius = MAX_SEGMENT_LENGTH;
 
     if (m_color[0] >= DIM_COLOR - 1)
-        m_color[0] = 0;
+        throw std::range_error("m_color0 out of range");
 
     if (m_color[1] >= DIM_COLOR)
-        m_color[1] = 0;
+        throw std::range_error("m_color1 out of range");
 }
 
 void GeneSegment::Randomize(int segment, bool bIsVisible)
@@ -314,6 +333,14 @@ void GeneTrait::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
     Document::AllocatorType& allocator = d.GetAllocator();
 
+    if(m_lineCount == 0 || m_lineCount > MAX_LIMBS)
+        throw InvalidGeneTraitValue("GeneTrait::SerializeJson", "m_lineCount", (unsigned)m_lineCount);
+    for(int i=0; i<MAX_LIMBS; i++)
+    {
+        if(m_lineRef[i] >= MAX_LIMB_TYPES)
+            throw InvalidLineRefValue("GeneTrait::SerializeJson", (rapidjson::SizeType)i, (unsigned)m_lineRef[i], (unsigned)m_lineCount);
+    }
+
     Value lineJson1(kArrayType);
     for (int i = 0; i < MAX_LIMB_TYPES; i++)
     {
@@ -323,25 +350,25 @@ void GeneTrait::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     }
     v.AddMember("m_geneLine", lineJson1, allocator);
 
-    v.AddMember("m_disperse", m_disperse, allocator);
-    v.AddMember("m_children", m_children, allocator);
-    v.AddMember("m_attackChildren", m_attackChildren, allocator);
-    v.AddMember("m_attackSiblings", m_attackSiblings, allocator);
-    v.AddMember("m_species", m_species, allocator);
-    v.AddMember("m_adultRatio0", m_adultRatio[0], allocator);
-    v.AddMember("m_adultRatio1", m_adultRatio[1], allocator);
-    v.AddMember("m_lineCount", m_lineCount, allocator);
+    v.AddMember("m_disperse", Value((unsigned)m_disperse), allocator);
+    v.AddMember("m_children", Value((unsigned)m_children), allocator);
+    v.AddMember("m_attackChildren", Value((unsigned)m_attackChildren), allocator);
+    v.AddMember("m_attackSiblings", Value((unsigned)m_attackSiblings), allocator);
+    v.AddMember("m_species", Value((unsigned)m_species), allocator);
+    v.AddMember("m_adultRatio0", Value((unsigned)m_adultRatio[0]), allocator);
+    v.AddMember("m_adultRatio1", Value((unsigned)m_adultRatio[1]), allocator);
+    v.AddMember("m_lineCount", Value((unsigned)m_lineCount), allocator);
     v.AddMember("m_offset", m_offset, allocator);
 
     Value linesJson(kArrayType);
     for(int i=0; i<MAX_LIMBS; i++)
-        linesJson.PushBack(m_lineRef[i], allocator);
+        linesJson.PushBack(Value((unsigned)m_lineRef[i]), allocator);
     v.AddMember("m_lineRef", linesJson, allocator);
 
-    v.AddMember("m_mirrored", m_mirrored, allocator);
-    v.AddMember("m_sex", m_sex, allocator);
-    v.AddMember("m_asexual", m_asexual, allocator);
-    v.AddMember("m_chanceMale", m_chanceMale, allocator);
+    v.AddMember("m_mirrored", Value((unsigned)m_mirrored), allocator);
+    v.AddMember("m_sex", Value((unsigned)m_sex), allocator);
+    v.AddMember("m_asexual", Value((unsigned)m_asexual), allocator);
+    v.AddMember("m_chanceMale", Value((unsigned)m_chanceMale), allocator);
     v.AddMember("m_maxAge", m_maxAge, allocator);
 }
 
@@ -367,11 +394,24 @@ void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
     for (int i = 0; i < MAX_LIMBS; i++)
         m_lineRef[i] = 0;
     const Value &lr = v["m_lineRef"];
+    if(!lr.IsArray() || lr.Size() != MAX_LIMBS)
+        throw std::range_error("m_lineRef count out of range");
     for(rapidjson::SizeType i=0; i<lr.Size() and i<MAX_LIMBS; i++)
     {
-        uint8_t val = lr[i].GetUint(); //Can't be negative due to unsigned type
-        if(val >= MAX_LIMB_TYPES) throw std::range_error("Invalid limb type in m_lineRef");
-        m_lineRef[i] = val;
+        if(!lr[i].IsUint())
+        {
+            std::ostringstream err;
+            err << "GeneTrait::SerializeJsonLoad: invalid m_lineRef"
+                << " index=" << i
+                << ", expected unsigned integer"
+                << ", lineCount=" << (unsigned)m_lineCount;
+            throw std::range_error(err.str());
+        }
+
+        unsigned val = lr[i].GetUint();
+        if(val >= MAX_LIMB_TYPES)
+            throw InvalidLineRefValue("GeneTrait::SerializeJsonLoad", i, val, (unsigned)m_lineCount);
+        m_lineRef[i] = (uint8_t)val;
     }
 
     m_mirrored = v["m_mirrored"].GetUint();
@@ -508,7 +548,12 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
     // We start out with uniform appearance
     for (i = 0; i < MAX_LIMBS; i++)
     {
-        m_lineRef[i] = Byte(nTypesPerBiot + 1);
+        int typeChoices = nTypesPerBiot + 1;
+        if(typeChoices > MAX_LIMB_TYPES)
+            typeChoices = MAX_LIMB_TYPES;
+        if(typeChoices < 1)
+            typeChoices = 1;
+        m_lineRef[i] = Byte(typeChoices);
         assert(m_lineRef[i] < MAX_LIMB_TYPES && m_lineRef[i] >= 0);
     }
 
@@ -704,4 +749,3 @@ bool GeneTrait::IsLineTypeVisible(int lineType)
 
     return false;
 }
-

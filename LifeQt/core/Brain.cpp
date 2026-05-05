@@ -12,6 +12,9 @@
 
 using namespace rapidjson;
 
+static const int MAX_COMMAND_DEGREES = 255;
+static const int MAX_MEMORY_DURATION = 255 * 4;
+
 static void LogInvalidDeserializedIndex(const char *context, const char *field, int value)
 {
     std::cerr << context << ": invalid " << field << " index " << value << std::endl;
@@ -20,6 +23,15 @@ static void LogInvalidDeserializedIndex(const char *context, const char *field, 
 static void LogInvalidDeserializedValue(const char *context, const char *field, int value)
 {
     std::cerr << context << ": invalid " << field << " value " << value << std::endl;
+}
+
+static void ValidateMoveRateCandidate(const char *context, int value)
+{
+    if(value > MAX_RATE || value < -MAX_RATE)
+    {
+        LogInvalidDeserializedValue(context, "move rate", value);
+        throw std::range_error("move rate out of range");
+    }
 }
 
 //
@@ -223,7 +235,7 @@ void ProductSum::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 
     Value refArrayJson(kArrayType);
     for (int i = 0; i < GetCount(); i++)
-        refArrayJson.PushBack(m_reference[i], allocator);
+        refArrayJson.PushBack(Value((unsigned)m_reference[i]), allocator);
     v.AddMember("m_reference", refArrayJson, allocator);
 
     v.AddMember("m_bTrue", m_bTrue, allocator);
@@ -299,10 +311,10 @@ void CommandArgument::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     Document::AllocatorType& allocator = d.GetAllocator();
 
     v.AddMember("m_command", Value(m_command), allocator);
-    v.AddMember("m_limb", Value(m_limb), allocator);
-    v.AddMember("m_segment", Value(m_segment), allocator);
-    v.AddMember("m_rate", Value(m_rate), allocator);
-    v.AddMember("m_degrees", Value(m_degrees), allocator);
+    v.AddMember("m_limb", Value((unsigned)m_limb), allocator);
+    v.AddMember("m_segment", Value((unsigned)m_segment), allocator);
+    v.AddMember("m_rate", Value((unsigned)m_rate), allocator);
+    v.AddMember("m_degrees", Value((unsigned)m_degrees), allocator);
 }
 
 void CommandArgument::SerializeJsonLoad(const rapidjson::Value& v)
@@ -556,8 +568,8 @@ void CommandLimbType::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     Value sumJson(kArrayType);
     for (int i = 0; i < GetCount(); i++)
     {
-        comJson.PushBack(m_comref[i], allocator);
-        sumJson.PushBack(m_sumref[i], allocator);
+        comJson.PushBack(Value((unsigned)m_comref[i]), allocator);
+        sumJson.PushBack(Value((unsigned)m_sumref[i]), allocator);
     }
     v.AddMember("m_comref", comJson, allocator);
     v.AddMember("m_sumref", sumJson, allocator);
@@ -568,22 +580,32 @@ void CommandLimbType::SerializeJsonLoad(const rapidjson::Value& v)
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");
 
+    for(int i=0; i < MAX_COMMANDS_PER_LIMB; i++)
+    {
+        m_comref[i] = 0;
+        m_sumref[i] = 0;
+    }
+
     const Value &cr = v["m_comref"];
+    if(!cr.IsArray() || cr.Size() != MAX_COMMANDS_PER_LIMB)
+        throw std::range_error("m_comref count out of range");
     for(rapidjson::SizeType i=0; i<cr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
         m_comref[i] = cr[i].GetUint();
 
     const Value &sr = v["m_sumref"];
+    if(!sr.IsArray() || sr.Size() != MAX_COMMANDS_PER_LIMB)
+        throw std::range_error("m_sumref count out of range");
     for(rapidjson::SizeType i=0; i<sr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
         m_sumref[i] = sr[i].GetUint();
 
-    //Ensure data is valid
-    Randomizer rand;
+    // Ensure data is valid.
     for(int i=0; i < MAX_COMMANDS_PER_LIMB; i++)
     {
         if(m_comref[i] >= CommandArray::MAX_COMMANDS)
         {
             LogInvalidDeserializedIndex("CommandLimbType::SerializeJsonLoad", "m_comref", m_comref[i]);
-            m_comref[i] = rand.Byte(CommandArray::MAX_COMMANDS);
+            m_comref[i] = 0;
+            throw std::range_error("m_comref out of range");
         }
     }
 
@@ -592,7 +614,8 @@ void CommandLimbType::SerializeJsonLoad(const rapidjson::Value& v)
         if(m_sumref[i] >= ProductArray::MAX_PRODUCT_SUMS)
         {
             LogInvalidDeserializedIndex("CommandLimbType::SerializeJsonLoad", "m_sumref", m_sumref[i]);
-            m_sumref[i] = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
+            m_sumref[i] = 0;
+            throw std::range_error("m_sumref out of range");
         }
     }
 }
@@ -982,13 +1005,29 @@ void CommandFlapLimbTypeSegment::Validate(CommandLimbStore& store)
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
-    if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < 0)
+    if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < -90)
     {
         LogInvalidDeserializedValue("CommandFlapLimbTypeSegment::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
     m_bGoingUp = (bool)m_bGoingUp;
+
+    if(m_bGoingUp)
+    {
+        if(m_nAppliedDegrees < m_nMaxDegrees)
+            ValidateMoveRateCandidate("CommandFlapLimbTypeSegment::Validate", std::min(m_nRate, m_nMaxDegrees - m_nAppliedDegrees));
+    }
+    else
+    {
+        if(m_nAppliedDegrees > -m_nMaxDegrees)
+            ValidateMoveRateCandidate("CommandFlapLimbTypeSegment::Validate", -std::min(m_nRate, m_nAppliedDegrees + m_nMaxDegrees));
+    }
+
+    if(m_nAppliedDegrees > 0)
+        ValidateMoveRateCandidate("CommandFlapLimbTypeSegment::Validate", -std::min(m_nRate, m_nAppliedDegrees));
+    if(m_nAppliedDegrees < 0)
+        ValidateMoveRateCandidate("CommandFlapLimbTypeSegment::Validate", std::min(m_nRate, -m_nAppliedDegrees));
 }
 
 void CommandFlapLimbTypeSegment::Execute(CommandLimbStore& store)
@@ -1044,7 +1083,7 @@ void CommandFlapLimbTypeSegment::Execute(CommandLimbStore& store)
         
         if (m_nAppliedDegrees < 0)
         {
-            m_nAppliedDegrees += store.m_pBiot->MoveLimbTypeSegment(m_nSegment, m_nLimbType, std::min(m_nRate, m_nAppliedDegrees));
+            m_nAppliedDegrees += store.m_pBiot->MoveLimbTypeSegment(m_nSegment, m_nLimbType, std::min(m_nRate, -m_nAppliedDegrees));
         }
     }
 }
@@ -1164,13 +1203,29 @@ void CommandFlapLimbSegment::Validate(CommandLimbStore& store)
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
-    if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < 0)
+    if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < -90)
     {
         LogInvalidDeserializedValue("CommandFlapLimbSegment::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
     m_bGoingUp = (bool)m_bGoingUp;
+
+    if(m_bGoingUp)
+    {
+        if(m_nAppliedDegrees < m_nMaxDegrees)
+            ValidateMoveRateCandidate("CommandFlapLimbSegment::Validate", std::min(m_nRate, m_nMaxDegrees - m_nAppliedDegrees));
+    }
+    else
+    {
+        if(m_nAppliedDegrees > -m_nMaxDegrees)
+            ValidateMoveRateCandidate("CommandFlapLimbSegment::Validate", -std::min(m_nRate, m_nAppliedDegrees + m_nMaxDegrees));
+    }
+
+    if(m_nAppliedDegrees > 0)
+        ValidateMoveRateCandidate("CommandFlapLimbSegment::Validate", -std::min(m_nRate, m_nAppliedDegrees));
+    if(m_nAppliedDegrees < 0)
+        ValidateMoveRateCandidate("CommandFlapLimbSegment::Validate", std::min(m_nRate, -m_nAppliedDegrees));
 
     // Is this line type even visible?
     if (m_nLimb >= store.m_pBiot->trait.GetLines() ||
@@ -1235,7 +1290,7 @@ void CommandFlapLimbSegment::Execute(CommandLimbStore& store)
         
         if (m_nAppliedDegrees < 0)
         {
-            m_nAppliedDegrees += store.m_pBiot->MoveLimbSegment(m_nSegment, m_nLimb, std::min(m_nRate, m_nAppliedDegrees));
+            m_nAppliedDegrees += store.m_pBiot->MoveLimbSegment(m_nSegment, m_nLimb, std::min(m_nRate, -m_nAppliedDegrees));
         }
     }
 }
@@ -1338,18 +1393,23 @@ void CommandMoveLimbSegment::Validate(CommandLimbStore& store)
         m_nSegment = 0;
         throw std::range_error("nSegment out of range");
     }
-    if(m_nMaxDegrees > 16 || m_nMaxDegrees < 0)
+    if(m_nMaxDegrees > MAX_COMMAND_DEGREES || m_nMaxDegrees < 0)
     {
         LogInvalidDeserializedValue("CommandMoveLimbSegment::Validate", "m_nMaxDegrees", m_nMaxDegrees);
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
-    if(m_nAppliedDegrees > 16 || m_nAppliedDegrees < 0)
+    if(m_nAppliedDegrees > MAX_COMMAND_DEGREES || m_nAppliedDegrees < 0)
     {
         LogInvalidDeserializedValue("CommandMoveLimbSegment::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
+
+    if(m_nAppliedDegrees < m_nMaxDegrees)
+        ValidateMoveRateCandidate("CommandMoveLimbSegment::Validate", std::min(m_nRate, m_nMaxDegrees - m_nAppliedDegrees));
+    if(m_nAppliedDegrees > 0)
+        ValidateMoveRateCandidate("CommandMoveLimbSegment::Validate", -std::min(m_nRate, m_nAppliedDegrees));
 
     // Is this line type even visible?
     if (m_nLimb >= store.m_pBiot->trait.GetLines() ||
@@ -1443,18 +1503,23 @@ void CommandMoveLimbTypeSegment::Validate(CommandLimbStore& store)
         m_nSegment = 0;
         throw std::range_error("nSegment out of range");
     }
-    if(m_nMaxDegrees > 90 || m_nMaxDegrees < 0)
+    if(m_nMaxDegrees > MAX_COMMAND_DEGREES || m_nMaxDegrees < 0)
     {
         LogInvalidDeserializedValue("CommandMoveLimbTypeSegment::Validate", "m_nMaxDegrees", m_nMaxDegrees);
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
-    if(m_nAppliedDegrees > 90 || m_nAppliedDegrees < 0)
+    if(m_nAppliedDegrees > MAX_COMMAND_DEGREES || m_nAppliedDegrees < 0)
     {
         LogInvalidDeserializedValue("CommandMoveLimbTypeSegment::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
+
+    if(m_nAppliedDegrees < m_nMaxDegrees)
+        ValidateMoveRateCandidate("CommandMoveLimbTypeSegment::Validate", std::min(m_nRate, m_nMaxDegrees - m_nAppliedDegrees));
+    if(m_nAppliedDegrees > 0)
+        ValidateMoveRateCandidate("CommandMoveLimbTypeSegment::Validate", -std::min(m_nRate, m_nAppliedDegrees));
 
     // Is this line type even visible?
     if (!store.m_pBiot->trait.IsLineTypeVisible(m_nLimbType) ||
@@ -1540,18 +1605,23 @@ void CommandMoveLimbSegments::Validate(CommandLimbStore& store)
         m_nRate = 0;
         throw std::range_error("m_nRate out of range");
     }
-    if(m_nMaxDegrees > 16 || m_nMaxDegrees < 0)
+    if(m_nMaxDegrees > MAX_COMMAND_DEGREES || m_nMaxDegrees < 0)
     {
         LogInvalidDeserializedValue("CommandMoveLimbSegments::Validate", "m_nMaxDegrees", m_nMaxDegrees);
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
-    if(m_nAppliedDegrees > 16 || m_nAppliedDegrees < 0)
+    if(m_nAppliedDegrees > MAX_COMMAND_DEGREES || m_nAppliedDegrees < 0)
     {
         LogInvalidDeserializedValue("CommandMoveLimbSegments::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
+
+    if(m_nAppliedDegrees < m_nMaxDegrees)
+        ValidateMoveRateCandidate("CommandMoveLimbSegments::Validate", std::min(m_nRate, m_nMaxDegrees - m_nAppliedDegrees));
+    if(m_nAppliedDegrees > 0)
+        ValidateMoveRateCandidate("CommandMoveLimbSegments::Validate", -std::min(m_nRate, m_nAppliedDegrees));
 
     // Is this line type even visible?
     if (m_nLimb >= store.m_pBiot->trait.GetLines())
@@ -1647,18 +1717,23 @@ void CommandMoveLimbTypeSegments::Validate(CommandLimbStore& store)
         m_nRate = 0;
         throw std::range_error("m_nRate out of range");
     }
-    if(m_nMaxDegrees > 16 || m_nMaxDegrees < 0)
+    if(m_nMaxDegrees > MAX_COMMAND_DEGREES || m_nMaxDegrees < 0)
     {
         LogInvalidDeserializedValue("CommandMoveLimbTypeSegments::Validate", "m_nMaxDegrees", m_nMaxDegrees);
         m_nMaxDegrees = 0;
         throw std::range_error("m_nMaxDegrees out of range");
     }
-    if(m_nAppliedDegrees > 16 || m_nAppliedDegrees < 0)
+    if(m_nAppliedDegrees > MAX_COMMAND_DEGREES || m_nAppliedDegrees < 0)
     {
         LogInvalidDeserializedValue("CommandMoveLimbTypeSegments::Validate", "m_nAppliedDegrees", m_nAppliedDegrees);
         m_nAppliedDegrees = 0;
         throw std::range_error("m_nAppliedDegrees out of range");
     }
+
+    if(m_nAppliedDegrees < m_nMaxDegrees)
+        ValidateMoveRateCandidate("CommandMoveLimbTypeSegments::Validate", std::min(m_nRate, m_nMaxDegrees - m_nAppliedDegrees));
+    if(m_nAppliedDegrees > 0)
+        ValidateMoveRateCandidate("CommandMoveLimbTypeSegments::Validate", -std::min(m_nRate, m_nAppliedDegrees));
 
     // Is this line type even visible?
     if (!store.m_pBiot->trait.IsLineTypeVisible(m_nLimbType))
@@ -1977,7 +2052,7 @@ void CommandMemory::Initialize(CommandLimbStore& store)
 void CommandMemory::Validate(CommandLimbStore& store)
 {
     (void)store;
-    if(m_time > 64 || m_time < 0)
+    if(m_time > MAX_MEMORY_DURATION || m_time < 0)
     {
         m_time = 0;
         throw std::range_error("m_time out of range");
