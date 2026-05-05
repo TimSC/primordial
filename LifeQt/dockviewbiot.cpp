@@ -63,7 +63,7 @@ void DockViewBiot::BiotUpdated(Biot* pBiot)
     }
     this->ui->daysOldEdit->setText(QString::asprintf("%f", pBiot->m_age * 0.05 / CEnvStats::SAMPLE_TIME));
     this->ui->lifespanEdit->setText(QString::asprintf("%f", pBiot->m_maxAge * 0.05 / CEnvStats::SAMPLE_TIME));
-    this->ui->energyEdit->setText(QString::asprintf("%d", pBiot->energy));
+    this->ui->energyEdit->setText(QString::asprintf("%ld", pBiot->energy));
     this->ui->sickTimeEdit->setText(QString::asprintf("%d", pBiot->m_nSick));
 
     this->ui->childredEdit->setText(pBiot->m_sWorldName.c_str());

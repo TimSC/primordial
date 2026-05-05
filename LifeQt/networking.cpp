@@ -143,7 +143,7 @@ void Networking::clientBytesAvailable()
 
         assemblyBuffer.append(rxBuffer, readBytes);
 
-        if(assemblyBuffer.size() >= sizeof(uint32_t)+magicCodeLen)
+        if(assemblyBuffer.size() >= (int)(sizeof(uint32_t)+magicCodeLen))
         {
             QByteArray chkMagicCode = assemblyBuffer.left(magicCodeLen);
             if(chkMagicCode != magicCode.c_str())

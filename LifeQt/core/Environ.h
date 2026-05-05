@@ -146,7 +146,7 @@ public:
     EnvironmentListener() {};
     virtual ~EnvironmentListener() {};
 
-    virtual void BiotUpdated(Biot* pBiot) {};
+    virtual void BiotUpdated(Biot*) {};
 };
 
 // ////////////////////////////////////////////////////////////////////

@@ -93,6 +93,7 @@ void MainApp::TimedUpdate(bool running)
 
 void MainApp::timerEvent(QTimerEvent *event)
 {
+    (void)event;
 
 }
 
@@ -289,6 +290,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::timerEvent(QTimerEvent *event)
 {
+    (void)event;
     int64_t now = QDateTime::currentMSecsSinceEpoch();
 
     app.TimedUpdate(this->ui->actionStart_Simulation->isChecked());
@@ -391,6 +393,7 @@ void MainWindow::on_actionStart_Simulation_triggered()
 
 void MainWindow::on_actionStart_Simulation_triggered(bool checked)
 {
+    (void)checked;
 
 }
 
@@ -494,6 +497,7 @@ void MainWindow::on_actionNetwork_Status_triggered()
 
 void MainWindow::SelectedBiot(uint32_t biotId)
 {
+    (void)biotId;
     if(!this->isFullScreen())
         this->ui->dockViewBiot->setVisible(true);
 }

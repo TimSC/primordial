@@ -50,6 +50,7 @@ void NetworkUi::sideAssigned(int side)
 
 void NetworkUi::sideStateChanged(int side, QAbstractSocket::SocketState state)
 {
+    (void)state;
     if(side == 0)
         UpdateRow(0, this->ui->addressEdit, this->ui->status, this->ui->connectButton);
     else if(side == 1)

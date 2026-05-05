@@ -103,7 +103,7 @@ std::string Biot::GetFatherName()
     {
         if (m_fatherGeneration > 0)
         {
-            QString sNameTmp = QString::asprintf(":%lu", m_fatherGeneration);
+            QString sNameTmp = QString::asprintf(":%u", m_fatherGeneration);
             sName = sNameTmp.toStdString();
         }
         sName = m_sFatherName + sName;
@@ -122,7 +122,7 @@ std::string Biot::GetFullName()
     std::string sName;
     if (m_generation > 0)
     {
-        QString sNameTmp = QString::asprintf(":%lu", m_generation);
+        QString sNameTmp = QString::asprintf(":%u", m_generation);
         sName = sNameTmp.toStdString();
     }
     sName = GetName() + sName;
@@ -339,7 +339,7 @@ int Biot::Initialize(bool bRandom)
 //
 int Biot::PlaceRandom(void)
 {
-    int i = 0, x = 0, y = 0;
+    int i = 0;
 
     Randomizer rand;
 
@@ -362,7 +362,7 @@ int Biot::PlaceRandom(void)
     }
        
     if (i > 8)
-    env.NoRoomToGiveBirth();
+        env.NoRoomToGiveBirth();
     Place(origin.x(), origin.y());
     return i;
 }
@@ -403,7 +403,9 @@ static int side[8][2] = {
   {
     nPos++;
     if (nPos > 7)
+    {
       nPos -= 8;
+    }
 
       origin.setX(parent.origin.x() + parent.Width() * side[nPos][0]);
       origin.setY(parent.origin.y() + parent.Height() * side[nPos][1]);
@@ -457,10 +459,13 @@ int64_t Biot::UpdateShape(int aRatio)
     turnBenefit    = 0;
 
     memset(distance, 0x00, sizeof(distance));
-    memset(stopPtLocal,   0x00, sizeof(stopPtLocal));
-    memset(startPtLocal,  0x00, sizeof(startPtLocal));
-    memset(stopPt,   0x00, sizeof(stopPt));
-    memset(startPt,  0x00, sizeof(startPt));
+    for (int i = 0; i < MAX_GENES; i++)
+    {
+        stopPtLocal[i] = QPointF();
+        startPtLocal[i] = QPointF();
+        stopPt[i] = QPointF();
+        startPt[i] = QPointF();
+    }
     memset(nType,    0x00, sizeof(nType));
     bShapeChanged = true;
 
@@ -631,7 +636,7 @@ inline QPointF Biot::RotatePoint(const QPointF &pt, double rotCos, double rotSin
     return out;
 }
 
-// ///////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+// /////////////////////////////////////////////////////////////////
 // Distance                                                           
 //
 // d=square root of (x1 - x2) sqaured + (y1 - y2) squared
@@ -821,7 +826,7 @@ bool Biot::Move(void)
     // We must account for the center of mass in relation
     // to the origin.  We estimate the center of mass
     // to be the center of the bounding rectangle
-    int dr = posAndSpeed.tryRotate(origin, Center(center));
+    posAndSpeed.tryRotate(origin, Center(center));
     int dx = posAndSpeed.tryStepX();
     int dy = posAndSpeed.tryStepY();
 
@@ -861,7 +866,7 @@ bool Biot::Move(void)
 
                         MoveBiot(-dx, -dy);
 
-                        dr = posAndSpeed.tryRotate(origin, Center(center));
+                        posAndSpeed.tryRotate(origin, Center(center));
                         dx = posAndSpeed.tryStepX();
                         dy = posAndSpeed.tryStepY();
 
@@ -883,7 +888,7 @@ bool Biot::Move(void)
                         posAndSpeed.setDeltaY((float)tempDY);
 
                         MoveBiot(-dx, -dy);
-                        dr = posAndSpeed.tryRotate(origin, Center(center));
+                        posAndSpeed.tryRotate(origin, Center(center));
                         dx = posAndSpeed.tryStepX();
                         dy = posAndSpeed.tryStepY();
 
@@ -1726,25 +1731,25 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
     m_commandArray2.SerializeJsonLoad(v["m_commandArray2"]);
 
     const Value &storeArray = v["m_store"];
-    for(int i=0; i<storeArray.Size() and i < MAX_LIMBS; i++)
+    for(rapidjson::SizeType i=0; i<storeArray.Size() and i < MAX_LIMBS; i++)
         m_store[i].SerializeJsonLoad(*this, storeArray[i]);
 
     posAndSpeed.SerializeJsonLoad(v["vector"]);
 
     // Now handle biot level variables
     const Value &stateJson = v["state"];
-    for(int i=0; i<stateJson.Size() and i < MAX_GENES; i++)
+    for(rapidjson::SizeType i=0; i<stateJson.Size() and i < MAX_GENES; i++)
         state[i] = stateJson[i].GetInt();
 
     const Value &retractDrawn = v["m_retractDrawn"];
     const Value &retractRadius = v["m_retractRadius"];
     const Value &retractSegment = v["m_retractSegment"];
 
-    for(int i=0; i<retractDrawn.Size() and i < MAX_LIMBS; i++)
+    for(rapidjson::SizeType i=0; i<retractDrawn.Size() and i < MAX_LIMBS; i++)
         m_retractDrawn[i] = retractDrawn[i].GetInt();
-    for(int i=0; i<retractRadius.Size() and i < MAX_LIMBS; i++)
+    for(rapidjson::SizeType i=0; i<retractRadius.Size() and i < MAX_LIMBS; i++)
         m_retractRadius[i] = retractRadius[i].GetInt();
-    for(int i=0; i<retractSegment.Size() and i < MAX_LIMBS; i++)
+    for(rapidjson::SizeType i=0; i<retractSegment.Size() and i < MAX_LIMBS; i++)
         m_retractSegment[i] = retractSegment[i].GetInt();
 
     max_genes = v["max_genes"].GetInt();
@@ -1936,7 +1941,6 @@ bool Biot::MoveSegmentType(int nLineType, int nSegment, short rate, short offset
     assert(nLineType < MAX_LIMB_TYPES && nLineType >= 0);
     assert(nSegment < MAX_SEGMENTS && nSegment >= 0);
 
-    GeneSegment& segment = trait.GetSegmentType(nLineType, nSegment);
     short& nAngle = m_angleLimbTypeSegment[nLineType][nSegment];
     if (offset != nAngle)
     {

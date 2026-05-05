@@ -50,7 +50,6 @@ Biot* CBiotList::FindBiotByID(uint32_t id)
 Biot* CBiotList::FindBiotByPoint(int x, int y)
 {
     int minDist = 30000;
-    int minBiot = -1;
     Biot *bestBiot = nullptr;
 
     for (int i = 0; i < size(); i++)
@@ -60,7 +59,6 @@ Biot* CBiotList::FindBiotByPoint(int x, int y)
             distance < minDist)
         {
             minDist = distance;
-            minBiot = i;
             bestBiot = this->at(i);
         }
     }
@@ -115,8 +113,6 @@ Biot* CBiotList::HitCheck(Biot *me, int* pStart)
 
 void CBiotList::SerializeJson(class Environment &env, rapidjson::Document &d, rapidjson::Value &v)
 {
-    Document::AllocatorType& allocator = d.GetAllocator();
-
     Value biotsJson(kArrayType);
     for(int i=0; i<env.m_biotList.size(); i++)
     {
@@ -139,7 +135,7 @@ void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value
     if(!biotsJson.IsArray() || biotsJson.Size() > MAX_BIOTS_IN_SAVE)
         throw std::runtime_error("eror parsing json");
 
-    for (int i = 0; i < biotsJson.Size(); i++)
+    for (rapidjson::SizeType i = 0; i < biotsJson.Size(); i++)
     {
         std::unique_ptr<Biot> pBiot(new Biot(env));
         pBiot->SerializeJsonLoad(biotsJson[i]);
@@ -360,6 +356,7 @@ void CEnvStats::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
 
     int32_t version = v["archVersion"].GetInt();
+    (void)version;
 
     m_births = v["m_births"].GetInt64();
     m_deaths = v["m_deaths"].GetInt64();
@@ -427,7 +424,7 @@ void CEnvStatsList::SerializeJsonLoad(const rapidjson::Value& v)
     clear();
     const Value &arr = v["stats"];
 
-    for(int i=0; i!=arr.Size(); i++)
+    for(rapidjson::SizeType i=0; i!=arr.Size(); i++)
     {
         CEnvStats stats;
         stats.SerializeJsonLoad(arr[i]);
@@ -963,11 +960,11 @@ void Environment::Fuzz()
             try {
                 biot->SerializeJsonLoad(d["biot"]);
             }
-            catch (std::runtime_error &err) {
-                std::cout << "Fuzzed json failed to load" << std::endl;
-            }
             catch (std::range_error &err) {
                 std::cout << "Fuzzed json out of range" << std::endl;
+            }
+            catch (std::runtime_error &err) {
+                std::cout << "Fuzzed json failed to load" << std::endl;
             }
         }
     }

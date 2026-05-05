@@ -139,11 +139,11 @@ void ProductArray::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
 
     const Value &pt = v["m_productTerm"];
-    for (int i = 0; i < pt.Size() and i < MAX_PRODUCT_TERMS; i++)
+    for (rapidjson::SizeType i = 0; i < pt.Size() and i < MAX_PRODUCT_TERMS; i++)
         m_productTerm[i].SerializeJsonLoad(pt[i]);
 
     const Value &ps = v["m_productSum"];
-    for (int i = 0; i < ps.Size() and i < MAX_PRODUCT_SUMS; i++)
+    for (rapidjson::SizeType i = 0; i < ps.Size() and i < MAX_PRODUCT_SUMS; i++)
         m_productSum[i].SerializeJsonLoad(ps[i]);
 }
 
@@ -225,7 +225,7 @@ void ProductSum::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
 
     const Value &ref = v["m_reference"];
-    for (int i = 0; i < ref.Size() and i < MAX_PRODUCT_SUM_TERMS; i++)
+    for (rapidjson::SizeType i = 0; i < ref.Size() and i < MAX_PRODUCT_SUM_TERMS; i++)
          m_reference[i] = ref[i].GetUint();
 
     m_bTrue = v["m_bTrue"].GetBool();
@@ -462,13 +462,13 @@ void CommandArray::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
 
     const Value &commArrJson = v["m_command"];
-    for (int i = 0; i < commArrJson.Size() and i < MAX_COMMANDS; i++)
+    for (rapidjson::SizeType i = 0; i < commArrJson.Size() and i < MAX_COMMANDS; i++)
         m_command[i].SerializeJsonLoad(commArrJson[i]);
 
     m_productArray.SerializeJsonLoad(v["m_productArray"]);
 
     const Value &commLimbArrJson = v["m_commandLimbType"];
-    for (int i = 0; i < commLimbArrJson.Size() and i < MAX_LIMB_TYPES; i++)
+    for (rapidjson::SizeType i = 0; i < commLimbArrJson.Size() and i < MAX_LIMB_TYPES; i++)
         m_commandLimbType[i].SerializeJsonLoad(commLimbArrJson[i]);
 }
 
@@ -555,24 +555,24 @@ void CommandLimbType::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
 
     const Value &cr = v["m_comref"];
-    for(int i=0; i<cr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
+    for(rapidjson::SizeType i=0; i<cr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
         m_comref[i] = cr[i].GetUint();
 
     const Value &sr = v["m_sumref"];
-    for(int i=0; i<sr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
+    for(rapidjson::SizeType i=0; i<sr.Size() and i < MAX_COMMANDS_PER_LIMB; i++)
         m_sumref[i] = sr[i].GetUint();
 
     //Ensure data is valid
     Randomizer rand;
     for(int i=0; i < MAX_COMMANDS_PER_LIMB; i++)
     {
-        if(m_comref[i] < 0 or m_comref[i] >= CommandArray::MAX_COMMANDS)
+        if(m_comref[i] >= CommandArray::MAX_COMMANDS)
             m_comref[i] = rand.Byte(CommandArray::MAX_COMMANDS);
     }
 
     for(int i=0; i < MAX_COMMANDS_PER_LIMB; i++)
     {
-        if(m_sumref[i] < 0 or m_sumref[i] >= ProductArray::MAX_PRODUCT_SUMS)
+        if(m_sumref[i] >= ProductArray::MAX_PRODUCT_SUMS)
             m_sumref[i] = rand.Byte(ProductArray::MAX_PRODUCT_SUMS);
     }
 }
@@ -829,7 +829,7 @@ void CommandLimbStore::SerializeJsonLoad(Biot& biot, const rapidjson::Value& v)
     const Value &commandJson = v["command"];
     if(!commandJson.IsArray())
         throw std::runtime_error("eror parsing json");
-    for(int i=0; i<commandJson.Size() and i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
+    for(rapidjson::SizeType i=0; i<commandJson.Size() and i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
     {
         //Store binary data as base64 encoded string
         if(!commandJson[i].IsString()) continue;
@@ -886,6 +886,7 @@ void CommandFlapLimbTypeSegment::Initialize(CommandLimbStore& store)
 
 void CommandFlapLimbTypeSegment::Validate(CommandLimbStore& store)
 {
+    (void)store;
     if(m_nLimbType > MAX_LIMB_TYPES || m_nLimbType < 0)
     {
         m_nLimbType = 0;
@@ -1626,6 +1627,7 @@ void CommandRetractLimb::Initialize(CommandLimbStore& store)
 
 void CommandRetractLimb::Validate(CommandLimbStore& store)
 {
+    (void)store;
 
     if(m_nLimb > MAX_LIMBS || m_nLimb < 0)
     {
@@ -1727,6 +1729,7 @@ void CommandRetractLimbType::Initialize(CommandLimbStore& store)
 
 void CommandRetractLimbType::Validate(CommandLimbStore& store)
 {
+    (void)store;
     if(m_nLimbType > MAX_LIMB_TYPES || m_nLimbType < 0)
     {
         m_nLimbType = 0;
@@ -1787,6 +1790,7 @@ void CommandNOP::Initialize(CommandLimbStore& /*store*/)
 
 void CommandNOP::Validate(CommandLimbStore& store)
 {
+    (void)store;
 
 }
 
@@ -1822,6 +1826,7 @@ void CommandMemory::Initialize(CommandLimbStore& store)
 
 void CommandMemory::Validate(CommandLimbStore& store)
 {
+    (void)store;
     if(m_time > 64 || m_time < 0)
     {
         m_time = 0;
@@ -1917,8 +1922,6 @@ void CommandMemory::Execute(CommandLimbStore& store)
         }
     }
 }
-
-
 
 
 

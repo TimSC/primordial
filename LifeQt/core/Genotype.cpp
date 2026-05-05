@@ -178,6 +178,7 @@ void GeneLimb::Randomize(int nSegmentsPerArm)
 
 void GeneLimb::Debug(int nSegmentsPerArm)
 {
+    (void)nSegmentsPerArm;
     for (int i = 0; i < MAX_SEGMENTS; i++)
     {
         m_segment[i].Debug(i, (i < MAX_SEGMENTS/2)?true:false);
@@ -223,9 +224,11 @@ void GeneLimb::Mutate(int chance)
 
 void GeneLimb::Crossover(GeneLimb&  gLine)
 {
-  for (int i = 0; i < MAX_SEGMENTS; i++)
-    if (Bool())
-      m_segment[i] = gLine.m_segment[i];
+    for (int i = 0; i < MAX_SEGMENTS; i++)
+    {
+        if (Bool())
+            m_segment[i] = gLine.m_segment[i];
+    }
 
     ToggleSegments();
 }
@@ -250,7 +253,7 @@ void GeneLimb::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
 
     const Value &seg = v["m_segment"];
-    for (int i = 0; i < seg.Size() and i<MAX_SEGMENTS; i++)
+    for (rapidjson::SizeType i = 0; i < seg.Size() and i<MAX_SEGMENTS; i++)
         m_segment[i].SerializeJsonLoad(seg[i]);
 
     ToggleSegments();
@@ -348,7 +351,7 @@ void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
 
     const Value &gl = v["m_geneLine"];
-    for (int i = 0; i < gl.Size() and i<MAX_LIMB_TYPES; i++)
+    for (rapidjson::SizeType i = 0; i < gl.Size() and i<MAX_LIMB_TYPES; i++)
             m_geneLine[i].SerializeJsonLoad(gl[i]);
 
     m_disperse = v["m_disperse"].GetUint();
@@ -364,7 +367,7 @@ void GeneTrait::SerializeJsonLoad(const rapidjson::Value& v)
     for (int i = 0; i < MAX_LIMBS; i++)
         m_lineRef[i] = 0;
     const Value &lr = v["m_lineRef"];
-    for(int i=0; i<lr.Size() and i<MAX_LIMBS; i++)
+    for(rapidjson::SizeType i=0; i<lr.Size() and i<MAX_LIMBS; i++)
     {
         uint8_t val = lr[i].GetUint(); //Can't be negative due to unsigned type
         if(val >= MAX_LIMB_TYPES) throw std::range_error("Invalid limb type in m_lineRef");
@@ -410,10 +413,12 @@ int GeneTrait::GetCompressedToggle(int nAngle, int nLine, int nSegment)
     if (IsMirrored())
     {
         if (mirrorCoef[nLine] == -1)
+        {
             if (m_geneLine[m_lineRef[nLine]].m_toggleVisibleSegments[nSegment])
                 return -nAngle;
             else
                 return nAngle;
+        }
     }
 
     if (m_geneLine[m_lineRef[nLine]].m_toggleVisibleSegments[nSegment])
@@ -513,6 +518,8 @@ void GeneTrait::Randomize(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerA
 
 void GeneTrait::Debug(int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm)
 {
+    (void)nArmsPerBiot;
+    (void)nTypesPerBiot;
     int i;
 
     m_disperse       = (uint8_t) true;
@@ -697,5 +704,4 @@ bool GeneTrait::IsLineTypeVisible(int lineType)
 
     return false;
 }
-
 

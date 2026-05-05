@@ -200,11 +200,11 @@ void Randomizer::SerializeJsonLoad(const rapidjson::Value& v)
         throw std::runtime_error("eror parsing json");
 
     const Value &randrslArr = v["randrsl"];
-    for (int i = 0; i < randrslArr.Size() and i<RANDSIZ; i++)
+    for (rapidjson::SizeType i = 0; i < randrslArr.Size() and i<RANDSIZ; i++)
         randrsl[i] = randrslArr[i].GetUint();
 
     const Value &mmArr = v["mm"];
-    for (int i = 0; i < mmArr.Size() and i<RANDSIZ; i++)
+    for (rapidjson::SizeType i = 0; i < mmArr.Size() and i<RANDSIZ; i++)
         mm[i] = mmArr[i].GetUint();
 
     randcnt = v["randcnt"].GetUint();

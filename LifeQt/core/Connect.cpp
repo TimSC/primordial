@@ -19,12 +19,12 @@ SideListener::~SideListener()
 
 }
 
-void SideListener::BiotLeavingSide(int side, Biot *pBiot)
+void SideListener::BiotLeavingSide(int, Biot *)
 {
 
 }
 
-void SideListener::ReadyToReceive(int sideId, bool ready)
+void SideListener::ReadyToReceive(int, bool)
 {
 
 }
@@ -344,6 +344,5 @@ void BottomSide::SetSize(bool connected)
         m_lines = 1;
     }
 }
-
 
 

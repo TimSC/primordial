@@ -516,6 +516,7 @@ BRectArray::~BRectArray()
 
 void BRectArray::TraceDebug(int nIndex)
 {
+    (void)nIndex;
     for (int j = 0; j < size(); j++)
     {
         //TRACE("Array %d, index %d, rectIndex %d, value %d, biot%x\n", nIndex, j,
@@ -687,4 +688,3 @@ bool BRectArray::ValidateRect(int nPos, BRectItem* pItem)
     return (at(nPos) == pItem && GetPos(pItem) == nPos);
 
 }
-

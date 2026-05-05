@@ -262,9 +262,7 @@ inline int PosAndSpeed::tryStepY(void)
 // Actually make the step
 inline void PosAndSpeed::makeStep(void)
 {
-    int rx = int(drx);
 //    drx -= double(vx);
-    int ry = int(dry);
 //    dry -= double(vy);
     x += (dx + double(drx));
     y += (dy + double(dry));
