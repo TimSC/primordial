@@ -273,7 +273,7 @@ void CSettings::SetToDefaults()
 
     m_nSick = 200;
 
-    m_enableNetworking = true;
+    m_enableNetworking = false;
     m_networkPort = 54275;
     m_connectList.clear();
 }

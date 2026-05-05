@@ -6,11 +6,14 @@
 #include <sstream>
 #include <QDebug>
 #include <QDateTime>
+#include <QCloseEvent>
 #include <QFileDialog>
+#include <QKeyEvent>
 #include <QOpenGLWidget>
 #include <QScreen>
 #include <QLabel>
 #include <QByteArray>
+#include <QtEndian>
 #include <QWindow>
 #include <QStandardPaths>
 #include "core/Biots.h"
@@ -24,11 +27,36 @@
 using namespace std;
 using namespace rapidjson;
 
+const qint64 MAX_SAVE_FILE_SIZE = 64*1024*1024;
+
+static uint32_t GetCompressedFileSize(const QByteArray &data)
+{
+    if(data.size() < (int)sizeof(uint32_t))
+        throw runtime_error("compressed file is truncated");
+
+    return qFromBigEndian<uint32_t>((const uchar *)data.constData());
+}
+
+static QByteArray UncompressSaveFile(const QByteArray &data)
+{
+    uint32_t uncompressedSize = GetCompressedFileSize(data);
+    if(uncompressedSize > MAX_SAVE_FILE_SIZE)
+        throw runtime_error("compressed file is too large");
+
+    QByteArray uncompressed = qUncompress(data);
+    if(uncompressed.isEmpty() || uncompressed.size() > MAX_SAVE_FILE_SIZE)
+        throw runtime_error("compressed file is invalid");
+
+    return uncompressed;
+}
+
 MainApp::MainApp(): sidesManager(env),
     autoConnect(env, sidesManager)
 {
     lastSimUpdate = 0;
+#if defined(ENABLE_PRIMORDIAL_FUZZ)
     lastFuzz = 0;
+#endif
 }
 
 MainApp::~MainApp()
@@ -50,12 +78,14 @@ void MainApp::TimedUpdate(bool running)
             this->env.Update();
         }
 
+#if defined(ENABLE_PRIMORDIAL_FUZZ)
         uint64_t elapsed2 = now - lastFuzz;
         if(elapsed2 > 20)
         {
             lastFuzz = now;
             this->env.Fuzz();
         }
+#endif
     }
     else
         lastSimUpdate = now;
@@ -128,25 +158,29 @@ void MainApp::Load(const std::string &fileName)
     QSharedPointer<stringstream> ss;
     QSharedPointer<ifstream> ifs;
 
-    if(compSuffix == "plfc")
-    {
-        //Load compressed file
-        QFile fil(fileName.c_str());
-        fil.open(QIODevice::ReadOnly);
-        QByteArray dat = fil.readAll();
-        QByteArray dat2(qUncompress(dat));
-
-        ss  = QSharedPointer<stringstream>(new stringstream(dat2.constData()));
-        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
-    }
-    else
-    {
-        //Load uncompressed file
-        ifs = QSharedPointer<ifstream>(new ifstream(fileName.c_str()));
-        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ifs.data()));
-    }
-
     try {
+        if(compSuffix == "plfc")
+        {
+            //Load compressed file
+            QFile fil(fileName.c_str());
+            if(fil.size() > MAX_SAVE_FILE_SIZE)
+                throw runtime_error("file is too large");
+            fil.open(QIODevice::ReadOnly);
+            QByteArray dat = fil.readAll();
+            QByteArray dat2(UncompressSaveFile(dat));
+
+            ss  = QSharedPointer<stringstream>(new stringstream(std::string(dat2.constData(), dat2.size())));
+            isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
+        }
+        else
+        {
+            //Load uncompressed file
+            if(fi.size() > MAX_SAVE_FILE_SIZE)
+                throw runtime_error("file is too large");
+            ifs = QSharedPointer<ifstream>(new ifstream(fileName.c_str()));
+            isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ifs.data()));
+        }
+
         Document d;
         IStreamWrapper *pisw = isw.data();
         ParseResult ok = d.ParseStream(*pisw);
@@ -496,4 +530,3 @@ void MainWindow::closeEvent(QCloseEvent *ev)
 {
     app.closeEvent(ev);
 }
-

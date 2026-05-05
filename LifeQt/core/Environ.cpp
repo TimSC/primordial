@@ -11,12 +11,15 @@
 #include <math.h>
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #include <QDateTime>
 #include <QThread>
 #include "Environ.h"
 #include "Biots.h"
 
 using namespace rapidjson;
+
+const rapidjson::SizeType MAX_BIOTS_IN_SAVE = 10000;
 
 // ////////////////////////////////////////////////////////////////////
 // CBiotList
@@ -132,19 +135,15 @@ void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value
 
     FreeAll();
 
-    Biot* pBiot = nullptr;
-
     const Value &biotsJson = v["biots"];
+    if(!biotsJson.IsArray() || biotsJson.Size() > MAX_BIOTS_IN_SAVE)
+        throw std::runtime_error("eror parsing json");
 
     for (int i = 0; i < biotsJson.Size(); i++)
     {
-        if ((pBiot = new Biot(env)) != NULL)
-        {
-            pBiot->SerializeJsonLoad(biotsJson[i]);
-            env.AddBiot(pBiot);
-        }
-        else
-            break;
+        std::unique_ptr<Biot> pBiot(new Biot(env));
+        pBiot->SerializeJsonLoad(biotsJson[i]);
+        env.AddBiot(pBiot.release());
     }
 }
 

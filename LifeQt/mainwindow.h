@@ -25,7 +25,9 @@ public:
     class Environment env;
 
     int64_t lastSimUpdate;
+#if defined(ENABLE_PRIMORDIAL_FUZZ)
     int64_t lastFuzz;
+#endif
 
     class SidesManager sidesManager;
     class AutoConnect autoConnect;

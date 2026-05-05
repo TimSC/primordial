@@ -3,6 +3,7 @@
 #include <QtEndian>
 #include <QDateTime>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include "core/json.h"
 #include <rapidjson/writer.h>
@@ -13,6 +14,28 @@ using namespace std;
 using namespace rapidjson;
 
 const uint32_t MAX_PAGE_SIZE = 1024*1024;
+const uint32_t MAX_BIOT_JSON_SIZE = 512*1024;
+
+static uint32_t GetQtCompressedSize(const QByteArray &data)
+{
+    if(data.size() < (int)sizeof(uint32_t))
+        throw runtime_error("compressed biot payload is truncated");
+
+    return qFromBigEndian<uint32_t>((const uchar *)data.constData());
+}
+
+static QByteArray UncompressBiotPayload(const QByteArray &data)
+{
+    uint32_t uncompressedSize = GetQtCompressedSize(data);
+    if(uncompressedSize > MAX_BIOT_JSON_SIZE)
+        throw runtime_error("compressed biot payload is too large");
+
+    QByteArray uncompressed = qUncompress(data);
+    if(uncompressed.isEmpty() || uncompressed.size() > (int)MAX_BIOT_JSON_SIZE)
+        throw runtime_error("compressed biot payload is invalid");
+
+    return uncompressed;
+}
 
 std::string SocketStateToString(QAbstractSocket::SocketState state)
 {
@@ -124,13 +147,20 @@ void Networking::clientBytesAvailable()
         {
             QByteArray chkMagicCode = assemblyBuffer.left(magicCodeLen);
             if(chkMagicCode != magicCode.c_str())
+            {
                 cout << "Error in page magic code" << endl;
+                assembleBuffers[client].clear();
+                client->disconnectFromHost();
+                return;
+            }
 
             uint32_t expectSize=qFromBigEndian<uint32_t>(&assemblyBuffer.constData()[magicCodeLen]);
             if(expectSize > MAX_PAGE_SIZE)
             {
                 //Prevent a client using all our memory
+                assembleBuffers[client].clear();
                 client->disconnectFromHost();
+                return;
             }
             //std::cout << "rx1 " << expectSize << " " << *(uint32_t *)&assemblyBuffer.constData()[magicCodeLen] << " " << assemblyBuffer.size() << std::endl;
 
@@ -408,33 +438,35 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, QByt
 {
     cout << "biot arriving " << side << endl;
 
-    QSharedPointer<IStreamWrapper> isw;
-    QSharedPointer<stringstream> ss;
-    QSharedPointer<ifstream> ifs;
-    if(rpcType == "transfbiot")
-    {
-        ss = QSharedPointer<stringstream>(new stringstream(d.mid(10).constData()));
-        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
-    }
-    else if(rpcType == "transbiotc")
-    {
-        QByteArray dat(qUncompress(d.mid(10)));
-
-        ss = QSharedPointer<stringstream>(new stringstream(dat.constData()));
-        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
-    }
-    else return;
-
-    Biot *pBiot = nullptr;
+    std::unique_ptr<Biot> pBiot;
     try {
+        QSharedPointer<IStreamWrapper> isw;
+        QSharedPointer<stringstream> ss;
+        QSharedPointer<ifstream> ifs;
+        if(rpcType == "transfbiot")
+        {
+            QByteArray dat(d.mid(10));
+            if(dat.size() > (int)MAX_BIOT_JSON_SIZE)
+                throw runtime_error("biot payload is too large");
+            ss = QSharedPointer<stringstream>(new stringstream(std::string(dat.constData(), dat.size())));
+            isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
+        }
+        else if(rpcType == "transbiotc")
+        {
+            QByteArray dat(UncompressBiotPayload(d.mid(10)));
+
+            ss = QSharedPointer<stringstream>(new stringstream(std::string(dat.constData(), dat.size())));
+            isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
+        }
+        else return;
 
         Document doc;
         ParseResult ok = doc.ParseStream(*isw.data());
         if (!ok)
             throw runtime_error("eror parsing json");
-        pBiot = new Biot(env);
         if (!doc.IsObject() or !doc.HasMember("biot"))
             throw runtime_error("eror parsing json");
+        pBiot.reset(new Biot(env));
         pBiot->SerializeJsonLoad(doc["biot"]);
 
     } catch (exception &err) {
@@ -444,7 +476,7 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, QByt
     }
 
     pBiot->OnOpen();
-    env.side[side]->ReceiveBiotFromNetwork(pBiot);
+    env.side[side]->ReceiveBiotFromNetwork(pBiot.release());
 }
 
 void SidesManager::readyToReceive(int sideId, bool ready)

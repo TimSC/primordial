@@ -3,8 +3,11 @@
 #include <QPainter>
 #include <QDateTime>
 #include <QFileDialog>
+#include <QFileInfo>
+#include <QMouseEvent>
 #include <iostream>
 #include <fstream>
+#include <memory>
 #include "core/json.h"
 #include "rapidjson/writer.h"
 #include <rapidjson/ostreamwrapper.h>
@@ -12,6 +15,8 @@
 
 using namespace std;
 using namespace rapidjson;
+
+const qint64 MAX_SINGLE_BIOT_FILE_SIZE = 1024*1024;
 
 EnvironmentArea::EnvironmentArea(QWidget *central) : QOpenGLWidget(central)
 {
@@ -148,20 +153,25 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
         if (fileName.isEmpty())
                 return;
 
-        Document d;
-
-        ifstream ifs(fileName.toStdString().c_str());
-        IStreamWrapper isw(ifs);
+        std::unique_ptr<Biot> loadedBiot;
 
         try {
+            QFileInfo fi(fileName);
+            if(fi.size() > MAX_SINGLE_BIOT_FILE_SIZE)
+                throw runtime_error("file is too large");
+
+            Document d;
+
+            ifstream ifs(fileName.toStdString().c_str());
+            IStreamWrapper isw(ifs);
 
             ParseResult ok = d.ParseStream(isw);
             if (!ok)
                 throw runtime_error("eror parsing json");
-            pBiot = new Biot(*env);
             if (!d.IsObject() or !d.HasMember("biot"))
                 throw runtime_error("eror parsing json");
-            pBiot->SerializeJsonLoad(d["biot"]);
+            loadedBiot.reset(new Biot(*env));
+            loadedBiot->SerializeJsonLoad(d["biot"]);
 
         }
         catch (exception &err) {
@@ -170,6 +180,7 @@ void EnvironmentArea::mousePressEvent(QMouseEvent * event)
             return;
         }
 
+        pBiot = loadedBiot.release();
         pBiot->Place(x, y);
         pBiot->OnOpen();
         env->AddBiot(pBiot);

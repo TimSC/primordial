@@ -8,9 +8,21 @@
 #include "Environ.h"
 #include "Biots.h"
 #include <iostream>
+#include <stdexcept>
 #include <QPainter>
 
 using namespace rapidjson;
+
+const rapidjson::SizeType MAX_BIOT_STRING_LENGTH = 256;
+
+static std::string LoadBiotString(const rapidjson::Value& v, const char *name)
+{
+    const rapidjson::Value& value = v[name];
+    if(!value.IsString() || value.GetStringLength() > MAX_BIOT_STRING_LENGTH)
+        throw std::runtime_error("eror parsing json");
+
+    return std::string(value.GetString(), value.GetStringLength());
+}
 
 // ////////////////////////////////////////////////////////////////////
 // Biot Class
@@ -1747,10 +1759,10 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
     stepEnergy = v["stepEnergy"].GetInt();
     ratio = v["ratio"].GetInt();
     m_age = v["m_age"].GetInt();
-    m_sName = v["m_sName"].GetString();
-    m_sWorldName = v["m_sWorldName"].GetString();
-    m_sFatherName = v["m_sFatherName"].GetString();
-    m_sFatherWorldName = v["m_sFatherWorldName"].GetString();
+    m_sName = LoadBiotString(v, "m_sName");
+    m_sWorldName = LoadBiotString(v, "m_sWorldName");
+    m_sFatherName = LoadBiotString(v, "m_sFatherName");
+    m_sFatherWorldName = LoadBiotString(v, "m_sFatherWorldName");
 
     if (max_genes > MAX_GENES)
         max_genes = MAX_GENES;
