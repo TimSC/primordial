@@ -26,6 +26,11 @@ static void AssertInvalidRuntimeBiotData()
     assert(false && "invalid runtime biot data");
 }
 
+static void LogInvalidValue(const char *functionName, const char *valueName, int value)
+{
+    std::cerr << functionName << ": invalid " << valueName << " value " << value << std::endl;
+}
+
 static std::string LoadBiotString(const rapidjson::Value& v, const char *name)
 {
     const rapidjson::Value& value = v[name];
@@ -33,6 +38,26 @@ static std::string LoadBiotString(const rapidjson::Value& v, const char *name)
         throw std::runtime_error("eror parsing json");
 
     return std::string(value.GetString(), value.GetStringLength());
+}
+
+static void ValidateBiotStateAfterShapeLoad(Biot& biot)
+{
+    for (int i = 0; i < MAX_GENES; i++)
+    {
+        if (biot.state[i] > biot.distance[i])
+        {
+            LogInvalidValue("Biot::OnOpen", "state", biot.state[i]);
+            LogInvalidValue("Biot::OnOpen", "distance", biot.distance[i]);
+            throw std::range_error("biot state length out of range");
+        }
+
+        if (biot.state[i] < -biot.distance[i])
+        {
+            LogInvalidValue("Biot::OnOpen", "state", biot.state[i]);
+            LogInvalidValue("Biot::OnOpen", "distance", biot.distance[i]);
+            throw std::range_error("biot missing state length out of range");
+        }
+    }
 }
 
 // ////////////////////////////////////////////////////////////////////
@@ -1811,6 +1836,7 @@ bool Biot::OnOpen()
     adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.settings.startEnergy;
 
     totalDistance   = UpdateShape(ratio);
+    ValidateBiotStateAfterShapeLoad(*this);
     UpdateShapeRotation();
     childBaseEnergy = totalDistance * env.settings.startEnergy;
 
