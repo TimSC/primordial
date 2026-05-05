@@ -7,6 +7,7 @@
 #include "Genotype.h"
 #include "Environ.h"
 #include "Biots.h"
+#include <cassert>
 #include <iostream>
 #include <stdexcept>
 #include <QPainter>
@@ -18,6 +19,11 @@ const rapidjson::SizeType MAX_BIOT_STRING_LENGTH = 256;
 static void LogInvalidIndex(const char *functionName, const char *indexName, int value)
 {
     std::cerr << functionName << ": invalid " << indexName << " index " << value << std::endl;
+}
+
+static void AssertInvalidRuntimeBiotData()
+{
+    assert(false && "invalid runtime biot data");
 }
 
 static std::string LoadBiotString(const rapidjson::Value& v, const char *name)
@@ -1874,6 +1880,7 @@ bool Biot::MoveLineType(int nLineType, short rate, short offset)
     if(nLineType >= MAX_LIMB_TYPES || nLineType < 0)
     {
         LogInvalidIndex("Biot::MoveLineType", "line type", nLineType);
+        AssertInvalidRuntimeBiotData();
         return true;
     }
 
@@ -1917,6 +1924,7 @@ bool Biot::MoveLine(int nLine, short rate, short offset)
     if(nLine >= MAX_LIMBS || nLine < 0)
     {
         LogInvalidIndex("Biot::MoveLine", "line", nLine);
+        AssertInvalidRuntimeBiotData();
         return true;
     }
 
@@ -1964,6 +1972,7 @@ bool Biot::MoveSegmentType(int nLineType, int nSegment, short rate, short offset
             LogInvalidIndex("Biot::MoveSegmentType", "line type", nLineType);
         if(nSegment >= MAX_SEGMENTS || nSegment < 0)
             LogInvalidIndex("Biot::MoveSegmentType", "segment", nSegment);
+        AssertInvalidRuntimeBiotData();
         return true;
     }
 
@@ -2076,6 +2085,7 @@ short Biot::RetractLine(int nSegment, int nLimb, int maxRadius)
            LogInvalidIndex("Biot::RetractLine", "limb", nLimb);
        if(nSegment >= MAX_SEGMENTS || nSegment < 0)
            LogInvalidIndex("Biot::RetractLine", "segment", nSegment);
+       AssertInvalidRuntimeBiotData();
        return (uint8_t) 0;
    }
 
@@ -2104,6 +2114,7 @@ short Biot::ExtendLine(int nSegment, int nLimb)
            LogInvalidIndex("Biot::ExtendLine", "limb", nLimb);
        if(nSegment >= MAX_SEGMENTS || nSegment < 0)
            LogInvalidIndex("Biot::ExtendLine", "segment", nSegment);
+       AssertInvalidRuntimeBiotData();
        return (uint8_t) 0;
    }
 
@@ -2138,6 +2149,7 @@ short Biot::RetractLimbType(int nSegment, int nLimbType, int maxRadius)
             LogInvalidIndex("Biot::RetractLimbType", "limb type", nLimbType);
         if(nSegment >= MAX_SEGMENTS || nSegment < 0)
             LogInvalidIndex("Biot::RetractLimbType", "segment", nSegment);
+        AssertInvalidRuntimeBiotData();
         return (uint8_t) 0;
     }
 
@@ -2185,6 +2197,7 @@ short Biot::ExtendLimbType(int nSegment, int nLimbType)
             LogInvalidIndex("Biot::ExtendLimbType", "limb type", nLimbType);
         if(nSegment >= MAX_SEGMENTS || nSegment < 0)
             LogInvalidIndex("Biot::ExtendLimbType", "segment", nSegment);
+        AssertInvalidRuntimeBiotData();
         return (uint8_t) 0;
     }
 
@@ -2230,6 +2243,7 @@ short Biot::MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate)
             LogInvalidIndex("Biot::MoveLimbTypeSegment", "limb type", nLimbType);
         if(nSegment >= MAX_SEGMENTS || nSegment < 0)
             LogInvalidIndex("Biot::MoveLimbTypeSegment", "segment", nSegment);
+        AssertInvalidRuntimeBiotData();
         return 0;
     }
 
@@ -2252,6 +2266,7 @@ short Biot::MoveLimbTypeSegment(int nSegment, int nLimbType, int nRate)
     if(nRate > MAX_RATE || nRate < -MAX_RATE)
     {
         LogInvalidIndex("Biot::MoveLimbTypeSegment", "rate", nRate);
+        AssertInvalidRuntimeBiotData();
         return 0;
     }
 
@@ -2270,6 +2285,7 @@ short Biot::MoveLimbTypeSegments(int nLimbType, int nRate)
     if(nLimbType >= MAX_LIMB_TYPES || nLimbType < 0)
     {
         LogInvalidIndex("Biot::MoveLimbTypeSegments", "limb type", nLimbType);
+        AssertInvalidRuntimeBiotData();
         return 0;
     }
 
@@ -2292,6 +2308,7 @@ short Biot::MoveLimbTypeSegments(int nLimbType, int nRate)
     if(nRate > MAX_RATE || nRate < -MAX_RATE)
     {
         LogInvalidIndex("Biot::MoveLimbTypeSegments", "rate", nRate);
+        AssertInvalidRuntimeBiotData();
         return 0;
     }
 
@@ -2310,6 +2327,7 @@ short Biot::MoveLimbSegments(int nLimb, int nRate)
     if(nLimb >= MAX_LIMBS || nLimb < 0)
     {
         LogInvalidIndex("Biot::MoveLimbSegments", "limb", nLimb);
+        AssertInvalidRuntimeBiotData();
         return 0;
     }
 
@@ -2332,6 +2350,7 @@ short Biot::MoveLimbSegments(int nLimb, int nRate)
     if(nRate > MAX_RATE || nRate < -MAX_RATE)
     {
         LogInvalidIndex("Biot::MoveLimbSegments", "rate", nRate);
+        AssertInvalidRuntimeBiotData();
         return 0;
     }
 
@@ -2354,6 +2373,7 @@ short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
             LogInvalidIndex("Biot::MoveLimbSegment", "limb", nLimb);
         if(nSegment >= MAX_SEGMENTS || nSegment < 0)
             LogInvalidIndex("Biot::MoveLimbSegment", "segment", nSegment);
+        AssertInvalidRuntimeBiotData();
         return 0;
     }
 
@@ -2377,6 +2397,7 @@ short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
     if(nRate > MAX_RATE || nRate < -MAX_RATE)
     {
         LogInvalidIndex("Biot::MoveLimbSegment", "rate", nRate);
+        AssertInvalidRuntimeBiotData();
         return 0;
     }
 
@@ -2429,6 +2450,7 @@ void Biot::paintGL(QPainter &painter)
             if(aPen < 0 || aPen >= env.settings.pens.size())
             {
                 LogInvalidIndex("Biot::paintGL", "pen", aPen);
+                AssertInvalidRuntimeBiotData();
                 aPen = GREEN_LEAF;
             }
 

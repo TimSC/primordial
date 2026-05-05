@@ -10,6 +10,7 @@
 #include <sstream>
 #include <math.h>
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <memory>
 #include <QDateTime>
@@ -20,6 +21,18 @@
 using namespace rapidjson;
 
 const rapidjson::SizeType MAX_BIOTS_IN_SAVE = 10000;
+
+static void RestoreBiotFromJson(Biot& biot, const std::string& json)
+{
+    Document restoreDoc;
+    StringStream restoreStream(json.c_str());
+    ParseResult restoreOk = restoreDoc.ParseStream(restoreStream);
+    if (!restoreOk || !restoreDoc.IsObject() || !restoreDoc.HasMember("biot"))
+        throw std::runtime_error("failed to restore original biot during fuzzing");
+
+    biot.SerializeJsonLoad(restoreDoc["biot"]);
+    biot.OnOpen();
+}
 
 // ////////////////////////////////////////////////////////////////////
 // CBiotList
@@ -142,6 +155,8 @@ void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value
         pBiot->SerializeJsonLoad(biotsJson[i]);
         env.AddBiot(pBiot.release());
     }
+
+    assert(env.m_biotList.size() == (int)biotsToLoad);
 }
 
 // ////////////////////////////////////////////////////////////////////
@@ -939,7 +954,8 @@ void Environment::Fuzz()
         OStreamWrapper osw(ss);
         Writer<OStreamWrapper> writer(osw);
         d.Accept(writer);
-        std::string buff = ss.str();
+        std::string originalBuff = ss.str();
+        std::string buff = originalBuff;
 
         //Add noise
         int corruptBytes = 1;//+Integer(3);
@@ -964,9 +980,11 @@ void Environment::Fuzz()
             }
             catch (std::range_error &err) {
                 std::cout << "Fuzzed json out of range: " << err.what() << std::endl;
+                RestoreBiotFromJson(*biot, originalBuff);
             }
             catch (std::runtime_error &err) {
                 std::cout << "Fuzzed json failed to load: " << err.what() << std::endl;
+                RestoreBiotFromJson(*biot, originalBuff);
             }
         }
     }

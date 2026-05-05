@@ -34,6 +34,11 @@ static void ValidateMoveRateCandidate(const char *context, int value)
     }
 }
 
+static void AssertInvalidRuntimeCommandData()
+{
+    assert(false && "invalid runtime command data");
+}
+
 //
 // ProductTerm (Picks a subset sensor bits that must be true or false)
 //
@@ -393,21 +398,30 @@ int CommandArgument::GetLimb(int actualLimb)
             out = (int) m_limb + actualLimb;
     }
     if(out >= MAX_LIMBS || out < 0)
+    {
+        AssertInvalidRuntimeCommandData();
         return 0;
+    }
     return out;
 }
 
 short CommandArgument::GetSegment()
 {
     if(m_segment >= MAX_SEGMENTS)
+    {
+        AssertInvalidRuntimeCommandData();
         return 0;
+    }
     return m_segment;
 }
 
 int CommandArgument::GetCommand()
 {
     if(m_command >= COMMAND_MAX_TYPES || m_command < 0)
+    {
+        AssertInvalidRuntimeCommandData();
         return 0;
+    }
     return m_command;
 }
 
@@ -681,6 +695,7 @@ void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
     if(nLimbType >= MAX_LIMB_TYPES || nLimbType < 0)
     {
         LogInvalidDeserializedIndex("CommandLimbStore::Initialize", "nLimbType", nLimbType);
+        AssertInvalidRuntimeCommandData();
         return;
     }
 
@@ -736,6 +751,7 @@ void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
 
             default:
                 LogInvalidDeserializedIndex("CommandLimbStore::Initialize", "command", m_pArg->GetCommand());
+                AssertInvalidRuntimeCommandData();
                 break;
         }
     }
@@ -861,6 +877,7 @@ void CommandLimbStore::Execute(Biot& biot, uint32_t dwSensor)
 
             default:
                 LogInvalidDeserializedIndex("CommandLimbStore::Execute", "command", m_pArg->GetCommand());
+                AssertInvalidRuntimeCommandData();
                 break;
         }
     }
@@ -1640,11 +1657,13 @@ void CommandMoveLimbSegments::Execute(CommandLimbStore& store)
     if(m_nLimb >= MAX_LIMBS || m_nLimb < 0)
     {
         LogInvalidDeserializedIndex("CommandMoveLimbSegments::Execute", "m_nLimb", m_nLimb);
+        AssertInvalidRuntimeCommandData();
         return;
     }
     if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
     {
         LogInvalidDeserializedIndex("CommandMoveLimbSegments::Execute", "m_nRate", m_nRate);
+        AssertInvalidRuntimeCommandData();
         return;
     }
 
@@ -1752,11 +1771,13 @@ void CommandMoveLimbTypeSegments::Execute(CommandLimbStore& store)
     if(m_nLimbType >= MAX_LIMB_TYPES || m_nLimbType < 0)
     {
         LogInvalidDeserializedIndex("CommandMoveLimbTypeSegments::Execute", "m_nLimbType", m_nLimbType);
+        AssertInvalidRuntimeCommandData();
         return;
     }
     if(m_nRate > MAX_RATE || m_nRate < -MAX_RATE)
     {
         LogInvalidDeserializedIndex("CommandMoveLimbTypeSegments::Execute", "m_nRate", m_nRate);
+        AssertInvalidRuntimeCommandData();
         return;
     }
 
