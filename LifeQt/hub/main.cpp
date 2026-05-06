@@ -27,6 +27,7 @@ const int DEFAULT_MAX_CLIENTS_PER_IP = 16;
 const int RX_BUFFER_SIZE = 50 * 1024;
 const uint32_t MAX_PAGE_SIZE = 1024 * 1024;
 const uint32_t MAX_BIOT_JSON_SIZE = 512 * 1024;
+const int MAX_MUX_CHANNELS_PER_SOCKET = 4;
 const qint64 LINK_BIOT_INTERVAL_MS = 1000;
 const int MAGIC_CODE_LEN = 8;
 const char *MAGIC_CODE = "primlife";
@@ -374,6 +375,15 @@ private:
         if(client.channels.contains(channelId))
             return;
 
+        if(client.channels.size() >= MAX_MUX_CHANNELS_PER_SOCKET)
+        {
+            std::cout << "rejecting mux channel " << channelId << ": too many channels on socket" << std::endl;
+            QByteArray noFree(RPC_MUX_NO_FREE);
+            noFree.append((char)channelId);
+            sendFrame(client.socket, noFree);
+            return;
+        }
+
         if(totalChannels() >= maxClients)
         {
             QByteArray noFree(RPC_MUX_NO_FREE);
@@ -546,7 +556,8 @@ private:
             ClientChannel *second = nullptr;
             for(int i=0; i<unlinked.size(); i++)
             {
-                if(!isLoopbackPair(*first->client, *unlinked[i]->client))
+                if(!isLoopbackPair(*first->client, *unlinked[i]->client) &&
+                   !clientsAlreadyLinked(*first->client, *unlinked[i]->client))
                 {
                     second = unlinked.takeAt(i);
                     break;
@@ -610,6 +621,25 @@ private:
         if(&a == &b)
             return true;
         return !a.instanceId.isEmpty() && a.instanceId == b.instanceId;
+    }
+
+    bool clientsAlreadyLinked(const Client &a, const Client &b) const
+    {
+        for(auto it = a.channels.begin(); it != a.channels.end(); ++it)
+        {
+            ClientChannel *channel = it.value();
+            if(channel->link != nullptr && channel->link->client == &b)
+                return true;
+        }
+
+        for(auto it = b.channels.begin(); it != b.channels.end(); ++it)
+        {
+            ClientChannel *channel = it.value();
+            if(channel->link != nullptr && channel->link->client == &a)
+                return true;
+        }
+
+        return false;
     }
 
     void unlink(ClientChannel &channel)

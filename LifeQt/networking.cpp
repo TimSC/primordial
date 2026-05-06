@@ -16,6 +16,7 @@ using namespace rapidjson;
 
 const uint32_t MAX_PAGE_SIZE = 1024*1024;
 const uint32_t MAX_BIOT_JSON_SIZE = 512*1024;
+const int MAX_MUX_CHANNELS_PER_SOCKET = 4;
 const qint64 RETURN_BIOT_WINDOW_MS = 10000;
 const qint64 RECONNECT_INTERVAL_MS = 60000;
 const char *RPC_PEER_HELLO = "peerhello1";
@@ -955,6 +956,15 @@ void SidesManager::receiveMuxOpen(QTcpSocket *client, const QByteArray &d)
     int channel = (uint8_t)rawPayload[0];
     if(sideBySocketChannel[client].contains(channel))
         return;
+
+    if(sideBySocketChannel[client].size() >= MAX_MUX_CHANNELS_PER_SOCKET)
+    {
+        std::cout << "rejecting mux channel " << channel << ": too many channels on socket" << std::endl;
+        QByteArray response(RPC_MUX_NO_FREE);
+        response.append((char)channel);
+        networking.sendPage(client, response.constData(), response.length());
+        return;
+    }
 
     if(peerInstanceBySocket.value(client) == env.settings.m_instanceId)
     {
