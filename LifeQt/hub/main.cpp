@@ -43,7 +43,7 @@ struct Client {
     bool readyToReceive = true;
     Client *link = nullptr;
     qint64 lastSentBiotTime = 0;
-    QHostAddress peerAddress;
+    QString peerAddress;
     qint64 connectTime = 0;
     qint64 lastActivityTime = 0;
     QMap<uint32_t, qint64> recentlyReceivedBiotIds;
@@ -187,7 +187,7 @@ public:
 private:
     QTcpServer server;
     QMap<QTcpSocket *, Client *> clients;
-    QMap<QHostAddress, int> connectionsPerIp;
+    QMap<QString, int> connectionsPerIp;
     QTimer linkTimer;
     int maxClients;
     int maxClientsPerIp;
@@ -203,7 +203,7 @@ private:
                 continue;
             }
 
-            QHostAddress peerAddr = socket->peerAddress();
+            QString peerAddr = socket->peerAddress().toString();
             if(connectionsPerIp.value(peerAddr, 0) >= maxClientsPerIp)
             {
                 socket->disconnectFromHost();
