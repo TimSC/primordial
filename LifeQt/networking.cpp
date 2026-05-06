@@ -20,6 +20,10 @@ const qint64 RETURN_BIOT_WINDOW_MS = 10000;
 const qint64 RECONNECT_INTERVAL_MS = 60000;
 const char *RPC_PEER_HELLO = "peerhello1";
 const char *RPC_BIOT_ACCEPT = "biotaccept";
+const char *RPC_MUX_OPEN = "muxopen001";
+const char *RPC_MUX_FRAME = "muxframe01";
+const char *RPC_MUX_ASSIGN = "muxassign1";
+const char *RPC_MUX_NO_FREE = "muxnofree1";
 
 static uint32_t GetQtCompressedSize(const QByteArray &data)
 {
@@ -362,6 +366,7 @@ SidesManager::SidesManager(class Environment &envIn) :
     for(int i=0;i<4; i++)
     {
         sockets[i] = nullptr;
+        sideChannel[i] = (uint8_t)i;
         status[i] = "no connection";
         isAssigned[i] = false;
         configuredHostPort[i] = QString::fromStdString(env.settings.m_sSideAddress[i]);
@@ -399,8 +404,11 @@ void SidesManager::connectToHost(int side, const QString &hostName, quint16 port
     assert(side >= 0 and side < 4);
     if(sockets[side] != nullptr)
     {
-        sockets[side]->disconnectFromHost();
-        sockets[side]->deleteLater();
+        QTcpSocket *oldSocket = sockets[side];
+        sideBySocketChannel[oldSocket].remove(sideChannel[side]);
+        sockets[side] = nullptr;
+        if(!socketHasOtherSides(oldSocket, side))
+            oldSocket->disconnectFromHost();
     }
 
     recentlySentBiots[side].clear();
@@ -412,7 +420,23 @@ void SidesManager::connectToHost(int side, const QString &hostName, quint16 port
     env.settings.m_bSideEnable[side] = true;
     env.settings.Save();
 
+    sideChannel[side] = (uint8_t)side;
+    QTcpSocket *sharedSocket = connectionByEndpoint.value(configuredHostPort[side], nullptr);
+    if(sharedSocket != nullptr && sharedSocket->state() != QAbstractSocket::UnconnectedState)
+    {
+        sockets[side] = sharedSocket;
+        sideBySocketChannel[sharedSocket][sideChannel[side]] = side;
+        status[side] = SocketStateToString(sharedSocket->state()).c_str();
+        if(sharedSocket->state() == QAbstractSocket::ConnectedState)
+            sendMuxOpen(side);
+        emit sideStateChanged(side, sharedSocket->state());
+        return;
+    }
+
     sockets[side] = new QTcpSocket(this);
+    connectionByEndpoint[configuredHostPort[side]] = sockets[side];
+    endpointBySocket[sockets[side]] = configuredHostPort[side];
+    sideBySocketChannel[sockets[side]][sideChannel[side]] = side;
     networking.connectToHost(sockets[side], hostName, port);
 }
 
@@ -425,53 +449,29 @@ void SidesManager::disconnectSide(int side)
     env.settings.Save();
 
     if(sockets[side] != nullptr)
-        sockets[side]->disconnectFromHost();
+    {
+        QTcpSocket *sock = sockets[side];
+        sideBySocketChannel[sock].remove(sideChannel[side]);
+        sockets[side] = nullptr;
+        isAssigned[side] = false;
+        recentlySentBiots[side].clear();
+        peerInstanceId[side] = "";
+        env.side[side]->SetConnected(false);
+        env.side[side]->Clear(&this->env);
+        env.side[side]->SetSize(false);
+        if(!socketHasOtherSides(sock, side))
+            sock->disconnectFromHost();
+    }
 }
 
 void SidesManager::netAcceptConnection(QTcpSocket *client)
 {
-    //Assign a side if possible
-    int freeSide = -1;
-    for(int i=0;i<4; i++)
-        if(sockets[i] == nullptr)
-        {
-            freeSide = i;
-            recentlySentBiots[i].clear();
-            break;
-        }
-
-    if(freeSide >= 0)
-    {
-        sockets[freeSide] = client;
-        isAssigned[freeSide] = true;
-        biotsSent[freeSide] = 0;
-        biotsReceived[freeSide] = 0;
-        emit sideStatsChanged(freeSide);
-        QString peer = client->peerName();
-        if(peer.isEmpty())
-            peer = client->peerAddress().toString();
-        configuredHostPort[freeSide] = FormatHostPort(peer, client->peerPort());
-        QByteArray data("assignside{}");
-        networking.sendPage(client, data.constData(), data.length());
-        env.side[freeSide]->SetConnected(true);
-        env.side[freeSide]->SetRemoteReady(true);
-        env.side[freeSide]->Clear(&this->env);
-        env.side[freeSide]->SetSize(true);
-
-        emit sideAssigned(freeSide);
-    }
-    else
-    {
-        QByteArray data("nofreeside{}");
-        networking.sendPage(client, data.constData(), data.length());
-        //client->disconnectFromHost();
-    }
-
+    (void)client;
 }
 
 void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketState state)
 {
-    int sideId = -1;
+    QList<int> affectedSides;
     for(int i=0;i<4; i++)
         if(sockets[i] == client)
         {
@@ -479,13 +479,19 @@ void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketSt
             if(state != QAbstractSocket::UnconnectedState ||
                (status[i] != "No free sides" && status[i] != "Loopback rejected"))
                 status[i] = stateStatus;
-            sideId = i;
-            break;
+            affectedSides.append(i);
         }
 
     if(state==QAbstractSocket::UnconnectedState)
     {
-        if(sideId >= 0)
+        QString endpoint = endpointBySocket.value(client);
+        if(!endpoint.isEmpty())
+            connectionByEndpoint.remove(endpoint);
+        endpointBySocket.remove(client);
+        peerInstanceBySocket.remove(client);
+        sideBySocketChannel.remove(client);
+
+        for(int sideId : affectedSides)
         {
             sockets[sideId] = nullptr;
             isAssigned[sideId] = false;
@@ -494,15 +500,17 @@ void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketSt
             env.side[sideId]->SetConnected(false);
             env.side[sideId]->Clear(&this->env);
             env.side[sideId]->SetSize(false);
-            client->deleteLater();
         }
+        client->deleteLater();
     }
     else if(state==QAbstractSocket::ConnectedState)
     {
         sendPeerHello(client);
+        for(int sideId : affectedSides)
+            sendMuxOpen(sideId);
     }
 
-    if(sideId >= 0)
+    for(int sideId : affectedSides)
         emit sideStateChanged(sideId, state);
 
 }
@@ -511,21 +519,64 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
 {
     QByteArray d(data, size);
 
-    int side = -1;
-    for(int i=0;i<4; i++)
-    {
-        if(sockets[i] == client)
-        {
-            side = i;
-            break;
-        }
-    }
-    if(side == -1) return;
-
     QString rpcType = d.left(10);
     if(rpcType == RPC_PEER_HELLO)
     {
-        receivePeerHello(side, d);
+        receivePeerHello(client, d);
+        return;
+    }
+    if(rpcType == RPC_MUX_OPEN)
+    {
+        receiveMuxOpen(client, d);
+        return;
+    }
+    if(rpcType == RPC_MUX_ASSIGN)
+    {
+        QByteArray rawPayload = d.mid(10);
+        if(rawPayload.size() == 1)
+        {
+            int channel = (uint8_t)rawPayload[0];
+            int side = sideBySocketChannel[client].value(channel, -1);
+            if(side >= 0)
+            {
+                isAssigned[side] = true;
+                env.side[side]->SetConnected(true);
+                env.side[side]->SetRemoteReady(true);
+                env.side[side]->Clear(&this->env);
+                env.side[side]->SetSize(true);
+                emit sideAssigned(side);
+            }
+        }
+        return;
+    }
+    if(rpcType == RPC_MUX_NO_FREE)
+    {
+        QByteArray rawPayload = d.mid(10);
+        if(rawPayload.size() == 1)
+        {
+            int channel = (uint8_t)rawPayload[0];
+            int side = sideBySocketChannel[client].value(channel, -1);
+            if(side >= 0)
+            {
+                status[side] = "No free sides";
+                sideBySocketChannel[client].remove(channel);
+                sockets[side] = nullptr;
+                emit sideStateChanged(side, QAbstractSocket::UnconnectedState);
+            }
+        }
+        return;
+    }
+
+    int side = -1;
+    QByteArray sideFrame;
+    if(!unwrapMuxFrame(client, d, side, sideFrame))
+        return;
+
+    d = sideFrame;
+    rpcType = d.left(10);
+
+    if(false)
+    {
     }
     else if(rpcType == "transfbiot" or rpcType == "transbiotc")
     {
@@ -693,7 +744,6 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
     if(sockets[side] != nullptr)
     {
         try {
-            QTcpSocket *sock = sockets[side];
             qint64 now = QDateTime::currentMSecsSinceEpoch();
             PruneRecentlySentBiots(recentlySentBiots[side], now);
             if(1)
@@ -702,7 +752,7 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
                 QByteArray data("transbiotc");
                 QByteArray dat1(qCompress(serBiot.c_str(), serBiot.size()));
                 data.append(dat1);
-                networking.sendPage(sock, data.constData(), data.length());
+                sendSidePage(side, data);
                 recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
             }
             else
@@ -710,7 +760,7 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
                 //Sent biot in uncompressed json
                 QByteArray data("transfbiot");
                 data.append(serBiot.c_str(), serBiot.size());
-                networking.sendPage(sock, data.constData(), data.length());
+                sendSidePage(side, data);
                 recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
             }
             return true;
@@ -725,13 +775,31 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
 
 void SidesManager::sendBiotAccept(int side, uint32_t biotId)
 {
-    QTcpSocket *sock = sockets[side];
-    if(sock == nullptr)
-        return;
     QByteArray ack(RPC_BIOT_ACCEPT);
     uint32_t networkId = qToBigEndian<uint32_t>(biotId);
     ack.append((const char *)&networkId, sizeof(networkId));
-    networking.sendPage(sock, ack.constData(), ack.length());
+    sendSidePage(side, ack);
+}
+
+void SidesManager::sendMuxOpen(int side)
+{
+    QTcpSocket *sock = sockets[side];
+    if(sock == nullptr || sock->state() != QAbstractSocket::ConnectedState)
+        return;
+    QByteArray open(RPC_MUX_OPEN);
+    open.append((char)sideChannel[side]);
+    networking.sendPage(sock, open.constData(), open.length());
+}
+
+void SidesManager::sendSidePage(int side, const QByteArray &frame)
+{
+    QTcpSocket *sock = sockets[side];
+    if(sock == nullptr)
+        return;
+    QByteArray muxFrame(RPC_MUX_FRAME);
+    muxFrame.append((char)sideChannel[side]);
+    muxFrame.append(frame);
+    networking.sendPage(sock, muxFrame.constData(), muxFrame.length());
 }
 
 void SidesManager::sendPeerHello(QTcpSocket *client)
@@ -789,6 +857,121 @@ void SidesManager::receivePeerHello(int side, const QByteArray &d)
     }
 }
 
+void SidesManager::receivePeerHello(QTcpSocket *client, const QByteArray &d)
+{
+    try {
+        QByteArray payload = d.mid(10);
+        stringstream ss(std::string(payload.constData(), payload.size()));
+        IStreamWrapper isw(ss);
+
+        Document doc;
+        ParseResult ok = doc.ParseStream(isw);
+        if(!ok || !doc.IsObject() || !doc.HasMember("instanceId") || !doc["instanceId"].IsString())
+            throw runtime_error("error parsing peer hello");
+
+        QString instanceId = QString::fromUtf8(doc["instanceId"].GetString(), doc["instanceId"].GetStringLength());
+        if(instanceId.isEmpty())
+            throw runtime_error("peer hello missing instance id");
+
+        peerInstanceBySocket[client] = instanceId;
+        QMap<int, int> channels = sideBySocketChannel.value(client);
+        for(auto it = channels.begin(); it != channels.end(); ++it)
+        {
+            int side = it.value();
+            peerInstanceId[side] = instanceId;
+            if(instanceId == env.settings.m_instanceId)
+            {
+                status[side] = "Loopback rejected";
+                env.settings.m_bSideEnable[side] = false;
+                sockets[side] = nullptr;
+                isAssigned[side] = false;
+                env.side[side]->SetConnected(false);
+                env.side[side]->Clear(&this->env);
+                env.side[side]->SetSize(false);
+            }
+        }
+        if(instanceId == env.settings.m_instanceId)
+        {
+            env.settings.Save();
+            client->disconnectFromHost();
+        }
+    }
+    catch (const exception &err) {
+        std::cout << "invalid peer hello: " << err.what() << std::endl;
+    }
+}
+
+void SidesManager::receiveMuxOpen(QTcpSocket *client, const QByteArray &d)
+{
+    QByteArray rawPayload = d.mid(10);
+    if(rawPayload.size() != 1)
+        return;
+
+    int channel = (uint8_t)rawPayload[0];
+    if(sideBySocketChannel[client].contains(channel))
+        return;
+
+    if(peerInstanceBySocket.value(client) == env.settings.m_instanceId)
+    {
+        QByteArray response(RPC_MUX_NO_FREE);
+        response.append((char)channel);
+        networking.sendPage(client, response.constData(), response.length());
+        client->disconnectFromHost();
+        return;
+    }
+
+    int freeSide = -1;
+    for(int i=0;i<4; i++)
+        if(sockets[i] == nullptr)
+        {
+            freeSide = i;
+            break;
+        }
+
+    QByteArray response(freeSide >= 0 ? RPC_MUX_ASSIGN : RPC_MUX_NO_FREE);
+    response.append((char)channel);
+    networking.sendPage(client, response.constData(), response.length());
+
+    if(freeSide < 0)
+        return;
+
+    sockets[freeSide] = client;
+    sideChannel[freeSide] = (uint8_t)channel;
+    sideBySocketChannel[client][channel] = freeSide;
+    isAssigned[freeSide] = true;
+    recentlySentBiots[freeSide].clear();
+    biotsSent[freeSide] = 0;
+    biotsReceived[freeSide] = 0;
+    peerInstanceId[freeSide] = "";
+    if(peerInstanceBySocket.contains(client))
+        peerInstanceId[freeSide] = peerInstanceBySocket[client];
+    emit sideStatsChanged(freeSide);
+    QString peer = client->peerName();
+    if(peer.isEmpty())
+        peer = client->peerAddress().toString();
+    configuredHostPort[freeSide] = FormatHostPort(peer, client->peerPort());
+    env.side[freeSide]->SetConnected(true);
+    env.side[freeSide]->SetRemoteReady(true);
+    env.side[freeSide]->Clear(&this->env);
+    env.side[freeSide]->SetSize(true);
+
+    emit sideAssigned(freeSide);
+}
+
+bool SidesManager::unwrapMuxFrame(QTcpSocket *client, const QByteArray &d, int &sideOut, QByteArray &frameOut)
+{
+    if(d.left(10) != RPC_MUX_FRAME || d.size() < 11)
+        return false;
+
+    int channel = (uint8_t)d[10];
+    sideOut = sideBySocketChannel[client].value(channel, -1);
+    if(sideOut < 0)
+        return false;
+
+    frameOut = d.mid(11);
+    return frameOut.size() >= 10;
+}
+
 void SidesManager::returnRejectedBiotToPeer(const QString &rpcType, int side, const QByteArray &d, const char *reason)
 {
     QTcpSocket *sock = sockets[side];
@@ -815,7 +998,7 @@ void SidesManager::returnRejectedBiotToPeer(const QString &rpcType, int side, co
     uint32_t networkBiotId = qToBigEndian<uint32_t>(biotId);
     returned.append((const char *)&networkBiotId, sizeof(networkBiotId));
     std::cout << "returning rejected biot on side " << side << ": " << reason << std::endl;
-    networking.sendPage(sock, returned.constData(), returned.length());
+    sendSidePage(side, returned);
 }
 
 void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, const QByteArray &d, bool returnOnFailure, bool allowQueueOverflow)
@@ -898,14 +1081,24 @@ void SidesManager::readyToReceive(int sideId, bool ready)
         if(ready)
         {
             QByteArray data("sidereadyy{}");
-            networking.sendPage(sock, data.constData(), data.length());
+            sendSidePage(sideId, data);
         }
         else
         {
             QByteArray data("sidunready{}");
-            networking.sendPage(sock, data.constData(), data.length());
+            sendSidePage(sideId, data);
         }
     }
+}
+
+bool SidesManager::socketHasOtherSides(QTcpSocket *sock, int exceptSide) const
+{
+    for(int i=0; i<4; i++)
+    {
+        if(i != exceptSide && sockets[i] == sock)
+            return true;
+    }
+    return false;
 }
 
 void SidesManager::updateListenMode()

@@ -31,22 +31,34 @@ const qint64 LINK_BIOT_INTERVAL_MS = 1000;
 const int MAGIC_CODE_LEN = 8;
 const char *MAGIC_CODE = "primlife";
 const char *RPC_PEER_HELLO = "peerhello1";
+const char *RPC_MUX_OPEN = "muxopen001";
+const char *RPC_MUX_FRAME = "muxframe01";
+const char *RPC_MUX_ASSIGN = "muxassign1";
+const char *RPC_MUX_NO_FREE = "muxnofree1";
 const qint64 HELLO_TIMEOUT_MS = 30000;
 const qint64 INCOMPLETE_FRAME_TIMEOUT_MS = 10000;
 const qint64 RETURN_BIOT_WINDOW_MS = 10000;
 const int MAX_INSTANCE_ID_LEN = 128;
 
+struct Client;
+
+struct ClientChannel {
+    Client *client = nullptr;
+    uint8_t id = 0;
+    bool readyToReceive = true;
+    ClientChannel *link = nullptr;
+    qint64 lastSentBiotTime = 0;
+    QMap<uint32_t, qint64> recentlyReceivedBiotIds;
+};
+
 struct Client {
     QTcpSocket *socket = nullptr;
     QByteArray assemblyBuffer;
     QString instanceId;
-    bool readyToReceive = true;
-    Client *link = nullptr;
-    qint64 lastSentBiotTime = 0;
     QString peerAddress;
     qint64 connectTime = 0;
     qint64 lastActivityTime = 0;
-    QMap<uint32_t, qint64> recentlyReceivedBiotIds;
+    QMap<int, ClientChannel *> channels;
 };
 
 uint32_t GetQtCompressedSize(const QByteArray &data)
@@ -227,7 +239,6 @@ private:
             connect(socket, &QTcpSocket::readyRead, this, [this, socket]() { readClient(socket); });
             connect(socket, &QTcpSocket::disconnected, this, [this, socket]() { removeClient(socket); });
 
-            sendFrame(socket, QByteArray("assignside{}"));
             std::cout << "client connected, total=" << clients.size() << std::endl;
         }
     }
@@ -289,29 +300,80 @@ private:
             return;
         }
 
+        if(rpcType == RPC_MUX_OPEN)
+        {
+            receiveMuxOpen(client, frame);
+            return;
+        }
+
+        if(rpcType != RPC_MUX_FRAME || frame.size() < 11)
+        {
+            std::cout << "dropping non-multiplexed frame" << std::endl;
+            return;
+        }
+
+        int channelId = (uint8_t)frame[10];
+        ClientChannel *channel = client.channels.value(channelId, nullptr);
+        if(channel == nullptr)
+        {
+            std::cout << "dropping frame for unopened channel " << channelId << std::endl;
+            return;
+        }
+
+        QByteArray channelFrame = frame.mid(11);
+        rpcType = channelFrame.left(10);
+
         if(rpcType == "sidereadyy")
         {
-            client.readyToReceive = true;
+            channel->readyToReceive = true;
             return;
         }
 
         if(rpcType == "sidunready")
         {
-            client.readyToReceive = false;
+            channel->readyToReceive = false;
             return;
         }
 
         if(IsBiotTransferRpc(rpcType))
         {
-            relayBiot(client, rpcType, frame);
+            relayBiot(*channel, rpcType, channelFrame);
             return;
         }
 
         if(rpcType == "returnbiot" || rpcType == "returnbioc" || rpcType == "biotaccept")
         {
-            relayReturnBiot(client, rpcType, frame);
+            relayReturnBiot(*channel, rpcType, channelFrame);
             return;
         }
+    }
+
+    void receiveMuxOpen(Client &client, const QByteArray &frame)
+    {
+        QByteArray payload = frame.mid(10);
+        if(payload.size() != 1)
+            return;
+
+        int channelId = (uint8_t)payload[0];
+        if(client.channels.contains(channelId))
+            return;
+
+        if(totalChannels() >= maxClients)
+        {
+            QByteArray noFree(RPC_MUX_NO_FREE);
+            noFree.append((char)channelId);
+            sendFrame(client.socket, noFree);
+            return;
+        }
+
+        ClientChannel *channel = new ClientChannel;
+        channel->client = &client;
+        channel->id = (uint8_t)channelId;
+        client.channels[channelId] = channel;
+
+        QByteArray assigned(RPC_MUX_ASSIGN);
+        assigned.append((char)channelId);
+        sendFrame(client.socket, assigned);
     }
 
     void receivePeerHello(Client &client, const QByteArray &frame)
@@ -324,11 +386,15 @@ private:
             return;
         }
 
-        if(client.link != nullptr && isLoopbackPair(client, *client.link))
-            unlink(client);
+        for(auto it = client.channels.begin(); it != client.channels.end(); ++it)
+        {
+            ClientChannel *channel = it.value();
+            if(channel->link != nullptr && isLoopbackPair(client, *channel->link->client))
+                unlink(*channel);
+        }
     }
 
-    void relayBiot(Client &client, const QString &rpcType, const QByteArray &frame)
+    void relayBiot(ClientChannel &channel, const QString &rpcType, const QByteArray &frame)
     {
         uint32_t biotId = 0;
         try {
@@ -339,33 +405,33 @@ private:
             return;
         }
 
-        if(client.link == nullptr)
+        if(channel.link == nullptr)
         {
-            sendReturnBiot(client, rpcType, biotId);
+            sendReturnBiot(channel, rpcType, biotId);
             return;
         }
 
-        if(!client.link->readyToReceive)
+        if(!channel.link->readyToReceive)
         {
             std::cout << "returning biot " << biotId << ": linked client is not ready" << std::endl;
-            sendReturnBiot(client, rpcType, biotId);
+            sendReturnBiot(channel, rpcType, biotId);
             return;
         }
 
         qint64 now = QDateTime::currentMSecsSinceEpoch();
-        if(now - client.lastSentBiotTime < LINK_BIOT_INTERVAL_MS)
+        if(now - channel.lastSentBiotTime < LINK_BIOT_INTERVAL_MS)
         {
             biotsRateLimitedThisMinute++;
-            sendReturnBiot(client, rpcType, biotId);
+            sendReturnBiot(channel, rpcType, biotId);
             return;
         }
 
-        client.lastSentBiotTime = now;
-        client.link->recentlyReceivedBiotIds[biotId] = now;
-        sendFrame(client.link->socket, frame);
+        channel.lastSentBiotTime = now;
+        channel.link->recentlyReceivedBiotIds[biotId] = now;
+        sendChannelFrame(*channel.link, frame);
     }
 
-    void relayReturnBiot(Client &client, const QString &rpcType, const QByteArray &frame)
+    void relayReturnBiot(ClientChannel &channel, const QString &rpcType, const QByteArray &frame)
     {
         uint32_t biotId = 0;
         if(!ParseReturnBiotId(frame, biotId))
@@ -374,15 +440,15 @@ private:
             return;
         }
 
-        auto it = client.recentlyReceivedBiotIds.find(biotId);
-        if(it == client.recentlyReceivedBiotIds.end())
+        auto it = channel.recentlyReceivedBiotIds.find(biotId);
+        if(it == channel.recentlyReceivedBiotIds.end())
         {
             std::cout << "dropping " << rpcType.toStdString() << " " << biotId << ": no matching relayed biot" << std::endl;
             return;
         }
 
         qint64 age = QDateTime::currentMSecsSinceEpoch() - it.value();
-        client.recentlyReceivedBiotIds.erase(it);
+        channel.recentlyReceivedBiotIds.erase(it);
 
         if(age > RETURN_BIOT_WINDOW_MS)
         {
@@ -390,11 +456,11 @@ private:
             return;
         }
 
-        if(client.link != nullptr)
+        if(channel.link != nullptr)
         {
             if(rpcType == "biotaccept")
                 biotsRelayedThisMinute++;
-            sendFrame(client.link->socket, frame);
+            sendChannelFrame(*channel.link, frame);
         }
     }
 
@@ -404,13 +470,18 @@ private:
         int linked = 0;
         for(auto it = clients.begin(); it != clients.end(); ++it)
         {
-            if(it.value()->link == nullptr)
-                unlinked++;
-            else
-                linked++;
+            Client *client = it.value();
+            for(auto channelIt = client->channels.begin(); channelIt != client->channels.end(); ++channelIt)
+            {
+                if(channelIt.value()->link == nullptr)
+                    unlinked++;
+                else
+                    linked++;
+            }
         }
         linked /= 2;
         std::cout << "stats: connected=" << clients.size()
+                  << " channels=" << totalChannels()
                   << " links=" << linked
                   << " biots_last_min=" << biotsRelayedThisMinute
                   << " rate_limited=" << biotsRateLimitedThisMinute
@@ -421,22 +492,27 @@ private:
 
     void reviewLinks()
     {
-        QList<Client *> unlinked;
+        QList<ClientChannel *> unlinked;
         for(auto it = clients.begin(); it != clients.end(); ++it)
         {
             Client *client = it.value();
-            if(client->link == nullptr && !client->instanceId.isEmpty())
-                unlinked.append(client);
+            if(client->instanceId.isEmpty())
+                continue;
+            for(auto channelIt = client->channels.begin(); channelIt != client->channels.end(); ++channelIt)
+            {
+                ClientChannel *channel = channelIt.value();
+                if(channel->link == nullptr)
+                    unlinked.append(channel);
+            }
         }
 
         while(!unlinked.isEmpty())
         {
-            Client *first = unlinked.takeFirst();
-            Client *second = nullptr;
+            ClientChannel *first = unlinked.takeFirst();
+            ClientChannel *second = nullptr;
             for(int i=0; i<unlinked.size(); i++)
             {
-                if(!isLoopbackPair(*first, *unlinked[i]) &&
-                   !playersAlreadyLinked(first->instanceId, unlinked[i]->instanceId))
+                if(!isLoopbackPair(*first->client, *unlinked[i]->client))
                 {
                     second = unlinked.takeAt(i);
                     break;
@@ -448,9 +524,9 @@ private:
 
             first->link = second;
             second->link = first;
-            std::cout << "linked clients"
-                      << " a=" << first->instanceId.toStdString()
-                      << " b=" << second->instanceId.toStdString() << std::endl;
+            std::cout << "linked channels"
+                      << " a=" << first->client->instanceId.toStdString() << ":" << (int)first->id
+                      << " b=" << second->client->instanceId.toStdString() << ":" << (int)second->id << std::endl;
         }
     }
 
@@ -477,13 +553,17 @@ private:
                 continue;
             }
 
-            auto bidIt = client->recentlyReceivedBiotIds.begin();
-            while(bidIt != client->recentlyReceivedBiotIds.end())
+            for(auto channelIt = client->channels.begin(); channelIt != client->channels.end(); ++channelIt)
             {
-                if(now - bidIt.value() > RETURN_BIOT_WINDOW_MS)
-                    bidIt = client->recentlyReceivedBiotIds.erase(bidIt);
-                else
-                    ++bidIt;
+                ClientChannel *channel = channelIt.value();
+                auto bidIt = channel->recentlyReceivedBiotIds.begin();
+                while(bidIt != channel->recentlyReceivedBiotIds.end())
+                {
+                    if(now - bidIt.value() > RETURN_BIOT_WINDOW_MS)
+                        bidIt = channel->recentlyReceivedBiotIds.erase(bidIt);
+                    else
+                        ++bidIt;
+                }
             }
         }
 
@@ -498,25 +578,18 @@ private:
         return !a.instanceId.isEmpty() && a.instanceId == b.instanceId;
     }
 
-    bool playersAlreadyLinked(const QString &idA, const QString &idB) const
+    void unlink(ClientChannel &channel)
     {
-        for(auto it = clients.begin(); it != clients.end(); ++it)
-        {
-            const Client *c = it.value();
-            if(c->link == nullptr)
-                continue;
-            if(c->instanceId == idA && c->link->instanceId == idB)
-                return true;
-        }
-        return false;
+        ClientChannel *other = channel.link;
+        channel.link = nullptr;
+        if(other != nullptr && other->link == &channel)
+            other->link = nullptr;
     }
 
-    void unlink(Client &client)
+    void unlinkAll(Client &client)
     {
-        Client *other = client.link;
-        client.link = nullptr;
-        if(other != nullptr && other->link == &client)
-            other->link = nullptr;
+        for(auto it = client.channels.begin(); it != client.channels.end(); ++it)
+            unlink(*it.value());
     }
 
     void removeClient(QTcpSocket *socket)
@@ -524,7 +597,7 @@ private:
         Client *client = findClient(socket);
         if(client != nullptr)
         {
-            unlink(*client);
+            unlinkAll(*client);
 
             int count = connectionsPerIp.value(client->peerAddress, 0) - 1;
             if(count <= 0)
@@ -532,6 +605,8 @@ private:
             else
                 connectionsPerIp[client->peerAddress] = count;
 
+            qDeleteAll(client->channels);
+            client->channels.clear();
             delete client;
         }
 
@@ -548,11 +623,27 @@ private:
         return it.value();
     }
 
-    void sendReturnBiot(Client &client, const QString &rpcType, uint32_t biotId)
+    int totalChannels() const
+    {
+        int total = 0;
+        for(auto it = clients.begin(); it != clients.end(); ++it)
+            total += it.value()->channels.size();
+        return total;
+    }
+
+    void sendReturnBiot(ClientChannel &channel, const QString &rpcType, uint32_t biotId)
     {
         QByteArray frame = ReturnBiotFrame(rpcType, biotId);
         if(!frame.isEmpty())
-            sendFrame(client.socket, frame);
+            sendChannelFrame(channel, frame);
+    }
+
+    void sendChannelFrame(ClientChannel &channel, const QByteArray &frame)
+    {
+        QByteArray muxFrame(RPC_MUX_FRAME);
+        muxFrame.append((char)channel.id);
+        muxFrame.append(frame);
+        sendFrame(channel.client->socket, muxFrame);
     }
 
     void sendFrame(QTcpSocket *socket, const QByteArray &frame)

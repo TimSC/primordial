@@ -91,15 +91,22 @@ signals:
 
 private:
     void sendPeerHello(QTcpSocket *client);
+    void sendMuxOpen(int side);
+    void sendSidePage(int side, const QByteArray &frame);
     void sendBiotAccept(int side, uint32_t biotId);
     void receivePeerHello(int side, const QByteArray &d);
+    void receivePeerHello(QTcpSocket *client, const QByteArray &d);
+    void receiveMuxOpen(QTcpSocket *client, const QByteArray &d);
+    bool unwrapMuxFrame(QTcpSocket *client, const QByteArray &d, int &sideOut, QByteArray &frameOut);
     void receiveBiotFromNetwork(const QString &rpcType, int side, const QByteArray &d, bool returnOnFailure, bool allowQueueOverflow = false);
     void receiveCachedReturnedBiot(int side, const QByteArray &jsonPayload);
     void returnRejectedBiotToPeer(const QString &rpcType, int side, const QByteArray &d, const char *reason);
+    bool socketHasOtherSides(QTcpSocket *sock, int exceptSide) const;
 
     class Environment &env;
     class Networking networking;
     QTcpSocket *sockets[4];
+    uint8_t sideChannel[4];
     bool isAssigned[4];
     QString configuredHostPort[4];
     QString peerInstanceId[4];
@@ -107,6 +114,10 @@ private:
     QString status[4];
     int biotsSent[4];
     int biotsReceived[4];
+    QMap<QString, QTcpSocket *> connectionByEndpoint;
+    QMap<QTcpSocket *, QString> endpointBySocket;
+    QMap<QTcpSocket *, QString> peerInstanceBySocket;
+    QMap<QTcpSocket *, QMap<int, int>> sideBySocketChannel;
     SidesManagerEventRx eventRx;
 };
 
