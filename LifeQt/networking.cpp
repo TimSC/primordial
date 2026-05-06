@@ -15,6 +15,7 @@ using namespace rapidjson;
 
 const uint32_t MAX_PAGE_SIZE = 1024*1024;
 const uint32_t MAX_BIOT_JSON_SIZE = 512*1024;
+const qint64 RETURN_BIOT_WINDOW_MS = 10000;
 
 static uint32_t GetQtCompressedSize(const QByteArray &data)
 {
@@ -35,6 +36,59 @@ static QByteArray UncompressBiotPayload(const QByteArray &data)
         throw runtime_error("compressed biot payload is invalid");
 
     return uncompressed;
+}
+
+static bool RpcIsCompressedBiotPayload(const QString &rpcType)
+{
+    return rpcType == "transbiotc" or rpcType == "returnbioc";
+}
+
+static bool RpcIsUncompressedBiotPayload(const QString &rpcType)
+{
+    return rpcType == "transfbiot" or rpcType == "returnbiot";
+}
+
+static QByteArray DecodeBiotPayload(const QString &rpcType, const QByteArray &data)
+{
+    QByteArray payload(data.mid(10));
+    if(RpcIsUncompressedBiotPayload(rpcType))
+    {
+        if(payload.size() > (int)MAX_BIOT_JSON_SIZE)
+            throw runtime_error("biot payload is too large");
+        return payload;
+    }
+    if(RpcIsCompressedBiotPayload(rpcType))
+        return UncompressBiotPayload(payload);
+
+    throw runtime_error("unknown biot payload type");
+}
+
+static uint32_t ExtractBiotIdFromNetworkPayload(const QString &rpcType, const QByteArray &data)
+{
+    QByteArray payload = DecodeBiotPayload(rpcType, data);
+    stringstream ss(std::string(payload.constData(), payload.size()));
+    IStreamWrapper isw(ss);
+
+    Document doc;
+    ParseResult ok = doc.ParseStream(isw);
+    if(!ok || !doc.IsObject() || !doc.HasMember("biot") || !doc["biot"].IsObject())
+        throw runtime_error("eror parsing json");
+
+    const Value &biot = doc["biot"];
+    if(!biot.HasMember("m_Id") || !biot["m_Id"].IsUint())
+        throw runtime_error("biot payload missing id");
+
+    return biot["m_Id"].GetUint();
+}
+
+static void PruneRecentlySentBiots(QMap<uint32_t, qint64> &sentBiots, qint64 now)
+{
+    QMutableMapIterator<uint32_t, qint64> sentIt(sentBiots);
+    while(sentIt.hasNext()) {
+        sentIt.next();
+        if(now - sentIt.value() > RETURN_BIOT_WINDOW_MS)
+            sentIt.remove();
+    }
 }
 
 static QString FormatHostPort(const QString &host, quint16 port)
@@ -241,6 +295,7 @@ SidesManager::SidesManager(class Environment &envIn) :
         sockets[i] = nullptr;
         status[i] = "no connection";
         isAssigned[i] = false;
+        recentlySentBiots[i].clear();
     }
 
     connect(&networking, SIGNAL(netAcceptConnection(QTcpSocket *)), this, SLOT(netAcceptConnection(QTcpSocket *)));
@@ -271,6 +326,7 @@ void SidesManager::connectToHost(int side, const QString &hostName, quint16 port
     if(sockets[side] != nullptr)
         sockets[side]->disconnectFromHost();
 
+    recentlySentBiots[side].clear();
     sockets[side] = new QTcpSocket(this);
     networking.connectToHost(sockets[side], hostName, port);
 }
@@ -289,6 +345,7 @@ void SidesManager::netAcceptConnection(QTcpSocket *client)
         if(sockets[i] == nullptr)
         {
             freeSide = i;
+            recentlySentBiots[i].clear();
             break;
         }
 
@@ -331,6 +388,7 @@ void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketSt
         {
             sockets[sideId] = nullptr;
             isAssigned[sideId] = false;
+            recentlySentBiots[sideId].clear();
             env.side[sideId]->SetConnected(false);
             env.side[sideId]->Clear(&this->env);
             env.side[sideId]->SetSize(false);
@@ -364,7 +422,30 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
     QString rpcType = d.left(10);
     if(rpcType == "transfbiot" or rpcType == "transbiotc")
     {
-        receiveBiotFromNetwork(rpcType, side, d);
+        receiveBiotFromNetwork(rpcType, side, d, true);
+    }
+    else if(rpcType == "returnbiot" or rpcType == "returnbioc")
+    {
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        PruneRecentlySentBiots(recentlySentBiots[side], now);
+
+        uint32_t biotId = 0;
+        try {
+            biotId = ExtractBiotIdFromNetworkPayload(rpcType, d);
+        }
+        catch (const exception &err) {
+            std::cout << "dropping returned biot with unreadable id: " << err.what() << std::endl;
+            return;
+        }
+
+        if(!recentlySentBiots[side].contains(biotId))
+        {
+            std::cout << "dropping unsolicited returned biot on side " << side
+                      << ", id=" << biotId << std::endl;
+            return;
+        }
+        recentlySentBiots[side].remove(biotId);
+        receiveBiotFromNetwork(rpcType, side, d, false, true);
     }
     else if(rpcType == "assignside")
     {
@@ -431,6 +512,8 @@ void SidesManager::biotLeavingSide(int side, Biot *pBiot)
     if(sockets[side] != nullptr)
     {
         QTcpSocket *sock = sockets[side];
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        PruneRecentlySentBiots(recentlySentBiots[side], now);
         if(1)
         {
             //Sent biot in compressed json
@@ -438,6 +521,7 @@ void SidesManager::biotLeavingSide(int side, Biot *pBiot)
             QByteArray dat1(qCompress(serBiot.c_str(), serBiot.size()));
             data.append(dat1);
             networking.sendPage(sock, data.constData(), data.length());
+            recentlySentBiots[side][pBiot->m_Id] = now;
         }
         else
         {
@@ -445,11 +529,31 @@ void SidesManager::biotLeavingSide(int side, Biot *pBiot)
             QByteArray data("transfbiot");
             data.append(serBiot.c_str(), serBiot.size());
             networking.sendPage(sock, data.constData(), data.length());
+            recentlySentBiots[side][pBiot->m_Id] = now;
         }
     }
 }
 
-void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, QByteArray &d)
+void SidesManager::returnRejectedBiotToPeer(const QString &rpcType, int side, const QByteArray &d, const char *reason)
+{
+    QTcpSocket *sock = sockets[side];
+    if(sock == nullptr)
+        return;
+
+    QByteArray returned;
+    if(rpcType == "transfbiot")
+        returned.append("returnbiot");
+    else if(rpcType == "transbiotc")
+        returned.append("returnbioc");
+    else
+        return;
+
+    returned.append(d.mid(10));
+    std::cout << "returning rejected biot on side " << side << ": " << reason << std::endl;
+    networking.sendPage(sock, returned.constData(), returned.length());
+}
+
+void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, const QByteArray &d, bool returnOnFailure, bool allowQueueOverflow)
 {
     cout << "biot arriving " << side << endl;
 
@@ -458,22 +562,9 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, QByt
         QSharedPointer<IStreamWrapper> isw;
         QSharedPointer<stringstream> ss;
         QSharedPointer<ifstream> ifs;
-        if(rpcType == "transfbiot")
-        {
-            QByteArray dat(d.mid(10));
-            if(dat.size() > (int)MAX_BIOT_JSON_SIZE)
-                throw runtime_error("biot payload is too large");
-            ss = QSharedPointer<stringstream>(new stringstream(std::string(dat.constData(), dat.size())));
-            isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
-        }
-        else if(rpcType == "transbiotc")
-        {
-            QByteArray dat(UncompressBiotPayload(d.mid(10)));
-
-            ss = QSharedPointer<stringstream>(new stringstream(std::string(dat.constData(), dat.size())));
-            isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
-        }
-        else return;
+        QByteArray dat = DecodeBiotPayload(rpcType, d);
+        ss = QSharedPointer<stringstream>(new stringstream(std::string(dat.constData(), dat.size())));
+        isw = QSharedPointer<IStreamWrapper>(new IStreamWrapper(*ss.data()));
 
         Document doc;
         ParseResult ok = doc.ParseStream(*isw.data());
@@ -483,15 +574,20 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, QByt
             throw runtime_error("eror parsing json");
         pBiot.reset(new Biot(env));
         pBiot->SerializeJsonLoad(doc["biot"]);
+        pBiot->OnOpen();
 
     } catch (exception &err) {
 
         std::cout << err.what() << std::endl;
+        if(returnOnFailure)
+            returnRejectedBiotToPeer(rpcType, side, d, err.what());
         return;
     }
 
-    pBiot->OnOpen();
-    env.side[side]->ReceiveBiotFromNetwork(pBiot.release());
+    if(env.side[side]->ReceiveBiotFromNetwork(pBiot.get(), allowQueueOverflow))
+        pBiot.release();
+    else
+        std::cout << "dropping received biot because side queue is full" << std::endl;
 }
 
 void SidesManager::readyToReceive(int sideId, bool ready)

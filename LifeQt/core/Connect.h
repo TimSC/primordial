@@ -67,7 +67,7 @@ class Side : public BRect
     bool Export(Biot* pBiot);
     virtual Biot* Import();
 
-    void ReceiveBiotFromNetwork(Biot *pBiot);
+    bool ReceiveBiotFromNetwork(Biot *pBiot, bool allowOverflow = false);
     Biot* GetBiot();
 
     bool IsConnected();

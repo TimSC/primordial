@@ -83,14 +83,16 @@ Biot*  Side::Import()
     return out;
 }
 
-void Side::ReceiveBiotFromNetwork(Biot *pBiot)
+bool Side::ReceiveBiotFromNetwork(Biot *pBiot, bool allowOverflow)
 {
-    if(m_inComing.size() >= SIDE_BUFFER_HARD_MAX)
+    if(m_inComing.size() >= SIDE_BUFFER_HARD_MAX and !allowOverflow)
     {
         std::cout << "Error buffer overflow receiving biot" << std::endl;
         assert(!m_readyToReceive);
-        return;
+        return false;
     }
+    if(m_inComing.size() >= SIDE_BUFFER_HARD_MAX)
+        std::cout << "Accepting returned biot beyond side queue hard limit" << std::endl;
 
     m_inComing.enqueue(pBiot);
 
@@ -100,6 +102,8 @@ void Side::ReceiveBiotFromNetwork(Biot *pBiot)
         if(m_listener)
             m_listener->ReadyToReceive(m_sideId, false);
     }
+
+    return true;
 }
 
 bool Side::IsConnected()
@@ -344,5 +348,3 @@ void BottomSide::SetSize(bool connected)
         m_lines = 1;
     }
 }
-
-

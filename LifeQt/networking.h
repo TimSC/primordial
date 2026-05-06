@@ -4,6 +4,7 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QList>
+#include <QMap>
 #include "core/Environ.h"
 
 const int RX_BUFFER_SIZE = 50*1024;
@@ -79,12 +80,14 @@ signals:
 
 private:
 
-    void receiveBiotFromNetwork(const QString &rpcType, int side, QByteArray &d);
+    void receiveBiotFromNetwork(const QString &rpcType, int side, const QByteArray &d, bool returnOnFailure, bool allowQueueOverflow = false);
+    void returnRejectedBiotToPeer(const QString &rpcType, int side, const QByteArray &d, const char *reason);
 
     class Environment &env;
     class Networking networking;
     QTcpSocket *sockets[4];
     bool isAssigned[4];
+    QMap<uint32_t, qint64> recentlySentBiots[4];
     QString status[4];
     SidesManagerEventRx eventRx;
 };

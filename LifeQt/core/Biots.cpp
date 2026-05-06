@@ -79,6 +79,8 @@ Biot::SegmentRuntimeState Biot::GetSegmentRuntimeState(int index) const
 
 void Biot::ValidateRuntimeState(const char *context)
 {
+    posAndSpeed.ValidateRuntimeState(context);
+
     if(max_genes < 1 || max_genes > MAX_GENES)
     {
         LogInvalidValue(context, "max_genes", max_genes);
@@ -98,6 +100,16 @@ void Biot::ValidateRuntimeState(const char *context)
     {
         LogInvalidValue(context, "totalDistance", (int)totalDistance);
         throw std::range_error("totalDistance out of range");
+    }
+    if(origin.x() < -100000 || origin.x() > 100000)
+    {
+        LogInvalidValue(context, "origin.x", origin.x());
+        throw std::range_error("origin.x out of range");
+    }
+    if(origin.y() < -100000 || origin.y() > 100000)
+    {
+        LogInvalidValue(context, "origin.y", origin.y());
+        throw std::range_error("origin.y out of range");
     }
 
     int64_t calculatedTotalDistance = 0;
@@ -1931,8 +1943,8 @@ bool Biot::OnOpen()
     adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.settings.startEnergy;
 
     totalDistance   = UpdateShape(ratio);
-    ValidateRuntimeState("Biot::OnOpen");
     UpdateShapeRotation();
+    ValidateRuntimeState("Biot::OnOpen");
     childBaseEnergy = totalDistance * env.settings.startEnergy;
 
     // Lets assume injury

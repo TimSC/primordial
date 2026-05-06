@@ -35,6 +35,18 @@ static void RestoreBiotFromJson(Biot& biot, const std::string& json)
     biot.OnOpen();
 }
 
+static void RestoreBiotFromJsonForFuzzing(Biot& biot, const std::string& json)
+{
+    try {
+        RestoreBiotFromJson(biot, json);
+    }
+    catch (const std::exception &err) {
+        std::cerr << "Failed to restore original biot during fuzzing: " << err.what() << std::endl;
+        biot.ClearSettings();
+        biot.OnOpen();
+    }
+}
+
 // ////////////////////////////////////////////////////////////////////
 // CBiotList
 //
@@ -989,11 +1001,11 @@ void Environment::Fuzz()
             }
             catch (std::range_error &err) {
                 std::cout << "Fuzzed json out of range: " << err.what() << std::endl;
-                RestoreBiotFromJson(*biot, originalBuff);
+                RestoreBiotFromJsonForFuzzing(*biot, originalBuff);
             }
             catch (std::runtime_error &err) {
                 std::cout << "Fuzzed json failed to load: " << err.what() << std::endl;
-                RestoreBiotFromJson(*biot, originalBuff);
+                RestoreBiotFromJsonForFuzzing(*biot, originalBuff);
             }
         }
     }

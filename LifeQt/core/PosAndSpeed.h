@@ -44,6 +44,7 @@ public:
 
     void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
+    void ValidateRuntimeState(const char *context) const;
 
     // Proposes movement in rotation, and translation
     // Always call tryRotate first!!
@@ -115,9 +116,9 @@ public:
     void setMass(double MASS) { mass = MASS; }
     void addMass(double MASS) { mass += MASS; }
 
-    void adjustDeltaX(double DX){dx += DX;}
-    void adjustDeltaY(double DY)      { dy += DY; }
-    void adjustDeltaRotate(double DR) { dr += DR; }
+    void adjustDeltaX(double DX)      { dx = CheckLimit(dx + DX); }
+    void adjustDeltaY(double DY)      { dy = CheckLimit(dy + DY); }
+    void adjustDeltaRotate(double DR) { dr = CheckRLimit(dr + DR); }
 
     inline double nonZeroMass() const
     {
@@ -148,8 +149,8 @@ public:
 
     double getDeltaX(void) const { return dx; }
     double getDeltaY(void) const { return dy; }
-    double getDeltaRotate(void) { return dr;  }
-    int getRotate(void)      { return (int) r; }
+    double getDeltaRotate(void) const { return dr;  }
+    int getRotate(void) const     { return (int) r; }
 
     void setX(int X)      { x = (double) X; }
     void setY(int Y)      { y = (double) Y; }
