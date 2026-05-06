@@ -309,7 +309,7 @@ private:
 
         if(rpcType == "returnbiot" || rpcType == "returnbioc" || rpcType == "biotaccept")
         {
-            relayReturnBiot(client, frame);
+            relayReturnBiot(client, rpcType, frame);
             return;
         }
     }
@@ -366,7 +366,7 @@ private:
         sendFrame(client.link->socket, frame);
     }
 
-    void relayReturnBiot(Client &client, const QByteArray &frame)
+    void relayReturnBiot(Client &client, const QString &rpcType, const QByteArray &frame)
     {
         uint32_t biotId = 0;
         if(!ParseReturnBiotId(frame, biotId))
@@ -378,7 +378,7 @@ private:
         auto it = client.recentlyReceivedBiotIds.find(biotId);
         if(it == client.recentlyReceivedBiotIds.end())
         {
-            std::cout << "dropping return biot " << biotId << ": no matching relayed biot" << std::endl;
+            std::cout << "dropping " << rpcType.toStdString() << " " << biotId << ": no matching relayed biot" << std::endl;
             return;
         }
 
@@ -387,9 +387,12 @@ private:
 
         if(age > RETURN_BIOT_WINDOW_MS)
         {
-            std::cout << "dropping return biot " << biotId << ": window expired" << std::endl;
+            std::cout << "dropping " << rpcType.toStdString() << " " << biotId << ": window expired" << std::endl;
             return;
         }
+
+        if(rpcType == "biotaccept")
+            std::cout << "relaying transfer success for biot " << biotId << std::endl;
 
         if(client.link != nullptr)
             sendFrame(client.link->socket, frame);

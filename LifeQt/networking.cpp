@@ -566,7 +566,10 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
                 recentlySentBiots[side].remove(biotId);
                 biotsSent[side]++;
                 emit sideStatsChanged(side);
+                std::cout << "biot " << biotId << " transferred successfully on side " << side << std::endl;
             }
+            else
+                std::cout << "biot " << biotId << " transfer success received but not in sent map on side " << side << std::endl;
         }
     }
     else if(rpcType == "assignside")
@@ -820,6 +823,7 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, cons
     cout << "biot arriving " << side << endl;
 
     std::unique_ptr<Biot> pBiot;
+    uint32_t biotId = 0;
     try {
         QSharedPointer<IStreamWrapper> isw;
         QSharedPointer<stringstream> ss;
@@ -836,6 +840,7 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, cons
             throw runtime_error("eror parsing json");
         pBiot.reset(new Biot(env));
         pBiot->SerializeJsonLoad(doc["biot"]);
+        biotId = (uint32_t)pBiot->m_Id;
         pBiot->OnOpen();
 
     } catch (exception &err) {
@@ -845,8 +850,6 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, cons
             returnRejectedBiotToPeer(rpcType, side, d, err.what());
         return;
     }
-
-    uint32_t biotId = pBiot->m_Id;
     if(env.side[side]->ReceiveBiotFromNetwork(pBiot.get(), allowQueueOverflow))
     {
         pBiot.release();
