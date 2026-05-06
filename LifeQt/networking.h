@@ -92,6 +92,7 @@ signals:
 private:
     void sendPeerHello(QTcpSocket *client);
     void sendMuxOpen(int side);
+    void sendMuxClose(QTcpSocket *sock, uint8_t channel);
     void sendSidePage(int side, const QByteArray &frame);
     void sendBiotAccept(int side, uint32_t biotId);
     void receivePeerHello(int side, const QByteArray &d);
@@ -101,7 +102,6 @@ private:
     void receiveBiotFromNetwork(const QString &rpcType, int side, const QByteArray &d, bool returnOnFailure, bool allowQueueOverflow = false);
     void receiveCachedReturnedBiot(int side, const QByteArray &jsonPayload);
     void returnRejectedBiotToPeer(const QString &rpcType, int side, const QByteArray &d, const char *reason);
-    bool socketHasOtherSides(QTcpSocket *sock, int exceptSide) const;
 
     class Environment &env;
     class Networking networking;

@@ -21,6 +21,7 @@ const qint64 RECONNECT_INTERVAL_MS = 60000;
 const char *RPC_PEER_HELLO = "peerhello1";
 const char *RPC_BIOT_ACCEPT = "biotaccept";
 const char *RPC_MUX_OPEN = "muxopen001";
+const char *RPC_MUX_CLOSE = "muxclose01";
 const char *RPC_MUX_FRAME = "muxframe01";
 const char *RPC_MUX_ASSIGN = "muxassign1";
 const char *RPC_MUX_NO_FREE = "muxnofree1";
@@ -405,9 +406,10 @@ void SidesManager::connectToHost(int side, const QString &hostName, quint16 port
     if(sockets[side] != nullptr)
     {
         QTcpSocket *oldSocket = sockets[side];
+        sendMuxClose(oldSocket, sideChannel[side]);
         sideBySocketChannel[oldSocket].remove(sideChannel[side]);
         sockets[side] = nullptr;
-        if(!socketHasOtherSides(oldSocket, side))
+        if(sideBySocketChannel[oldSocket].isEmpty())
             oldSocket->disconnectFromHost();
     }
 
@@ -451,6 +453,7 @@ void SidesManager::disconnectSide(int side)
     if(sockets[side] != nullptr)
     {
         QTcpSocket *sock = sockets[side];
+        sendMuxClose(sock, sideChannel[side]);
         sideBySocketChannel[sock].remove(sideChannel[side]);
         sockets[side] = nullptr;
         isAssigned[side] = false;
@@ -459,14 +462,15 @@ void SidesManager::disconnectSide(int side)
         env.side[side]->SetConnected(false);
         env.side[side]->Clear(&this->env);
         env.side[side]->SetSize(false);
-        if(!socketHasOtherSides(sock, side))
+        if(sideBySocketChannel[sock].isEmpty())
             sock->disconnectFromHost();
+        emit sideStateChanged(side, QAbstractSocket::UnconnectedState);
     }
 }
 
 void SidesManager::netAcceptConnection(QTcpSocket *client)
 {
-    (void)client;
+    sendPeerHello(client);
 }
 
 void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketState state)
@@ -561,6 +565,8 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
                 status[side] = "No free sides";
                 sideBySocketChannel[client].remove(channel);
                 sockets[side] = nullptr;
+                if(sideBySocketChannel[client].isEmpty())
+                    client->disconnectFromHost();
                 emit sideStateChanged(side, QAbstractSocket::UnconnectedState);
             }
         }
@@ -789,6 +795,15 @@ void SidesManager::sendMuxOpen(int side)
     QByteArray open(RPC_MUX_OPEN);
     open.append((char)sideChannel[side]);
     networking.sendPage(sock, open.constData(), open.length());
+}
+
+void SidesManager::sendMuxClose(QTcpSocket *sock, uint8_t channel)
+{
+    if(sock == nullptr || sock->state() != QAbstractSocket::ConnectedState)
+        return;
+    QByteArray close(RPC_MUX_CLOSE);
+    close.append((char)channel);
+    networking.sendPage(sock, close.constData(), close.length());
 }
 
 void SidesManager::sendSidePage(int side, const QByteArray &frame)
@@ -1089,16 +1104,6 @@ void SidesManager::readyToReceive(int sideId, bool ready)
             sendSidePage(sideId, data);
         }
     }
-}
-
-bool SidesManager::socketHasOtherSides(QTcpSocket *sock, int exceptSide) const
-{
-    for(int i=0; i<4; i++)
-    {
-        if(i != exceptSide && sockets[i] == sock)
-            return true;
-    }
-    return false;
 }
 
 void SidesManager::updateListenMode()

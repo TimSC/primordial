@@ -32,6 +32,7 @@ const int MAGIC_CODE_LEN = 8;
 const char *MAGIC_CODE = "primlife";
 const char *RPC_PEER_HELLO = "peerhello1";
 const char *RPC_MUX_OPEN = "muxopen001";
+const char *RPC_MUX_CLOSE = "muxclose01";
 const char *RPC_MUX_FRAME = "muxframe01";
 const char *RPC_MUX_ASSIGN = "muxassign1";
 const char *RPC_MUX_NO_FREE = "muxnofree1";
@@ -306,6 +307,12 @@ private:
             return;
         }
 
+        if(rpcType == RPC_MUX_CLOSE)
+        {
+            receiveMuxClose(client, frame);
+            return;
+        }
+
         if(rpcType != RPC_MUX_FRAME || frame.size() < 11)
         {
             std::cout << "dropping non-multiplexed frame" << std::endl;
@@ -374,6 +381,24 @@ private:
         QByteArray assigned(RPC_MUX_ASSIGN);
         assigned.append((char)channelId);
         sendFrame(client.socket, assigned);
+    }
+
+    void receiveMuxClose(Client &client, const QByteArray &frame)
+    {
+        QByteArray payload = frame.mid(10);
+        if(payload.size() != 1)
+            return;
+
+        int channelId = (uint8_t)payload[0];
+        ClientChannel *channel = client.channels.take(channelId);
+        if(channel == nullptr)
+            return;
+
+        unlink(*channel);
+        delete channel;
+
+        if(client.channels.isEmpty())
+            client.socket->disconnectFromHost();
     }
 
     void receivePeerHello(Client &client, const QByteArray &frame)
