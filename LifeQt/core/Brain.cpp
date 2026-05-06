@@ -7,6 +7,7 @@
 #include "Brain.h"
 #include "Environ.h"
 #include "Biots.h"
+#include <cstring>
 #include <iostream>
 #include <cassert>
 
@@ -889,7 +890,101 @@ inline bool CommandLimbStore::IsSensorTrue()
     return m_pBiot->m_commandArray.IsTrue(m_nLimbType, m_index, m_dwSensor);
 }
 
-void CommandLimbStore::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
+static const char *CommandKindName(int command)
+{
+    switch(command)
+    {
+    case CommandArgument::COMMAND_FLAP_LIMB_SEGMENT:
+        return "flap_limb_segment";
+    case CommandArgument::COMMAND_FLAP_LIMB_TYPE_SEGMENT:
+        return "flap_limb_type_segment";
+    case CommandArgument::COMMAND_MOVE_LIMB_SEGMENT:
+        return "move_limb_segment";
+    case CommandArgument::COMMAND_MOVE_LIMB_SEGMENTS:
+        return "move_limb_segments";
+    case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENT:
+        return "move_limb_type_segment";
+    case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENTS:
+        return "move_limb_type_segments";
+    case CommandArgument::COMMAND_RETRACT_LIMB_TYPE:
+        return "retract_limb_type";
+    case CommandArgument::COMMAND_RETRACT_LIMB:
+        return "retract_limb";
+    case CommandArgument::COMMAND_NOP:
+        return "nop";
+    case CommandArgument::COMMAND_MEMORY:
+        return "memory";
+    default:
+        return "unknown";
+    }
+}
+
+static int CommandKindFromName(const char *kind)
+{
+    if(strcmp(kind, "flap_limb_segment") == 0)
+        return CommandArgument::COMMAND_FLAP_LIMB_SEGMENT;
+    if(strcmp(kind, "flap_limb_type_segment") == 0)
+        return CommandArgument::COMMAND_FLAP_LIMB_TYPE_SEGMENT;
+    if(strcmp(kind, "move_limb_segment") == 0)
+        return CommandArgument::COMMAND_MOVE_LIMB_SEGMENT;
+    if(strcmp(kind, "move_limb_segments") == 0)
+        return CommandArgument::COMMAND_MOVE_LIMB_SEGMENTS;
+    if(strcmp(kind, "move_limb_type_segment") == 0)
+        return CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENT;
+    if(strcmp(kind, "move_limb_type_segments") == 0)
+        return CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENTS;
+    if(strcmp(kind, "retract_limb_type") == 0)
+        return CommandArgument::COMMAND_RETRACT_LIMB_TYPE;
+    if(strcmp(kind, "retract_limb") == 0)
+        return CommandArgument::COMMAND_RETRACT_LIMB;
+    if(strcmp(kind, "nop") == 0)
+        return CommandArgument::COMMAND_NOP;
+    if(strcmp(kind, "memory") == 0)
+        return CommandArgument::COMMAND_MEMORY;
+    return -1;
+}
+
+static void AddStringMember(Document::AllocatorType& allocator, Value &v, const char *name, const char *text)
+{
+    Value value;
+    value.SetString(text, allocator);
+    v.AddMember(StringRef(name), value, allocator);
+}
+
+static void AddIntMember(Document::AllocatorType& allocator, Value &v, const char *name, int value)
+{
+    v.AddMember(StringRef(name), value, allocator);
+}
+
+static void AddBoolMember(Document::AllocatorType& allocator, Value &v, const char *name, bool value)
+{
+    v.AddMember(StringRef(name), value, allocator);
+}
+
+static int LoadIntMember(const Value &v, const char *name)
+{
+    if(!v.HasMember(name) || !v[name].IsInt())
+        throw std::runtime_error("error parsing command state json");
+    return v[name].GetInt();
+}
+
+static bool LoadBoolMember(const Value &v, const char *name)
+{
+    if(!v.HasMember(name) || !v[name].IsBool())
+        throw std::runtime_error("error parsing command state json");
+    return v[name].GetBool();
+}
+
+static int ExpectedStoreCommand(Biot& biot, int nLimbType, int index)
+{
+    if(nLimbType < 0 || nLimbType >= MAX_LIMB_TYPES)
+        return -1;
+    if(index < 0 || index >= CommandLimbType::MAX_COMMANDS_PER_LIMB)
+        return -1;
+    return biot.m_commandArray.GetCommandArgument(nLimbType, index).GetCommand();
+}
+
+void CommandLimbStore::SerializeJson(Biot& biot, rapidjson::Document &d, rapidjson::Value &v)
 {
     Document::AllocatorType& allocator = d.GetAllocator();
     v.AddMember("m_nLimbType", m_nLimbType, allocator);
@@ -898,13 +993,184 @@ void CommandLimbStore::SerializeJson(rapidjson::Document &d, rapidjson::Value &v
     Value commandJson(kArrayType);
     for(int i=0; i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
     {
-        QByteArray buff((const char *)&command[i], sizeof(CommandType));
-        std::string buffStr = buff.toBase64().toStdString();
-        Value v2;
-        v2.SetString(buffStr.c_str(), allocator);
-        commandJson.PushBack(v2, allocator);
+        int commandType = ExpectedStoreCommand(biot, m_nLimbType, i);
+        Value commandObj(kObjectType);
+        AddStringMember(allocator, commandObj, "kind", CommandKindName(commandType));
+        AddIntMember(allocator, commandObj, "storeIndex", i);
+        if(m_nLimbType >= 0 && m_nLimbType < MAX_LIMB_TYPES)
+        {
+            AddIntMember(allocator, commandObj, "commandDefinitionIndex", biot.m_commandArray.GetCommandReference(m_nLimbType, i));
+            AddIntMember(allocator, commandObj, "sensorProductIndex", biot.m_commandArray.GetProductSumReference(m_nLimbType, i));
+        }
+
+        switch(commandType)
+        {
+        case CommandArgument::COMMAND_FLAP_LIMB_SEGMENT:
+            AddIntMember(allocator, commandObj, "limb", command[i].flapLimbSegment.m_nLimb);
+            AddIntMember(allocator, commandObj, "segment", command[i].flapLimbSegment.m_nSegment);
+            AddIntMember(allocator, commandObj, "rate", command[i].flapLimbSegment.m_nRate);
+            AddIntMember(allocator, commandObj, "maxDegrees", command[i].flapLimbSegment.m_nMaxDegrees);
+            AddIntMember(allocator, commandObj, "appliedDegrees", command[i].flapLimbSegment.m_nAppliedDegrees);
+            AddBoolMember(allocator, commandObj, "goingUp", command[i].flapLimbSegment.m_bGoingUp);
+            break;
+        case CommandArgument::COMMAND_FLAP_LIMB_TYPE_SEGMENT:
+            AddIntMember(allocator, commandObj, "limbType", command[i].flapLimbTypeSegment.m_nLimbType);
+            AddIntMember(allocator, commandObj, "segment", command[i].flapLimbTypeSegment.m_nSegment);
+            AddIntMember(allocator, commandObj, "rate", command[i].flapLimbTypeSegment.m_nRate);
+            AddIntMember(allocator, commandObj, "maxDegrees", command[i].flapLimbTypeSegment.m_nMaxDegrees);
+            AddIntMember(allocator, commandObj, "appliedDegrees", command[i].flapLimbTypeSegment.m_nAppliedDegrees);
+            AddBoolMember(allocator, commandObj, "goingUp", command[i].flapLimbTypeSegment.m_bGoingUp);
+            break;
+        case CommandArgument::COMMAND_MOVE_LIMB_SEGMENT:
+            AddIntMember(allocator, commandObj, "limb", command[i].moveLimbSegment.m_nLimb);
+            AddIntMember(allocator, commandObj, "segment", command[i].moveLimbSegment.m_nSegment);
+            AddIntMember(allocator, commandObj, "rate", command[i].moveLimbSegment.m_nRate);
+            AddIntMember(allocator, commandObj, "maxDegrees", command[i].moveLimbSegment.m_nMaxDegrees);
+            AddIntMember(allocator, commandObj, "appliedDegrees", command[i].moveLimbSegment.m_nAppliedDegrees);
+            break;
+        case CommandArgument::COMMAND_MOVE_LIMB_SEGMENTS:
+            AddIntMember(allocator, commandObj, "limb", command[i].moveLimbSegments.m_nLimb);
+            AddIntMember(allocator, commandObj, "rate", command[i].moveLimbSegments.m_nRate);
+            AddIntMember(allocator, commandObj, "maxDegrees", command[i].moveLimbSegments.m_nMaxDegrees);
+            AddIntMember(allocator, commandObj, "appliedDegrees", command[i].moveLimbSegments.m_nAppliedDegrees);
+            break;
+        case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENT:
+            AddIntMember(allocator, commandObj, "limbType", command[i].moveLimbTypeSegment.m_nLimbType);
+            AddIntMember(allocator, commandObj, "segment", command[i].moveLimbTypeSegment.m_nSegment);
+            AddIntMember(allocator, commandObj, "rate", command[i].moveLimbTypeSegment.m_nRate);
+            AddIntMember(allocator, commandObj, "maxDegrees", command[i].moveLimbTypeSegment.m_nMaxDegrees);
+            AddIntMember(allocator, commandObj, "appliedDegrees", command[i].moveLimbTypeSegment.m_nAppliedDegrees);
+            break;
+        case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENTS:
+            AddIntMember(allocator, commandObj, "limbType", command[i].moveLimbTypeSegments.m_nLimbType);
+            AddIntMember(allocator, commandObj, "rate", command[i].moveLimbTypeSegments.m_nRate);
+            AddIntMember(allocator, commandObj, "maxDegrees", command[i].moveLimbTypeSegments.m_nMaxDegrees);
+            AddIntMember(allocator, commandObj, "appliedDegrees", command[i].moveLimbTypeSegments.m_nAppliedDegrees);
+            break;
+        case CommandArgument::COMMAND_RETRACT_LIMB_TYPE:
+            AddIntMember(allocator, commandObj, "segment", command[i].retractLimbType.m_nSegment);
+            AddIntMember(allocator, commandObj, "limbType", command[i].retractLimbType.m_nLimbType);
+            AddIntMember(allocator, commandObj, "maxRadius", command[i].retractLimbType.m_nMaxRadius);
+            AddIntMember(allocator, commandObj, "appliedRadius", command[i].retractLimbType.m_nAppliedRadius);
+            break;
+        case CommandArgument::COMMAND_RETRACT_LIMB:
+            AddIntMember(allocator, commandObj, "segment", command[i].retractLimb.m_nSegment);
+            AddIntMember(allocator, commandObj, "limb", command[i].retractLimb.m_nLimb);
+            AddIntMember(allocator, commandObj, "maxRadius", command[i].retractLimb.m_nMaxRadius);
+            AddIntMember(allocator, commandObj, "appliedRadius", command[i].retractLimb.m_nAppliedRadius);
+            break;
+        case CommandArgument::COMMAND_MEMORY:
+            AddIntMember(allocator, commandObj, "time", command[i].memory.m_time);
+            AddIntMember(allocator, commandObj, "memoryState", command[i].memory.m_type);
+            AddBoolMember(allocator, commandObj, "set", command[i].memory.m_bSet);
+            break;
+        case CommandArgument::COMMAND_NOP:
+        default:
+            break;
+        }
+        commandJson.PushBack(commandObj, allocator);
     }
     v.AddMember("command", commandJson, allocator);
+}
+
+static void LoadLegacyCommandBlob(CommandType &command, const Value &v)
+{
+    if(!v.IsString())
+        throw std::range_error("command entry is not a string");
+
+    QByteArray buffStr(v.GetString(), v.GetStringLength());
+    QByteArray buff = QByteArray::fromBase64(buffStr);
+    if(buff.length() != (int)sizeof(CommandType))
+    {
+        LogInvalidDeserializedValue("CommandLimbStore::SerializeJsonLoad", "command byte length", buff.length());
+        throw std::range_error("command byte length out of range");
+    }
+
+    memset(&command, 0x00, sizeof(CommandType));
+    memcpy(&command, buff.constData(), sizeof(CommandType));
+}
+
+void CommandLimbStore::LoadSemanticCommandState(CommandType &command, const Value &v, int expectedCommand)
+{
+    if(!v.IsObject())
+        throw std::runtime_error("error parsing command state json");
+    if(!v.HasMember("kind") || !v["kind"].IsString())
+        throw std::runtime_error("command state kind missing");
+
+    int commandType = CommandKindFromName(v["kind"].GetString());
+    if(commandType < 0)
+        throw std::range_error("command state kind unknown");
+    if(expectedCommand >= 0 && commandType != expectedCommand)
+        throw std::range_error("command state kind does not match command definition");
+
+    memset(&command, 0x00, sizeof(CommandType));
+
+    switch(commandType)
+    {
+    case CommandArgument::COMMAND_FLAP_LIMB_SEGMENT:
+        command.flapLimbSegment.m_nLimb = LoadIntMember(v, "limb");
+        command.flapLimbSegment.m_nSegment = LoadIntMember(v, "segment");
+        command.flapLimbSegment.m_nRate = LoadIntMember(v, "rate");
+        command.flapLimbSegment.m_nMaxDegrees = LoadIntMember(v, "maxDegrees");
+        command.flapLimbSegment.m_nAppliedDegrees = LoadIntMember(v, "appliedDegrees");
+        command.flapLimbSegment.m_bGoingUp = LoadBoolMember(v, "goingUp");
+        break;
+    case CommandArgument::COMMAND_FLAP_LIMB_TYPE_SEGMENT:
+        command.flapLimbTypeSegment.m_nLimbType = LoadIntMember(v, "limbType");
+        command.flapLimbTypeSegment.m_nSegment = LoadIntMember(v, "segment");
+        command.flapLimbTypeSegment.m_nRate = LoadIntMember(v, "rate");
+        command.flapLimbTypeSegment.m_nMaxDegrees = LoadIntMember(v, "maxDegrees");
+        command.flapLimbTypeSegment.m_nAppliedDegrees = LoadIntMember(v, "appliedDegrees");
+        command.flapLimbTypeSegment.m_bGoingUp = LoadBoolMember(v, "goingUp");
+        break;
+    case CommandArgument::COMMAND_MOVE_LIMB_SEGMENT:
+        command.moveLimbSegment.m_nLimb = LoadIntMember(v, "limb");
+        command.moveLimbSegment.m_nSegment = LoadIntMember(v, "segment");
+        command.moveLimbSegment.m_nRate = LoadIntMember(v, "rate");
+        command.moveLimbSegment.m_nMaxDegrees = LoadIntMember(v, "maxDegrees");
+        command.moveLimbSegment.m_nAppliedDegrees = LoadIntMember(v, "appliedDegrees");
+        break;
+    case CommandArgument::COMMAND_MOVE_LIMB_SEGMENTS:
+        command.moveLimbSegments.m_nLimb = LoadIntMember(v, "limb");
+        command.moveLimbSegments.m_nRate = LoadIntMember(v, "rate");
+        command.moveLimbSegments.m_nMaxDegrees = LoadIntMember(v, "maxDegrees");
+        command.moveLimbSegments.m_nAppliedDegrees = LoadIntMember(v, "appliedDegrees");
+        break;
+    case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENT:
+        command.moveLimbTypeSegment.m_nLimbType = LoadIntMember(v, "limbType");
+        command.moveLimbTypeSegment.m_nSegment = LoadIntMember(v, "segment");
+        command.moveLimbTypeSegment.m_nRate = LoadIntMember(v, "rate");
+        command.moveLimbTypeSegment.m_nMaxDegrees = LoadIntMember(v, "maxDegrees");
+        command.moveLimbTypeSegment.m_nAppliedDegrees = LoadIntMember(v, "appliedDegrees");
+        break;
+    case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENTS:
+        command.moveLimbTypeSegments.m_nLimbType = LoadIntMember(v, "limbType");
+        command.moveLimbTypeSegments.m_nRate = LoadIntMember(v, "rate");
+        command.moveLimbTypeSegments.m_nMaxDegrees = LoadIntMember(v, "maxDegrees");
+        command.moveLimbTypeSegments.m_nAppliedDegrees = LoadIntMember(v, "appliedDegrees");
+        break;
+    case CommandArgument::COMMAND_RETRACT_LIMB_TYPE:
+        command.retractLimbType.m_nSegment = LoadIntMember(v, "segment");
+        command.retractLimbType.m_nLimbType = LoadIntMember(v, "limbType");
+        command.retractLimbType.m_nMaxRadius = LoadIntMember(v, "maxRadius");
+        command.retractLimbType.m_nAppliedRadius = LoadIntMember(v, "appliedRadius");
+        break;
+    case CommandArgument::COMMAND_RETRACT_LIMB:
+        command.retractLimb.m_nSegment = LoadIntMember(v, "segment");
+        command.retractLimb.m_nLimb = LoadIntMember(v, "limb");
+        command.retractLimb.m_nMaxRadius = LoadIntMember(v, "maxRadius");
+        command.retractLimb.m_nAppliedRadius = LoadIntMember(v, "appliedRadius");
+        break;
+    case CommandArgument::COMMAND_MEMORY:
+        command.memory.m_time = LoadIntMember(v, "time");
+        command.memory.m_type = LoadIntMember(v, "memoryState");
+        command.memory.m_bSet = LoadBoolMember(v, "set");
+        break;
+    case CommandArgument::COMMAND_NOP:
+        break;
+    default:
+        throw std::range_error("command state kind out of range");
+    }
 }
 
 void CommandLimbStore::SerializeJsonLoad(Biot& biot, const rapidjson::Value& v)
@@ -922,22 +1188,15 @@ void CommandLimbStore::SerializeJsonLoad(Biot& biot, const rapidjson::Value& v)
     }
     for(rapidjson::SizeType i=0; i<commandJson.Size() and i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
     {
-        //Store binary data as base64 encoded string
-        if(!commandJson[i].IsString())
+        if(commandJson[i].IsString())
+            LoadLegacyCommandBlob(command[i], commandJson[i]);
+        else if(commandJson[i].IsObject())
+            LoadSemanticCommandState(command[i], commandJson[i], ExpectedStoreCommand(biot, m_nLimbType, (int)i));
+        else
         {
             LogInvalidDeserializedIndex("CommandLimbStore::SerializeJsonLoad", "command", (int)i);
-            throw std::range_error("command entry is not a string");
+            throw std::range_error("command entry has invalid format");
         }
-        QByteArray buffStr(commandJson[i].GetString(), commandJson[i].GetStringLength());
-        QByteArray buff = QByteArray::fromBase64(buffStr);
-        if(buff.length() != (int)sizeof(CommandType))
-        {
-            LogInvalidDeserializedValue("CommandLimbStore::SerializeJsonLoad", "command byte length", buff.length());
-            throw std::range_error("command byte length out of range");
-        }
-
-        memset(&command[i], 0x00, sizeof(CommandType));
-        memcpy(&command[i], buff.constData(), sizeof(CommandType));
     }
 
     try {

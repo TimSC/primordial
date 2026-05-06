@@ -314,6 +314,8 @@ public:
     void Crossover(CommandArray& commandArray);
     CommandArray& operator=(CommandArray& commandArray);
     CommandArgument& GetCommandArgument(int nLimbType, int nCommand);
+    int GetCommandReference(int nLimbType, int nCommand);
+    int GetProductSumReference(int nLimbType, int nCommand);
     bool IsTrue(int nLimbType, int nCommand, uint32_t dwSensor);
 
 protected:
@@ -332,6 +334,18 @@ inline CommandArgument& CommandArray::GetCommandArgument(int nLimbType, int nCom
 { 
     assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
     return m_command[m_commandLimbType[nLimbType].GetCommand(nCommand)];
+}
+
+inline int CommandArray::GetCommandReference(int nLimbType, int nCommand)
+{
+    assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
+    return m_commandLimbType[nLimbType].GetCommand(nCommand);
+}
+
+inline int CommandArray::GetProductSumReference(int nLimbType, int nCommand)
+{
+    assert(nLimbType < MAX_LIMB_TYPES && nLimbType >= 0);
+    return m_commandLimbType[nLimbType].GetProductSum(nCommand);
 }
 
 inline int CommandArray::GetCommandCount()
@@ -362,6 +376,7 @@ public:
     void Flap(Biot& biot);
 
 protected:
+    friend class CommandLimbStore;
     int   m_nLimb;
     int   m_nSegment;
     int   m_nRate;
@@ -385,6 +400,7 @@ public:
     void FlapLimbTypeSegments(Biot& biot);
 
 protected:
+    friend class CommandLimbStore;
     int   m_nLimbType;
     int   m_nSegment;
     int   m_nRate;
@@ -405,6 +421,7 @@ public:
     void SerializeJsonLoad(const rapidjson::Value& v);
 
 protected:
+    friend class CommandLimbStore;
     int   m_nLimb;
     int   m_nSegment;
     int   m_nRate;
@@ -423,6 +440,7 @@ public:
     void Execute(CommandLimbStore& store);
 
 protected:
+    friend class CommandLimbStore;
     int   m_nLimb;
     int   m_nRate;
     int   m_nMaxDegrees;
@@ -439,6 +457,7 @@ public:
     void Execute(CommandLimbStore& store);
 
 protected:
+    friend class CommandLimbStore;
     int   m_nLimbType;
     int   m_nSegment;
     int   m_nRate;
@@ -457,6 +476,7 @@ public:
     void Execute(CommandLimbStore& store);
 
 protected:
+    friend class CommandLimbStore;
     int   m_nLimbType;
     int   m_nRate;
     int   m_nMaxDegrees;
@@ -473,6 +493,7 @@ public:
     void Execute(CommandLimbStore& store);
 
 protected:
+    friend class CommandLimbStore;
     int   m_nSegment;
     int   m_nLimbType;
     int   m_nMaxRadius;
@@ -490,6 +511,7 @@ public:
     void Execute(CommandLimbStore& store);
 
 protected:
+    friend class CommandLimbStore;
     int   m_nSegment;
     int   m_nLimb;
     int   m_nMaxRadius;
@@ -526,6 +548,7 @@ public:
     };
         
 protected:
+    friend class CommandLimbStore;
     int   m_time;
     int   m_type;
     bool  m_bSet;
@@ -573,10 +596,12 @@ public:
     // Callback for each
     bool IsSensorTrue();
 
-    void SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
+    void SerializeJson(Biot& biot, rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(Biot& biot, const rapidjson::Value& v);
 
 protected:
+    void LoadSemanticCommandState(CommandType &command, const rapidjson::Value& v, int expectedCommand);
+
     // This requires serialization
     CommandType  command[CommandLimbType::MAX_COMMANDS_PER_LIMB];
 };

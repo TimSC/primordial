@@ -1676,7 +1676,7 @@ void Biot::CopyGenes(Biot& enemy)
 
 void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
 {
-    const uint8_t archiveVersion = 11;
+    const uint8_t archiveVersion = 12;
     Document::AllocatorType& allocator = d.GetAllocator();
 
     v.AddMember("archiveVersion", Value(archiveVersion), allocator);
@@ -1708,7 +1708,7 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     for(int i=0; i<MAX_LIMBS; i++)
     {
         Value storeObj(kObjectType);
-        m_store[i].SerializeJson(d, storeObj);
+        m_store[i].SerializeJson(*this, d, storeObj);
         storeJson.PushBack(storeObj, allocator);
     }
     v.AddMember("m_store", storeJson, allocator);
@@ -1759,8 +1759,10 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");
 
-    const uint8_t archiveVersion = 11;
-    if (v["archiveVersion"].GetInt() != archiveVersion)
+    const uint8_t minArchiveVersion = 11;
+    const uint8_t maxArchiveVersion = 12;
+    int archiveVersion = v["archiveVersion"].GetInt();
+    if (archiveVersion < minArchiveVersion || archiveVersion > maxArchiveVersion)
         throw std::runtime_error("eror parsing json");
 
     // Store or load other objects
