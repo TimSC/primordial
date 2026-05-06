@@ -74,6 +74,29 @@ NetworkUi::NetworkUi(SidesManager &sidesManagerIn, QWidget *parent) :
 
     connect(&sidesManager, SIGNAL(sideStateChanged(int, QAbstractSocket::SocketState)), this, SLOT(sideStateChanged(int, QAbstractSocket::SocketState)));
     connect(&sidesManager, SIGNAL(sideAssigned(int)), this, SLOT(sideAssigned(int)));
+    connect(&sidesManager, SIGNAL(sideStatsChanged(int)), this, SLOT(sideStatsChanged(int)));
+
+    QLabel *sentHeader = new QLabel("sent", this);
+    sentHeader->setAlignment(Qt::AlignCenter);
+    ui->gridLayout->addWidget(sentHeader, 0, 4, 1, 1);
+    QLabel *receivedHeader = new QLabel("received", this);
+    receivedHeader->setAlignment(Qt::AlignCenter);
+    ui->gridLayout->addWidget(receivedHeader, 0, 5, 1, 1);
+
+    for(int i = 0; i < 4; i++)
+    {
+        sentEdit[i] = new QLineEdit("0", this);
+        sentEdit[i]->setEnabled(false);
+        sentEdit[i]->setFixedWidth(55);
+        ui->gridLayout->addWidget(sentEdit[i], i + 1, 4, 1, 1);
+
+        receivedEdit[i] = new QLineEdit("0", this);
+        receivedEdit[i]->setEnabled(false);
+        receivedEdit[i]->setFixedWidth(55);
+        ui->gridLayout->addWidget(receivedEdit[i], i + 1, 5, 1, 1);
+
+        UpdateStats(i);
+    }
 
     UpdateRow(0, this->ui->addressEdit, this->ui->status, this->ui->connectButton);
     UpdateRow(1, this->ui->addressEdit_2, this->ui->status_2, this->ui->connectButton_2);
@@ -127,6 +150,20 @@ void NetworkUi::sideStateChanged(int side, QAbstractSocket::SocketState state)
         UpdateRow(2, this->ui->addressEdit_3, this->ui->status_3, this->ui->connectButton_3);
     else if(side == 3)
         UpdateRow(3, this->ui->addressEdit_4, this->ui->status_4, this->ui->connectButton_4);
+    UpdateStats(side);
+}
+
+void NetworkUi::sideStatsChanged(int side)
+{
+    UpdateStats(side);
+}
+
+void NetworkUi::UpdateStats(int side)
+{
+    int sent, received;
+    sidesManager.getSideStats(side, sent, received);
+    sentEdit[side]->setText(QString::number(sent));
+    receivedEdit[side]->setText(QString::number(received));
 }
 
 void NetworkUi::UpdateRow(int side, QLineEdit *lineEdit, QLineEdit *statusEdit, QPushButton *button)
@@ -135,6 +172,7 @@ void NetworkUi::UpdateRow(int side, QLineEdit *lineEdit, QLineEdit *statusEdit, 
     bool enableConnect=0;
     sidesManager.getSideStatus(side, addr, status, enableConnect);
     lineEdit->setText(addr);
+    lineEdit->setEnabled(enableConnect);
     statusEdit->setText(status);
     if(enableConnect)
         button->setText("Connect");

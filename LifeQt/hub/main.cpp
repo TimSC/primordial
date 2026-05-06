@@ -175,6 +175,8 @@ public:
         connect(&server, &QTcpServer::newConnection, this, [this]() { acceptConnections(); });
         connect(&linkTimer, &QTimer::timeout, this, [this]() { reviewLinks(); sweepTimeouts(); });
         linkTimer.start(1000);
+        connect(&minuteTimer, &QTimer::timeout, this, [this]() { logMinuteStats(); });
+        minuteTimer.start(60000);
 
         if(!server.listen(QHostAddress::Any, port))
             throw std::runtime_error(server.errorString().toStdString());
@@ -189,8 +191,11 @@ private:
     QMap<QTcpSocket *, Client *> clients;
     QMap<QString, int> connectionsPerIp;
     QTimer linkTimer;
+    QTimer minuteTimer;
     int maxClients;
     int maxClientsPerIp;
+    int biotsRelayedThisMinute = 0;
+    int biotsRateLimitedThisMinute = 0;
 
     void acceptConnections()
     {
@@ -336,7 +341,6 @@ private:
 
         if(client.link == nullptr)
         {
-            std::cout << "returning biot " << biotId << ": client has no hub link" << std::endl;
             sendReturnBiot(client, rpcType, biotId);
             return;
         }
@@ -351,13 +355,14 @@ private:
         qint64 now = QDateTime::currentMSecsSinceEpoch();
         if(now - client.lastSentBiotTime < LINK_BIOT_INTERVAL_MS)
         {
-            std::cout << "returning biot " << biotId << ": link rate limit exceeded" << std::endl;
+            biotsRateLimitedThisMinute++;
             sendReturnBiot(client, rpcType, biotId);
             return;
         }
 
         client.lastSentBiotTime = now;
         client.link->recentlyReceivedBiotIds[biotId] = now;
+        biotsRelayedThisMinute++;
         sendFrame(client.link->socket, frame);
     }
 
@@ -390,13 +395,29 @@ private:
             sendFrame(client.link->socket, frame);
     }
 
+    void logMinuteStats()
+    {
+        int unlinked = 0;
+        for(auto it = clients.begin(); it != clients.end(); ++it)
+        {
+            if(it.value()->link == nullptr)
+                unlinked++;
+        }
+        std::cout << "stats: connected=" << clients.size()
+                  << " biots_last_min=" << biotsRelayedThisMinute
+                  << " rate_limited=" << biotsRateLimitedThisMinute
+                  << " unlinked=" << unlinked << std::endl;
+        biotsRelayedThisMinute = 0;
+        biotsRateLimitedThisMinute = 0;
+    }
+
     void reviewLinks()
     {
         QList<Client *> unlinked;
         for(auto it = clients.begin(); it != clients.end(); ++it)
         {
             Client *client = it.value();
-            if(client->link == nullptr)
+            if(client->link == nullptr && !client->instanceId.isEmpty())
                 unlinked.append(client);
         }
 

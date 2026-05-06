@@ -366,6 +366,8 @@ SidesManager::SidesManager(class Environment &envIn) :
         configuredHostPort[i] = QString::fromStdString(env.settings.m_sSideAddress[i]);
         peerInstanceId[i] = "";
         recentlySentBiots[i].clear();
+        biotsSent[i] = 0;
+        biotsReceived[i] = 0;
     }
 
     connect(&networking, SIGNAL(netAcceptConnection(QTcpSocket *)), this, SLOT(netAcceptConnection(QTcpSocket *)));
@@ -401,6 +403,9 @@ void SidesManager::connectToHost(int side, const QString &hostName, quint16 port
     }
 
     recentlySentBiots[side].clear();
+    biotsSent[side] = 0;
+    biotsReceived[side] = 0;
+    emit sideStatsChanged(side);
     configuredHostPort[side] = FormatHostPort(hostName, port);
     env.settings.m_sSideAddress[side] = configuredHostPort[side].toStdString();
     env.settings.m_bSideEnable[side] = true;
@@ -438,6 +443,9 @@ void SidesManager::netAcceptConnection(QTcpSocket *client)
     {
         sockets[freeSide] = client;
         isAssigned[freeSide] = true;
+        biotsSent[freeSide] = 0;
+        biotsReceived[freeSide] = 0;
+        emit sideStatsChanged(freeSide);
         QString peer = client->peerName();
         if(peer.isEmpty())
             peer = client->peerAddress().toString();
@@ -601,6 +609,13 @@ void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &status
         statusOut = "Assigned";
 }
 
+void SidesManager::getSideStats(int side, int &sentOut, int &receivedOut)
+{
+    assert(side >= 0 && side < 4);
+    sentOut = biotsSent[side];
+    receivedOut = biotsReceived[side];
+}
+
 quint16 SidesManager::defaultNetworkPort() const
 {
     return env.settings.m_networkPort;
@@ -680,6 +695,8 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
                 networking.sendPage(sock, data.constData(), data.length());
                 recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
             }
+            biotsSent[side]++;
+            emit sideStatsChanged(side);
             return true;
         }
         catch (const exception &err) {
@@ -806,7 +823,11 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, cons
     }
 
     if(env.side[side]->ReceiveBiotFromNetwork(pBiot.get(), allowQueueOverflow))
+    {
         pBiot.release();
+        biotsReceived[side]++;
+        emit sideStatsChanged(side);
+    }
     else
         std::cout << "dropping received biot because side queue is full" << std::endl;
 }

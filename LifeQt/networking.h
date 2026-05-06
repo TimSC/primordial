@@ -69,6 +69,7 @@ public:
     void connectToHost(int side, const QString &hostName, quint16 port);
     void disconnectSide(int side);
     void getSideStatus(int side, QString &hostPortOut, QString &statusOut, bool &enableConnect);
+    void getSideStats(int side, int &sentOut, int &receivedOut);
     quint16 defaultNetworkPort() const;
     void connectConfiguredSides();
     bool autoReconnectEnabled() const;
@@ -86,6 +87,7 @@ public slots:
 signals:
     void sideStateChanged(int side, QAbstractSocket::SocketState socketState);
     void sideAssigned(int side);
+    void sideStatsChanged(int side);
 
 private:
     void sendPeerHello(QTcpSocket *client);
@@ -102,6 +104,8 @@ private:
     QString peerInstanceId[4];
     QMap<uint32_t, RecentlySentBiot> recentlySentBiots[4];
     QString status[4];
+    int biotsSent[4];
+    int biotsReceived[4];
     SidesManagerEventRx eventRx;
 };
 

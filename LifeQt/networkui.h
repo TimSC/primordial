@@ -3,6 +3,7 @@
 
 #include "networking.h"
 #include <QDialog>
+#include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 
@@ -32,11 +33,15 @@ private slots:
 public slots:
     void sideAssigned(int side);
     void sideStateChanged(int side, QAbstractSocket::SocketState);
+    void sideStatsChanged(int side);
 
 private:
     Ui::NetworkUi *ui;
     SidesManager &sidesManager;
+    QLineEdit *sentEdit[4];
+    QLineEdit *receivedEdit[4];
     void UpdateRow(int side, QLineEdit *lineEdit, QLineEdit *statusEdit, QPushButton *button);
+    void UpdateStats(int side);
     void ConnectRow(int side, QPushButton *button, QLineEdit *lineEdit);
 };
 
