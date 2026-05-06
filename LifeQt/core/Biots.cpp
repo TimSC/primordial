@@ -319,6 +319,8 @@ float Biot::PercentEnergy()
 //
 void Biot::ClearSettings(void)
 {
+    posAndSpeed = PosAndSpeed();
+
     bDie             = false;
     genes            = INITIAL_GENES; // We start out showing a little
     genes2           = 0;

@@ -3,8 +3,6 @@
 #include <QHostAddress>
 #include <QUrl>
 
-static const quint16 DEFAULT_NETWORK_PORT = 56436;
-
 static bool ParsePort(const QString &text, quint16 &port)
 {
     bool ok = false;
@@ -16,10 +14,10 @@ static bool ParsePort(const QString &text, quint16 &port)
     return true;
 }
 
-static bool ParseEndpoint(const QString &input, QString &host, quint16 &port)
+static bool ParseEndpoint(const QString &input, quint16 defaultPort, QString &host, quint16 &port)
 {
     QString text = input.trimmed();
-    port = DEFAULT_NETWORK_PORT;
+    port = defaultPort;
 
     if(text.isEmpty())
         return false;
@@ -28,7 +26,7 @@ static bool ParseEndpoint(const QString &input, QString &host, quint16 &port)
     {
         QUrl url(text);
         host = url.host();
-        port = (quint16)url.port(DEFAULT_NETWORK_PORT);
+        port = (quint16)url.port(defaultPort);
         return !host.isEmpty();
     }
 
@@ -144,7 +142,7 @@ void NetworkUi::ConnectRow(int side, QPushButton *button, QLineEdit *lineEdit)
     {
         QString host;
         quint16 port;
-        if(!ParseEndpoint(lineEdit->text(), host, port))
+        if(!ParseEndpoint(lineEdit->text(), sidesManager.defaultNetworkPort(), host, port))
             return;
 
         sidesManager.connectToHost(side, host, port);

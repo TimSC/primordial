@@ -69,6 +69,7 @@ public:
     void connectToHost(int side, const QString &hostName, quint16 port);
     void disconnectSide(int side);
     void getSideStatus(int side, QString &hostPortOut, QString &statusOut, bool &enableConnect);
+    quint16 defaultNetworkPort() const;
     bool biotLeavingSide(int side, Biot *pBiot);
     bool isListening(uint16_t &portOut);
     void readyToReceive(int sideId, bool ready);

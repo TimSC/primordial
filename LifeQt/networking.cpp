@@ -497,6 +497,11 @@ void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &status
         statusOut = "Assigned";
 }
 
+quint16 SidesManager::defaultNetworkPort() const
+{
+    return env.settings.m_networkPort;
+}
+
 bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
 {
     cout << "biotLeavingSide " << side << endl;

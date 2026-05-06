@@ -42,8 +42,13 @@ static void RestoreBiotFromJsonForFuzzing(Biot& biot, const std::string& json)
     }
     catch (const std::exception &err) {
         std::cerr << "Failed to restore original biot during fuzzing: " << err.what() << std::endl;
-        biot.ClearSettings();
-        biot.OnOpen();
+        try {
+            biot.ClearSettings();
+            biot.OnOpen();
+        }
+        catch (const std::exception &fallbackErr) {
+            std::cerr << "Failed to reset biot during fuzzing: " << fallbackErr.what() << std::endl;
+        }
     }
 }
 
