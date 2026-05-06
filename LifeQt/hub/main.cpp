@@ -59,6 +59,7 @@ struct Client {
     QString peerAddress;
     qint64 connectTime = 0;
     qint64 lastActivityTime = 0;
+    bool disconnectAfterRead = false;
     QMap<int, ClientChannel *> channels;
 };
 
@@ -260,17 +261,25 @@ private:
             client->assemblyBuffer.append(rxBuffer, readBytes);
             client->lastActivityTime = QDateTime::currentMSecsSinceEpoch();
             processAssemblyBuffer(*client);
+            client = findClient(socket);
+            if(client == nullptr)
+                return;
+            if(client->disconnectAfterRead)
+            {
+                socket->disconnectFromHost();
+                return;
+            }
         }
     }
 
     void processAssemblyBuffer(Client &client)
     {
-        while(client.assemblyBuffer.size() >= MAGIC_CODE_LEN + (int)sizeof(uint32_t))
+        while(!client.disconnectAfterRead && client.assemblyBuffer.size() >= MAGIC_CODE_LEN + (int)sizeof(uint32_t))
         {
             if(client.assemblyBuffer.left(MAGIC_CODE_LEN) != MAGIC_CODE)
             {
                 std::cout << "disconnecting client with invalid frame magic" << std::endl;
-                client.socket->disconnectFromHost();
+                requestDisconnect(client);
                 return;
             }
 
@@ -278,7 +287,7 @@ private:
             if(payloadSize > MAX_PAGE_SIZE)
             {
                 std::cout << "disconnecting client with oversized frame" << std::endl;
-                client.socket->disconnectFromHost();
+                requestDisconnect(client);
                 return;
             }
 
@@ -398,7 +407,7 @@ private:
         delete channel;
 
         if(client.channels.isEmpty())
-            client.socket->disconnectFromHost();
+            requestDisconnect(client);
     }
 
     void receivePeerHello(Client &client, const QByteArray &frame)
@@ -615,6 +624,11 @@ private:
     {
         for(auto it = client.channels.begin(); it != client.channels.end(); ++it)
             unlink(*it.value());
+    }
+
+    void requestDisconnect(Client &client)
+    {
+        client.disconnectAfterRead = true;
     }
 
     void removeClient(QTcpSocket *socket)

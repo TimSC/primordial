@@ -283,7 +283,7 @@ void Networking::clientBytesAvailable()
 
         assemblyBuffer.append(rxBuffer, readBytes);
 
-        if(assemblyBuffer.size() >= (int)(sizeof(uint32_t)+magicCodeLen))
+        while(assemblyBuffer.size() >= (int)(sizeof(uint32_t)+magicCodeLen))
         {
             QByteArray chkMagicCode = assemblyBuffer.left(magicCodeLen);
             if(chkMagicCode != magicCode.c_str())
@@ -305,12 +305,12 @@ void Networking::clientBytesAvailable()
             //std::cout << "rx1 " << expectSize << " " << *(uint32_t *)&assemblyBuffer.constData()[magicCodeLen] << " " << assemblyBuffer.size() << std::endl;
 
             int entirePageSize = magicCodeLen + sizeof(uint32_t) + expectSize;
-            if(assemblyBuffer.size() >= entirePageSize)
-            {
-                pageComplete(client, &assemblyBuffer.constData()[magicCodeLen+sizeof(uint32_t)], expectSize);
-                QByteArray remains = assemblyBuffer.mid(entirePageSize);
-                assembleBuffers[client] = remains;
-            }
+            if(assemblyBuffer.size() < entirePageSize)
+                break;
+
+            QByteArray page = assemblyBuffer.mid(magicCodeLen + sizeof(uint32_t), expectSize);
+            assemblyBuffer.remove(0, entirePageSize);
+            pageComplete(client, page.constData(), page.size());
         }
     }
 }
