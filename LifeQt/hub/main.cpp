@@ -307,7 +307,7 @@ private:
             return;
         }
 
-        if(rpcType == "returnbiot" || rpcType == "returnbioc")
+        if(rpcType == "returnbiot" || rpcType == "returnbioc" || rpcType == "biotaccept")
         {
             relayReturnBiot(client, frame);
             return;

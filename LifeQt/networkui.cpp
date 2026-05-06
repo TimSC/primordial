@@ -76,7 +76,7 @@ NetworkUi::NetworkUi(SidesManager &sidesManagerIn, QWidget *parent) :
     connect(&sidesManager, SIGNAL(sideAssigned(int)), this, SLOT(sideAssigned(int)));
     connect(&sidesManager, SIGNAL(sideStatsChanged(int)), this, SLOT(sideStatsChanged(int)));
 
-    QLabel *sentHeader = new QLabel("sent", this);
+    QLabel *sentHeader = new QLabel("transferred", this);
     sentHeader->setAlignment(Qt::AlignCenter);
     ui->gridLayout->addWidget(sentHeader, 0, 4, 1, 1);
     QLabel *receivedHeader = new QLabel("received", this);

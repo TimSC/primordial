@@ -91,6 +91,7 @@ signals:
 
 private:
     void sendPeerHello(QTcpSocket *client);
+    void sendBiotAccept(int side, uint32_t biotId);
     void receivePeerHello(int side, const QByteArray &d);
     void receiveBiotFromNetwork(const QString &rpcType, int side, const QByteArray &d, bool returnOnFailure, bool allowQueueOverflow = false);
     void receiveCachedReturnedBiot(int side, const QByteArray &jsonPayload);

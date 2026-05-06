@@ -19,6 +19,7 @@ const uint32_t MAX_BIOT_JSON_SIZE = 512*1024;
 const qint64 RETURN_BIOT_WINDOW_MS = 10000;
 const qint64 RECONNECT_INTERVAL_MS = 60000;
 const char *RPC_PEER_HELLO = "peerhello1";
+const char *RPC_BIOT_ACCEPT = "biotaccept";
 
 static uint32_t GetQtCompressedSize(const QByteArray &data)
 {
@@ -554,6 +555,20 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
         recentlySentBiots[side].remove(biotId);
         receiveCachedReturnedBiot(side, cachedPayload);
     }
+    else if(rpcType == RPC_BIOT_ACCEPT)
+    {
+        QByteArray rawPayload = d.mid(10);
+        if(rawPayload.size() == (int)sizeof(uint32_t))
+        {
+            uint32_t biotId = qFromBigEndian<uint32_t>((const uchar *)rawPayload.constData());
+            if(recentlySentBiots[side].contains(biotId))
+            {
+                recentlySentBiots[side].remove(biotId);
+                biotsSent[side]++;
+                emit sideStatsChanged(side);
+            }
+        }
+    }
     else if(rpcType == "assignside")
     {
         isAssigned[side] = true;
@@ -695,8 +710,6 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
                 networking.sendPage(sock, data.constData(), data.length());
                 recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
             }
-            biotsSent[side]++;
-            emit sideStatsChanged(side);
             return true;
         }
         catch (const exception &err) {
@@ -705,6 +718,17 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
         }
     }
     return false;
+}
+
+void SidesManager::sendBiotAccept(int side, uint32_t biotId)
+{
+    QTcpSocket *sock = sockets[side];
+    if(sock == nullptr)
+        return;
+    QByteArray ack(RPC_BIOT_ACCEPT);
+    uint32_t networkId = qToBigEndian<uint32_t>(biotId);
+    ack.append((const char *)&networkId, sizeof(networkId));
+    networking.sendPage(sock, ack.constData(), ack.length());
 }
 
 void SidesManager::sendPeerHello(QTcpSocket *client)
@@ -822,9 +846,11 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, cons
         return;
     }
 
+    uint32_t biotId = pBiot->m_Id;
     if(env.side[side]->ReceiveBiotFromNetwork(pBiot.get(), allowQueueOverflow))
     {
         pBiot.release();
+        sendBiotAccept(side, biotId);
         biotsReceived[side]++;
         emit sideStatsChanged(side);
     }
