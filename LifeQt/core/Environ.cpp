@@ -13,6 +13,7 @@
 #include <cassert>
 #include <iostream>
 #include <memory>
+#include <vector>
 #include <QDateTime>
 #include <QThread>
 #include "Environ.h"
@@ -142,17 +143,26 @@ void CBiotList::SerializeJsonLoad(class Environment &env, const rapidjson::Value
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");
 
-    FreeAll();
-
     const Value &biotsJson = v["biots"];
     if(!biotsJson.IsArray())
         throw std::runtime_error("eror parsing json");
 
     const rapidjson::SizeType biotsToLoad = std::min(biotsJson.Size(), MAX_BIOTS_IN_SAVE);
+    std::vector<std::unique_ptr<Biot>> loadedBiots;
+    loadedBiots.reserve(biotsToLoad);
+
     for (rapidjson::SizeType i = 0; i < biotsToLoad; i++)
     {
         std::unique_ptr<Biot> pBiot(new Biot(env));
         pBiot->SerializeJsonLoad(biotsJson[i]);
+        pBiot->totalDistance = pBiot->UpdateShape(pBiot->ratio);
+        pBiot->ValidateRuntimeState("CBiotList::SerializeJsonLoad");
+        loadedBiots.push_back(std::move(pBiot));
+    }
+
+    env.DeleteContents();
+    for (std::unique_ptr<Biot> &pBiot : loadedBiots)
+    {
         env.AddBiot(pBiot.release());
     }
 
@@ -888,7 +898,6 @@ void Environment::SerializeJsonLoad(const rapidjson::Value& v)
     if(!v.IsObject())
         throw std::runtime_error("eror parsing json");
 
-    DeleteContents();
     const uint8_t archiveVersion = 13;
 
     int32_t version = v["archiveVersion"].GetInt();

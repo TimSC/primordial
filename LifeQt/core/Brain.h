@@ -556,7 +556,11 @@ protected:
 
 
 struct CommandType {
+    CommandType() : m_kind(CommandArgument::COMMAND_NOP) {}
+
     void Clear() { *this = CommandType(); }
+    void SetKind(int kind) { m_kind = kind; }
+    int GetKind() const { return m_kind; }
 
     CommandFlapLimbSegment         flapLimbSegment;
     CommandFlapLimbTypeSegment     flapLimbTypeSegment;
@@ -568,6 +572,8 @@ struct CommandType {
     CommandRetractLimb             retractLimb;
     CommandNOP                     nop;
     CommandMemory                  memory;
+private:
+    int                            m_kind;
 };
 
 

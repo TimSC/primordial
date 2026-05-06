@@ -40,26 +40,6 @@ static std::string LoadBiotString(const rapidjson::Value& v, const char *name)
     return std::string(value.GetString(), value.GetStringLength());
 }
 
-static void ValidateBiotStateAfterShapeLoad(Biot& biot)
-{
-    for (int i = 0; i < MAX_GENES; i++)
-    {
-        if (biot.state[i] > biot.distance[i])
-        {
-            LogInvalidValue("Biot::OnOpen", "state", biot.state[i]);
-            LogInvalidValue("Biot::OnOpen", "distance", biot.distance[i]);
-            throw std::range_error("biot state length out of range");
-        }
-
-        if (biot.state[i] < -biot.distance[i])
-        {
-            LogInvalidValue("Biot::OnOpen", "state", biot.state[i]);
-            LogInvalidValue("Biot::OnOpen", "distance", biot.distance[i]);
-            throw std::range_error("biot missing state length out of range");
-        }
-    }
-}
-
 // ////////////////////////////////////////////////////////////////////
 // Biot Class
 //
@@ -78,6 +58,117 @@ Biot::~Biot(void)
 {
 
 //    FreeBitmaps();
+}
+
+Biot::SegmentRuntimeState Biot::GetSegmentRuntimeState(int index) const
+{
+    if(index < 0 || index >= MAX_GENES)
+        throw std::range_error("segment index out of range");
+
+    SegmentRuntimeState segment;
+    segment.index = index;
+    segment.line = lineNo[index];
+    segment.gene = geneNo[index];
+    segment.type = nType[index];
+    segment.state = state[index];
+    segment.distance = distance[index];
+    segment.start = startPt[index];
+    segment.stop = stopPt[index];
+    return segment;
+}
+
+void Biot::ValidateRuntimeState(const char *context)
+{
+    if(max_genes < 1 || max_genes > MAX_GENES)
+    {
+        LogInvalidValue(context, "max_genes", max_genes);
+        throw std::range_error("max_genes out of range");
+    }
+    if(genes < 1 || genes > max_genes || genes > MAX_GENES)
+    {
+        LogInvalidValue(context, "genes", genes);
+        throw std::range_error("genes out of range");
+    }
+    if(ratio < trait.GetAdultRatio() || ratio > MAX_RATIO)
+    {
+        LogInvalidValue(context, "ratio", ratio);
+        throw std::range_error("ratio out of range");
+    }
+    if(totalDistance < 0)
+    {
+        LogInvalidValue(context, "totalDistance", (int)totalDistance);
+        throw std::range_error("totalDistance out of range");
+    }
+
+    int64_t calculatedTotalDistance = 0;
+    int64_t calculatedColorDistance[WHITE_LEAF + 1] = {};
+    for (int i = 0; i < MAX_GENES; i++)
+    {
+        SegmentRuntimeState segment = GetSegmentRuntimeState(i);
+        if(segment.line < 0 || segment.line >= MAX_LIMBS)
+        {
+            LogInvalidValue(context, "lineNo", segment.line);
+            throw std::range_error("lineNo out of range");
+        }
+        if(segment.gene < 0 || segment.gene >= MAX_SEGMENTS)
+        {
+            LogInvalidValue(context, "geneNo", segment.gene);
+            throw std::range_error("geneNo out of range");
+        }
+        if(segment.type < 0 || segment.type > WHITE_LEAF)
+        {
+            LogInvalidValue(context, "nType", segment.type);
+            throw std::range_error("segment type out of range");
+        }
+        if(segment.state > segment.distance)
+        {
+            LogInvalidValue(context, "state", segment.state);
+            LogInvalidValue(context, "distance", segment.distance);
+            throw std::range_error("biot state length out of range");
+        }
+        if(segment.state < -segment.distance)
+        {
+            LogInvalidValue(context, "state", segment.state);
+            LogInvalidValue(context, "distance", segment.distance);
+            throw std::range_error("biot missing state length out of range");
+        }
+        if(i < genes && segment.state > 0)
+        {
+            calculatedTotalDistance += segment.state;
+            calculatedColorDistance[segment.type] += segment.state;
+        }
+    }
+
+    for(int i = 0; i <= WHITE_LEAF; i++)
+    {
+        if(colorDistance[i] < 0 || colorDistance[i] > totalDistance)
+        {
+            LogInvalidValue(context, "colorDistance", (int)colorDistance[i]);
+            throw std::range_error("colorDistance out of range");
+        }
+    }
+
+    for(int i = 0; i < MAX_LIMBS; i++)
+    {
+        if(m_retractSegment[i] < -1 || m_retractSegment[i] > MAX_SEGMENTS)
+        {
+            LogInvalidValue(context, "m_retractSegment", m_retractSegment[i]);
+            throw std::range_error("m_retractSegment out of range");
+        }
+        if(m_retractRadius[i] < 0 || m_retractRadius[i] > 16)
+        {
+            LogInvalidValue(context, "m_retractRadius", m_retractRadius[i]);
+            throw std::range_error("m_retractRadius out of range");
+        }
+        if(m_retractDrawn[i] < 0 || m_retractDrawn[i] > 16)
+        {
+            LogInvalidValue(context, "m_retractDrawn", m_retractDrawn[i]);
+            throw std::range_error("m_retractDrawn out of range");
+        }
+    }
+
+    (void)calculatedTotalDistance;
+    (void)calculatedColorDistance;
 }
 
 
@@ -1831,6 +1922,8 @@ void Biot::SerializeJsonLoad(const rapidjson::Value& v)
     if (ratio < trait.GetAdultRatio())
         ratio = trait.GetAdultRatio();
 
+    totalDistance = UpdateShape(ratio);
+    ValidateRuntimeState("Biot::SerializeJsonLoad");
 }
 
 bool Biot::OnOpen()
@@ -1838,7 +1931,7 @@ bool Biot::OnOpen()
     adultBaseEnergy = UpdateShape(trait.GetAdultRatio()) * env.settings.startEnergy;
 
     totalDistance   = UpdateShape(ratio);
-    ValidateBiotStateAfterShapeLoad(*this);
+    ValidateRuntimeState("Biot::OnOpen");
     UpdateShapeRotation();
     childBaseEnergy = totalDistance * env.settings.startEnergy;
 

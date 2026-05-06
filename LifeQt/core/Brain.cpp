@@ -707,6 +707,8 @@ void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
     for (m_index = 0; m_index < CommandLimbType::MAX_COMMANDS_PER_LIMB; m_index++)
     {
         m_pArg = &biot.m_commandArray.GetCommandArgument(nLimbType, m_index);
+        command[m_index].Clear();
+        command[m_index].SetKind(m_pArg->GetCommand());
 
         switch (m_pArg->GetCommand())
         {
@@ -777,6 +779,11 @@ void CommandLimbStore::Validate(Biot& biot)
     for (m_index = 0; m_index < CommandLimbType::MAX_COMMANDS_PER_LIMB; m_index++)
     {
         m_pArg = &biot.m_commandArray.GetCommandArgument(m_nLimbType, m_index);
+        if(command[m_index].GetKind() != m_pArg->GetCommand())
+        {
+            LogInvalidDeserializedIndex("CommandLimbStore::Validate", "command kind", command[m_index].GetKind());
+            throw std::range_error("command kind does not match command definition");
+        }
         switch (m_pArg->GetCommand())
         {
             case CommandArgument::COMMAND_FLAP_LIMB_SEGMENT:
@@ -993,7 +1000,10 @@ void CommandLimbStore::SerializeJson(Biot& biot, rapidjson::Document &d, rapidjs
     Value commandJson(kArrayType);
     for(int i=0; i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
     {
-        int commandType = ExpectedStoreCommand(biot, m_nLimbType, i);
+        int commandType = command[i].GetKind();
+        int expectedCommand = ExpectedStoreCommand(biot, m_nLimbType, i);
+        if(expectedCommand >= 0 && commandType != expectedCommand)
+            commandType = expectedCommand;
         Value commandObj(kObjectType);
         AddStringMember(allocator, commandObj, "kind", CommandKindName(commandType));
         AddIntMember(allocator, commandObj, "storeIndex", i);
@@ -1104,6 +1114,7 @@ static void LoadLegacyCommandBlob(CommandType &command, const Value &v, int expe
     memcpy(&legacy, buff.constData(), sizeof(LegacyCommandType));
 
     command.Clear();
+    command.SetKind(expectedCommand);
     switch(expectedCommand)
     {
     case CommandArgument::COMMAND_FLAP_LIMB_SEGMENT:
@@ -1155,6 +1166,7 @@ void CommandLimbStore::LoadSemanticCommandState(CommandType &command, const Valu
         throw std::range_error("command state kind does not match command definition");
 
     command.Clear();
+    command.SetKind(commandType);
 
     switch(commandType)
     {

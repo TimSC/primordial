@@ -143,6 +143,20 @@ class Biot: public BRectItem
     int   Contacter(Biot* enemy, int dx, int dy, int& x, int& y);
     virtual void  SerializeJson(rapidjson::Document &d, rapidjson::Value &v);
     void SerializeJsonLoad(const rapidjson::Value& v);
+    void ValidateRuntimeState(const char *context);
+
+    struct SegmentRuntimeState {
+        int index;
+        int line;
+        int gene;
+        short type;
+        short state;
+        short distance;
+        QPointF start;
+        QPointF stop;
+    };
+
+    SegmentRuntimeState GetSegmentRuntimeState(int index) const;
 
     short LengthLoss(int nPeno, short delta);
     

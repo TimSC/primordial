@@ -103,14 +103,15 @@ static void AddRuntimeGeometry(QTreeWidgetItem *root, Biot *pBiot)
     QTreeWidgetItem *segments = AddTreeItem(root, "segments", QString("[%1]").arg(pBiot->genes));
     for(int i = 0; i < pBiot->genes && i < MAX_GENES; i++)
     {
+        Biot::SegmentRuntimeState segmentState = pBiot->GetSegmentRuntimeState(i);
         QTreeWidgetItem *segment = AddTreeItem(segments, QString("[%1]").arg(i));
-        AddTreeItem(segment, "line", QString::number(pBiot->lineNo[i]));
-        AddTreeItem(segment, "gene", QString::number(pBiot->geneNo[i]));
-        AddTreeItem(segment, "type", QString::number(pBiot->nType[i]));
-        AddTreeItem(segment, "state", QString::number(pBiot->state[i]));
-        AddTreeItem(segment, "distance", QString::number(pBiot->distance[i]));
-        AddTreeItem(segment, "start", QString("%1, %2").arg(pBiot->startPt[i].x()).arg(pBiot->startPt[i].y()));
-        AddTreeItem(segment, "stop", QString("%1, %2").arg(pBiot->stopPt[i].x()).arg(pBiot->stopPt[i].y()));
+        AddTreeItem(segment, "line", QString::number(segmentState.line));
+        AddTreeItem(segment, "gene", QString::number(segmentState.gene));
+        AddTreeItem(segment, "type", QString::number(segmentState.type));
+        AddTreeItem(segment, "state", QString::number(segmentState.state));
+        AddTreeItem(segment, "distance", QString::number(segmentState.distance));
+        AddTreeItem(segment, "start", QString("%1, %2").arg(segmentState.start.x()).arg(segmentState.start.y()));
+        AddTreeItem(segment, "stop", QString("%1, %2").arg(segmentState.stop.x()).arg(segmentState.stop.y()));
     }
 }
 
