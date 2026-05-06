@@ -963,9 +963,16 @@ static void AddIntMember(Document::AllocatorType& allocator, Value &v, const cha
     v.AddMember(StringRef(name), value, allocator);
 }
 
-static void AddBoolMember(Document::AllocatorType& allocator, Value &v, const char *name, bool value)
+static int BoolStorageAsInt(const bool &value)
 {
-    v.AddMember(StringRef(name), value, allocator);
+    unsigned char storedValue = 0;
+    memcpy(&storedValue, &value, sizeof(storedValue));
+    return storedValue;
+}
+
+static void AddBoolStorageMember(Document::AllocatorType& allocator, Value &v, const char *name, const bool &value)
+{
+    AddIntMember(allocator, v, name, BoolStorageAsInt(value));
 }
 
 static int LoadIntMember(const Value &v, const char *name)
@@ -975,11 +982,15 @@ static int LoadIntMember(const Value &v, const char *name)
     return v[name].GetInt();
 }
 
-static bool LoadBoolMember(const Value &v, const char *name)
+static bool LoadBoolStorageMember(const Value &v, const char *name)
 {
-    if(!v.HasMember(name) || !v[name].IsBool())
+    if(!v.HasMember(name))
         throw std::runtime_error("error parsing command state json");
-    return v[name].GetBool();
+    if(v[name].IsBool())
+        return v[name].GetBool();
+    if(v[name].IsInt())
+        return v[name].GetInt() != 0;
+    throw std::runtime_error("error parsing command state json");
 }
 
 static int ExpectedStoreCommand(Biot& biot, int nLimbType, int index)
@@ -1021,7 +1032,7 @@ void CommandLimbStore::SerializeJson(Biot& biot, rapidjson::Document &d, rapidjs
             AddIntMember(allocator, commandObj, "rate", command[i].flapLimbSegment.m_nRate);
             AddIntMember(allocator, commandObj, "maxDegrees", command[i].flapLimbSegment.m_nMaxDegrees);
             AddIntMember(allocator, commandObj, "appliedDegrees", command[i].flapLimbSegment.m_nAppliedDegrees);
-            AddBoolMember(allocator, commandObj, "goingUp", command[i].flapLimbSegment.m_bGoingUp);
+            AddBoolStorageMember(allocator, commandObj, "goingUp", command[i].flapLimbSegment.m_bGoingUp);
             break;
         case CommandArgument::COMMAND_FLAP_LIMB_TYPE_SEGMENT:
             AddIntMember(allocator, commandObj, "limbType", command[i].flapLimbTypeSegment.m_nLimbType);
@@ -1029,7 +1040,7 @@ void CommandLimbStore::SerializeJson(Biot& biot, rapidjson::Document &d, rapidjs
             AddIntMember(allocator, commandObj, "rate", command[i].flapLimbTypeSegment.m_nRate);
             AddIntMember(allocator, commandObj, "maxDegrees", command[i].flapLimbTypeSegment.m_nMaxDegrees);
             AddIntMember(allocator, commandObj, "appliedDegrees", command[i].flapLimbTypeSegment.m_nAppliedDegrees);
-            AddBoolMember(allocator, commandObj, "goingUp", command[i].flapLimbTypeSegment.m_bGoingUp);
+            AddBoolStorageMember(allocator, commandObj, "goingUp", command[i].flapLimbTypeSegment.m_bGoingUp);
             break;
         case CommandArgument::COMMAND_MOVE_LIMB_SEGMENT:
             AddIntMember(allocator, commandObj, "limb", command[i].moveLimbSegment.m_nLimb);
@@ -1072,7 +1083,7 @@ void CommandLimbStore::SerializeJson(Biot& biot, rapidjson::Document &d, rapidjs
         case CommandArgument::COMMAND_MEMORY:
             AddIntMember(allocator, commandObj, "time", command[i].memory.m_time);
             AddIntMember(allocator, commandObj, "memoryState", command[i].memory.m_type);
-            AddBoolMember(allocator, commandObj, "set", command[i].memory.m_bSet);
+            AddBoolStorageMember(allocator, commandObj, "set", command[i].memory.m_bSet);
             break;
         case CommandArgument::COMMAND_NOP:
         default:
@@ -1176,7 +1187,7 @@ void CommandLimbStore::LoadSemanticCommandState(CommandType &command, const Valu
         command.flapLimbSegment.m_nRate = LoadIntMember(v, "rate");
         command.flapLimbSegment.m_nMaxDegrees = LoadIntMember(v, "maxDegrees");
         command.flapLimbSegment.m_nAppliedDegrees = LoadIntMember(v, "appliedDegrees");
-        command.flapLimbSegment.m_bGoingUp = LoadBoolMember(v, "goingUp");
+        command.flapLimbSegment.m_bGoingUp = LoadBoolStorageMember(v, "goingUp");
         break;
     case CommandArgument::COMMAND_FLAP_LIMB_TYPE_SEGMENT:
         command.flapLimbTypeSegment.m_nLimbType = LoadIntMember(v, "limbType");
@@ -1184,7 +1195,7 @@ void CommandLimbStore::LoadSemanticCommandState(CommandType &command, const Valu
         command.flapLimbTypeSegment.m_nRate = LoadIntMember(v, "rate");
         command.flapLimbTypeSegment.m_nMaxDegrees = LoadIntMember(v, "maxDegrees");
         command.flapLimbTypeSegment.m_nAppliedDegrees = LoadIntMember(v, "appliedDegrees");
-        command.flapLimbTypeSegment.m_bGoingUp = LoadBoolMember(v, "goingUp");
+        command.flapLimbTypeSegment.m_bGoingUp = LoadBoolStorageMember(v, "goingUp");
         break;
     case CommandArgument::COMMAND_MOVE_LIMB_SEGMENT:
         command.moveLimbSegment.m_nLimb = LoadIntMember(v, "limb");
@@ -1227,7 +1238,7 @@ void CommandLimbStore::LoadSemanticCommandState(CommandType &command, const Valu
     case CommandArgument::COMMAND_MEMORY:
         command.memory.m_time = LoadIntMember(v, "time");
         command.memory.m_type = LoadIntMember(v, "memoryState");
-        command.memory.m_bSet = LoadBoolMember(v, "set");
+        command.memory.m_bSet = LoadBoolStorageMember(v, "set");
         break;
     case CommandArgument::COMMAND_NOP:
         break;
