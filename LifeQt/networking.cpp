@@ -65,6 +65,10 @@ static QByteArray DecodeBiotPayload(const QString &rpcType, const QByteArray &da
 
 static uint32_t ExtractBiotIdFromNetworkPayload(const QString &rpcType, const QByteArray &data)
 {
+    QByteArray rawPayload(data.mid(10));
+    if((rpcType == "returnbiot" or rpcType == "returnbioc") && rawPayload.size() == (int)sizeof(uint32_t))
+        return qFromBigEndian<uint32_t>((const uchar *)rawPayload.constData());
+
     QByteArray payload = DecodeBiotPayload(rpcType, data);
     stringstream ss(std::string(payload.constData(), payload.size()));
     IStreamWrapper isw(ss);
@@ -81,12 +85,12 @@ static uint32_t ExtractBiotIdFromNetworkPayload(const QString &rpcType, const QB
     return biot["m_Id"].GetUint();
 }
 
-static void PruneRecentlySentBiots(QMap<uint32_t, qint64> &sentBiots, qint64 now)
+static void PruneRecentlySentBiots(QMap<uint32_t, RecentlySentBiot> &sentBiots, qint64 now)
 {
-    QMutableMapIterator<uint32_t, qint64> sentIt(sentBiots);
+    QMutableMapIterator<uint32_t, RecentlySentBiot> sentIt(sentBiots);
     while(sentIt.hasNext()) {
         sentIt.next();
-        if(now - sentIt.value() > RETURN_BIOT_WINDOW_MS)
+        if(now - sentIt.value().sentTime > RETURN_BIOT_WINDOW_MS)
             sentIt.remove();
     }
 }
@@ -444,8 +448,9 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
                       << ", id=" << biotId << std::endl;
             return;
         }
+        QByteArray cachedPayload = recentlySentBiots[side][biotId].jsonPayload;
         recentlySentBiots[side].remove(biotId);
-        receiveBiotFromNetwork(rpcType, side, d, false, true);
+        receiveCachedReturnedBiot(side, cachedPayload);
     }
     else if(rpcType == "assignside")
     {
@@ -521,7 +526,7 @@ void SidesManager::biotLeavingSide(int side, Biot *pBiot)
             QByteArray dat1(qCompress(serBiot.c_str(), serBiot.size()));
             data.append(dat1);
             networking.sendPage(sock, data.constData(), data.length());
-            recentlySentBiots[side][pBiot->m_Id] = now;
+            recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
         }
         else
         {
@@ -529,7 +534,7 @@ void SidesManager::biotLeavingSide(int side, Biot *pBiot)
             QByteArray data("transfbiot");
             data.append(serBiot.c_str(), serBiot.size());
             networking.sendPage(sock, data.constData(), data.length());
-            recentlySentBiots[side][pBiot->m_Id] = now;
+            recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
         }
     }
 }
@@ -540,6 +545,15 @@ void SidesManager::returnRejectedBiotToPeer(const QString &rpcType, int side, co
     if(sock == nullptr)
         return;
 
+    uint32_t biotId = 0;
+    try {
+        biotId = ExtractBiotIdFromNetworkPayload(rpcType, d);
+    }
+    catch (const exception &err) {
+        std::cout << "cannot return rejected biot without readable id: " << err.what() << std::endl;
+        return;
+    }
+
     QByteArray returned;
     if(rpcType == "transfbiot")
         returned.append("returnbiot");
@@ -548,7 +562,8 @@ void SidesManager::returnRejectedBiotToPeer(const QString &rpcType, int side, co
     else
         return;
 
-    returned.append(d.mid(10));
+    uint32_t networkBiotId = qToBigEndian<uint32_t>(biotId);
+    returned.append((const char *)&networkBiotId, sizeof(networkBiotId));
     std::cout << "returning rejected biot on side " << side << ": " << reason << std::endl;
     networking.sendPage(sock, returned.constData(), returned.length());
 }
@@ -588,6 +603,35 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, cons
         pBiot.release();
     else
         std::cout << "dropping received biot because side queue is full" << std::endl;
+}
+
+void SidesManager::receiveCachedReturnedBiot(int side, const QByteArray &jsonPayload)
+{
+    cout << "returned biot arriving " << side << endl;
+
+    std::unique_ptr<Biot> pBiot;
+    try {
+        stringstream ss(std::string(jsonPayload.constData(), jsonPayload.size()));
+        IStreamWrapper isw(ss);
+
+        Document doc;
+        ParseResult ok = doc.ParseStream(isw);
+        if (!ok)
+            throw runtime_error("eror parsing json");
+        if (!doc.IsObject() or !doc.HasMember("biot"))
+            throw runtime_error("eror parsing json");
+
+        pBiot.reset(new Biot(env));
+        pBiot->SerializeJsonLoad(doc["biot"]);
+        pBiot->OnOpen();
+    }
+    catch (exception &err) {
+        std::cout << "failed to load cached returned biot: " << err.what() << std::endl;
+        return;
+    }
+
+    if(env.side[side]->ReceiveBiotFromNetwork(pBiot.get(), true))
+        pBiot.release();
 }
 
 void SidesManager::readyToReceive(int sideId, bool ready)

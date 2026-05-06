@@ -54,6 +54,11 @@ public:
 
 // ************************************************
 
+struct RecentlySentBiot {
+    qint64 sentTime;
+    QByteArray jsonPayload;
+};
+
 class SidesManager : public QObject
 {
     Q_OBJECT
@@ -79,15 +84,15 @@ signals:
     void sideAssigned(int side);
 
 private:
-
     void receiveBiotFromNetwork(const QString &rpcType, int side, const QByteArray &d, bool returnOnFailure, bool allowQueueOverflow = false);
+    void receiveCachedReturnedBiot(int side, const QByteArray &jsonPayload);
     void returnRejectedBiotToPeer(const QString &rpcType, int side, const QByteArray &d, const char *reason);
 
     class Environment &env;
     class Networking networking;
     QTcpSocket *sockets[4];
     bool isAssigned[4];
-    QMap<uint32_t, qint64> recentlySentBiots[4];
+    QMap<uint32_t, RecentlySentBiot> recentlySentBiots[4];
     QString status[4];
     SidesManagerEventRx eventRx;
 };
