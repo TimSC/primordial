@@ -9,6 +9,11 @@ using namespace rapidjson;
 
 CSettings::CSettings() {
     Reset(600, 340);
+    for (int i = 0; i < SIDES; i++)
+    {
+        m_sSideAddress[i] = "";
+        m_bSideEnable[i]  = false;
+    }
 
     pens.clear();
     for (int i = 0; i <= MAX_LEAF; i++)
@@ -47,7 +52,14 @@ void CSettings::Save()
     settings.setValue("biot/bSiblingsAttack", bSiblingsAttack);
 
     settings.setValue("network/m_enableNetworking", m_enableNetworking);
+    settings.setValue("network/m_autoReconnect", m_autoReconnect);
     settings.setValue("network/m_networkPort", m_networkPort);
+    for(int i=0; i<SIDES; i++)
+    {
+        QString sidePrefix = QString("network/side%1/").arg(i);
+        settings.setValue(sidePrefix + "address", QString::fromStdString(m_sSideAddress[i]));
+        settings.setValue(sidePrefix + "enabled", m_bSideEnable[i]);
+    }
     QJsonArray clj = QJsonArray::fromStringList(m_connectList);
     QJsonDocument cljdoc(clj);
     settings.setValue("network/m_connectList", cljdoc.toJson());
@@ -87,8 +99,18 @@ void CSettings::Load()
 
     val = settings.value("network/m_enableNetworking");
     if(val.isValid()) m_enableNetworking = val.toBool();
+    val = settings.value("network/m_autoReconnect");
+    if(val.isValid()) m_autoReconnect = val.toBool();
     val = settings.value("network/m_networkPort");
     if(val.isValid()) m_networkPort = val.toUInt();
+    for(int i=0; i<SIDES; i++)
+    {
+        QString sidePrefix = QString("network/side%1/").arg(i);
+        val = settings.value(sidePrefix + "address");
+        if(val.isValid()) m_sSideAddress[i] = val.toString().toStdString();
+        val = settings.value(sidePrefix + "enabled");
+        if(val.isValid()) m_bSideEnable[i] = val.toBool();
+    }
     val = settings.value("network/m_connectList");
     if(val.isValid())
     {
@@ -189,6 +211,7 @@ CSettings& CSettings::operator=(CSettings& s)
     m_nSizeChoice = s.m_nSizeChoice;
 
     m_enableNetworking = s.m_enableNetworking;
+    m_autoReconnect = s.m_autoReconnect;
     m_networkPort = s.m_networkPort;
     m_connectList = s.m_connectList;
 
@@ -202,12 +225,6 @@ void CSettings::Reset(int nWidth, int nHeight)
     m_nSegmentsPerArm       = 10;
     m_nArmsPerBiot          = 0;
     m_bGenerateOnExtinction = true;
-
-    for (int i = 0; i < SIDES; i++)
-    {
-        m_sSideAddress[i] = "";
-        m_bSideEnable[i]  = false;
-    }
 
     m_nHeight     = nWidth;
     m_nWidth      = nHeight;
@@ -292,8 +309,14 @@ void CSettings::SetToDefaults()
     m_nSick = 200;
 
     m_enableNetworking = false;
+    m_autoReconnect = true;
     m_networkPort = 54275;
     m_connectList.clear();
+    for (int i = 0; i < SIDES; i++)
+    {
+        m_sSideAddress[i] = "";
+        m_bSideEnable[i]  = false;
+    }
 }
 
 void CSettings::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)

@@ -70,6 +70,7 @@ NetworkUi::NetworkUi(SidesManager &sidesManagerIn, QWidget *parent) :
     sidesManager(sidesManagerIn)
 {
     ui->setupUi(this);
+    ui->autoReconnectCheckBox->setChecked(sidesManager.autoReconnectEnabled());
 
     connect(&sidesManager, SIGNAL(sideStateChanged(int, QAbstractSocket::SocketState)), this, SLOT(sideStateChanged(int, QAbstractSocket::SocketState)));
     connect(&sidesManager, SIGNAL(sideAssigned(int)), this, SLOT(sideAssigned(int)));
@@ -103,6 +104,11 @@ void NetworkUi::on_connectButton_3_clicked()
 void NetworkUi::on_connectButton_4_clicked()
 {
     ConnectRow(3, this->ui->connectButton_4, this->ui->addressEdit_4);
+}
+
+void NetworkUi::on_autoReconnectCheckBox_toggled(bool checked)
+{
+    sidesManager.setAutoReconnectEnabled(checked);
 }
 
 void NetworkUi::sideAssigned(int side)

@@ -27,6 +27,8 @@ private slots:
 
     void on_connectButton_4_clicked();
 
+    void on_autoReconnectCheckBox_toggled(bool checked);
+
 public slots:
     void sideAssigned(int side);
     void sideStateChanged(int side, QAbstractSocket::SocketState);

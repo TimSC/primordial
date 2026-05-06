@@ -2,6 +2,7 @@
 #include <QIODevice>
 #include <QtEndian>
 #include <QDateTime>
+#include <QUrl>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -16,6 +17,7 @@ using namespace rapidjson;
 const uint32_t MAX_PAGE_SIZE = 1024*1024;
 const uint32_t MAX_BIOT_JSON_SIZE = 512*1024;
 const qint64 RETURN_BIOT_WINDOW_MS = 10000;
+const qint64 RECONNECT_INTERVAL_MS = 60000;
 
 static uint32_t GetQtCompressedSize(const QByteArray &data)
 {
@@ -105,6 +107,67 @@ static QString FormatHostPort(const QString &host, quint16 port)
         return QString("[%1]:%2").arg(host).arg(port);
 
     return QString("%1:%2").arg(host).arg(port);
+}
+
+static bool ParsePort(const QString &text, quint16 &port)
+{
+    bool ok = false;
+    uint parsed = text.toUInt(&ok);
+    if(!ok || parsed > 65535)
+        return false;
+
+    port = (quint16)parsed;
+    return true;
+}
+
+static bool ParseEndpoint(const QString &input, quint16 defaultPort, QString &host, quint16 &port)
+{
+    QString text = input.trimmed();
+    port = defaultPort;
+
+    if(text.isEmpty())
+        return false;
+
+    if(text.startsWith("tcp://", Qt::CaseInsensitive))
+    {
+        QUrl url(text);
+        host = url.host();
+        port = (quint16)url.port(defaultPort);
+        return !host.isEmpty();
+    }
+
+    if(text.startsWith("["))
+    {
+        int closeBracket = text.indexOf("]");
+        if(closeBracket < 0)
+            return false;
+
+        host = text.mid(1, closeBracket - 1);
+        QString rest = text.mid(closeBracket + 1);
+        if(rest.startsWith(":") && !ParsePort(rest.mid(1), port))
+            return false;
+
+        return !host.isEmpty();
+    }
+
+    QHostAddress address;
+    if(address.setAddress(text))
+    {
+        host = address.toString();
+        return true;
+    }
+
+    if(text.count(":") == 1)
+    {
+        int colon = text.lastIndexOf(":");
+        host = text.left(colon);
+        if(!ParsePort(text.mid(colon + 1), port))
+            return false;
+        return !host.isEmpty();
+    }
+
+    host = text;
+    return true;
 }
 
 std::string SocketStateToString(QAbstractSocket::SocketState state)
@@ -299,6 +362,7 @@ SidesManager::SidesManager(class Environment &envIn) :
         sockets[i] = nullptr;
         status[i] = "no connection";
         isAssigned[i] = false;
+        configuredHostPort[i] = QString::fromStdString(env.settings.m_sSideAddress[i]);
         recentlySentBiots[i].clear();
     }
 
@@ -327,16 +391,31 @@ bool SidesManager::isListening(uint16_t &portOut)
 
 void SidesManager::connectToHost(int side, const QString &hostName, quint16 port)
 {
+    assert(side >= 0 and side < 4);
     if(sockets[side] != nullptr)
+    {
         sockets[side]->disconnectFromHost();
+        sockets[side]->deleteLater();
+    }
 
     recentlySentBiots[side].clear();
+    configuredHostPort[side] = FormatHostPort(hostName, port);
+    env.settings.m_sSideAddress[side] = configuredHostPort[side].toStdString();
+    env.settings.m_bSideEnable[side] = true;
+    env.settings.Save();
+
     sockets[side] = new QTcpSocket(this);
     networking.connectToHost(sockets[side], hostName, port);
 }
 
 void SidesManager::disconnectSide(int side)
 {
+    assert(side >= 0 and side < 4);
+    env.settings.m_bSideEnable[side] = false;
+    env.settings.m_sSideAddress[side] = "";
+    configuredHostPort[side] = "";
+    env.settings.Save();
+
     if(sockets[side] != nullptr)
         sockets[side]->disconnectFromHost();
 }
@@ -357,6 +436,10 @@ void SidesManager::netAcceptConnection(QTcpSocket *client)
     {
         sockets[freeSide] = client;
         isAssigned[freeSide] = true;
+        QString peer = client->peerName();
+        if(peer.isEmpty())
+            peer = client->peerAddress().toString();
+        configuredHostPort[freeSide] = FormatHostPort(peer, client->peerPort());
         QByteArray data("assignside{}");
         networking.sendPage(client, data.constData(), data.length());
         env.side[freeSide]->SetConnected(true);
@@ -396,6 +479,7 @@ void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketSt
             env.side[sideId]->SetConnected(false);
             env.side[sideId]->Clear(&this->env);
             env.side[sideId]->SetSize(false);
+            client->deleteLater();
         }
     }
     else if(state==QAbstractSocket::ConnectedState)
@@ -477,21 +561,30 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
 
 void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &statusOut, bool &enableConnect)
 {
-    assert(side >= 0 and side <= 4);
+    assert(side >= 0 and side < 4);
     hostPortOut = "";
     statusOut = "";
     enableConnect = true;
     if(sockets[side] != nullptr)
     {
         QTcpSocket *sock = sockets[side];
-        QString host = sock->peerAddress().toString();
-        if(host.isEmpty() || sock->peerAddress().isNull())
-            host = sock->peerName();
-        hostPortOut = FormatHostPort(host, sock->peerPort());
+        hostPortOut = configuredHostPort[side];
+        if(hostPortOut.isEmpty())
+        {
+            QString host = sock->peerName();
+            if(host.isEmpty())
+                host = sock->peerAddress().toString();
+            hostPortOut = FormatHostPort(host, sock->peerPort());
+        }
         QTcpSocket::SocketState state = sock->state();
         statusOut = SocketStateToString(state).c_str();
         if(state == QTcpSocket::SocketState::HostLookupState || state == QTcpSocket::SocketState::ConnectingState || state == QTcpSocket::SocketState::ConnectedState)
             enableConnect = false;
+    }
+    else if(env.settings.m_bSideEnable[side])
+    {
+        hostPortOut = QString::fromStdString(env.settings.m_sSideAddress[side]);
+        statusOut = status[side];
     }
     if(isAssigned[side])
         statusOut = "Assigned";
@@ -500,6 +593,35 @@ void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &status
 quint16 SidesManager::defaultNetworkPort() const
 {
     return env.settings.m_networkPort;
+}
+
+void SidesManager::connectConfiguredSides()
+{
+    if(!env.settings.m_enableNetworking || !env.settings.m_autoReconnect)
+        return;
+
+    for(int side=0; side<4; side++)
+    {
+        if(sockets[side] != nullptr || !env.settings.m_bSideEnable[side])
+            continue;
+
+        QString host;
+        quint16 port = defaultNetworkPort();
+        QString endpoint = QString::fromStdString(env.settings.m_sSideAddress[side]);
+        if(ParseEndpoint(endpoint, defaultNetworkPort(), host, port))
+            connectToHost(side, host, port);
+    }
+}
+
+bool SidesManager::autoReconnectEnabled() const
+{
+    return env.settings.m_autoReconnect;
+}
+
+void SidesManager::setAutoReconnectEnabled(bool enabled)
+{
+    env.settings.m_autoReconnect = enabled;
+    env.settings.Save();
 }
 
 bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
@@ -713,11 +835,12 @@ void AutoConnect::TimedUpdate()
 {
     int64_t now = QDateTime::currentMSecsSinceEpoch();
     int64_t elapse = now - previousActionTime;
-    if(elapse > 1000.0)
+    if(elapse > RECONNECT_INTERVAL_MS)
     {
         previousActionTime = now;
 
         //std::cout << "tick" << std::endl;
+        sideManager.connectConfiguredSides();
     }
 
 }
