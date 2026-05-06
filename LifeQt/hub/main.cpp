@@ -23,6 +23,7 @@ namespace {
 
 const int DEFAULT_PORT = 54275;
 const int DEFAULT_MAX_CLIENTS = 4096;
+const int DEFAULT_MAX_CLIENTS_PER_IP = 16;
 const int RX_BUFFER_SIZE = 50 * 1024;
 const uint32_t MAX_PAGE_SIZE = 1024 * 1024;
 const uint32_t MAX_BIOT_JSON_SIZE = 512 * 1024;
@@ -30,6 +31,10 @@ const qint64 LINK_BIOT_INTERVAL_MS = 1000;
 const int MAGIC_CODE_LEN = 8;
 const char *MAGIC_CODE = "primlife";
 const char *RPC_PEER_HELLO = "peerhello1";
+const qint64 HELLO_TIMEOUT_MS = 30000;
+const qint64 INCOMPLETE_FRAME_TIMEOUT_MS = 10000;
+const qint64 RETURN_BIOT_WINDOW_MS = 10000;
+const int MAX_INSTANCE_ID_LEN = 128;
 
 struct Client {
     QTcpSocket *socket = nullptr;
@@ -38,6 +43,10 @@ struct Client {
     bool readyToReceive = true;
     Client *link = nullptr;
     qint64 lastSentBiotTime = 0;
+    QHostAddress peerAddress;
+    qint64 connectTime = 0;
+    qint64 lastActivityTime = 0;
+    QMap<uint32_t, qint64> recentlyReceivedBiotIds;
 };
 
 uint32_t GetQtCompressedSize(const QByteArray &data)
@@ -128,31 +137,60 @@ QByteArray ReturnBiotFrame(const QString &transferRpcType, uint32_t biotId)
     return frame;
 }
 
+bool ParseReturnBiotId(const QByteArray &frame, uint32_t &biotId)
+{
+    if(frame.size() < 10 + (int)sizeof(uint32_t))
+        return false;
+    biotId = qFromBigEndian<uint32_t>((const uchar *)frame.constData() + 10);
+    return true;
+}
+
+// Strip non-printable ASCII and cap length to prevent log injection.
+QString SanitizeInstanceId(const QString &s)
+{
+    QString result;
+    result.reserve(qMin(s.size(), MAX_INSTANCE_ID_LEN));
+    for(QChar c : s)
+    {
+        if(c.unicode() >= 0x20 && c.unicode() < 0x7f)
+            result.append(c);
+        else
+            result.append('?');
+        if(result.size() >= MAX_INSTANCE_ID_LEN)
+            break;
+    }
+    return result;
+}
+
 } // namespace
 
 class HubServer : public QObject
 {
 public:
-    explicit HubServer(quint16 port, int maxClientsIn, QObject *parent = nullptr) :
+    explicit HubServer(quint16 port, int maxClientsIn, int maxClientsPerIpIn, QObject *parent = nullptr) :
         QObject(parent),
-        maxClients(maxClientsIn)
+        maxClients(maxClientsIn),
+        maxClientsPerIp(maxClientsPerIpIn)
     {
         connect(&server, &QTcpServer::newConnection, this, [this]() { acceptConnections(); });
-        connect(&linkTimer, &QTimer::timeout, this, [this]() { reviewLinks(); });
+        connect(&linkTimer, &QTimer::timeout, this, [this]() { reviewLinks(); sweepTimeouts(); });
         linkTimer.start(1000);
 
         if(!server.listen(QHostAddress::Any, port))
             throw std::runtime_error(server.errorString().toStdString());
 
         std::cout << "hub listening on port " << server.serverPort()
-                  << ", max clients " << maxClients << std::endl;
+                  << ", max clients " << maxClients
+                  << ", max per ip " << maxClientsPerIp << std::endl;
     }
 
 private:
     QTcpServer server;
     QMap<QTcpSocket *, Client *> clients;
+    QMap<QHostAddress, int> connectionsPerIp;
     QTimer linkTimer;
     int maxClients;
+    int maxClientsPerIp;
 
     void acceptConnections()
     {
@@ -165,9 +203,21 @@ private:
                 continue;
             }
 
+            QHostAddress peerAddr = socket->peerAddress();
+            if(connectionsPerIp.value(peerAddr, 0) >= maxClientsPerIp)
+            {
+                socket->disconnectFromHost();
+                continue;
+            }
+
+            qint64 now = QDateTime::currentMSecsSinceEpoch();
             Client *client = new Client;
             client->socket = socket;
+            client->peerAddress = peerAddr;
+            client->connectTime = now;
+            client->lastActivityTime = now;
             clients[socket] = client;
+            connectionsPerIp[peerAddr]++;
 
             connect(socket, &QTcpSocket::readyRead, this, [this, socket]() { readClient(socket); });
             connect(socket, &QTcpSocket::disconnected, this, [this, socket]() { removeClient(socket); });
@@ -191,6 +241,7 @@ private:
                 return;
 
             client->assemblyBuffer.append(rxBuffer, readBytes);
+            client->lastActivityTime = QDateTime::currentMSecsSinceEpoch();
             processAssemblyBuffer(*client);
         }
     }
@@ -253,8 +304,7 @@ private:
 
         if(rpcType == "returnbiot" || rpcType == "returnbioc")
         {
-            if(client.link != nullptr)
-                sendFrame(client.link->socket, frame);
+            relayReturnBiot(client, frame);
             return;
         }
     }
@@ -262,7 +312,7 @@ private:
     void receivePeerHello(Client &client, const QByteArray &frame)
     {
         try {
-            client.instanceId = ParsePeerInstanceId(frame);
+            client.instanceId = SanitizeInstanceId(ParsePeerInstanceId(frame));
         }
         catch(const std::exception &err) {
             std::cout << "invalid peer hello: " << err.what() << std::endl;
@@ -307,7 +357,37 @@ private:
         }
 
         client.lastSentBiotTime = now;
+        client.link->recentlyReceivedBiotIds[biotId] = now;
         sendFrame(client.link->socket, frame);
+    }
+
+    void relayReturnBiot(Client &client, const QByteArray &frame)
+    {
+        uint32_t biotId = 0;
+        if(!ParseReturnBiotId(frame, biotId))
+        {
+            std::cout << "dropping return biot: malformed frame" << std::endl;
+            return;
+        }
+
+        auto it = client.recentlyReceivedBiotIds.find(biotId);
+        if(it == client.recentlyReceivedBiotIds.end())
+        {
+            std::cout << "dropping return biot " << biotId << ": no matching relayed biot" << std::endl;
+            return;
+        }
+
+        qint64 age = QDateTime::currentMSecsSinceEpoch() - it.value();
+        client.recentlyReceivedBiotIds.erase(it);
+
+        if(age > RETURN_BIOT_WINDOW_MS)
+        {
+            std::cout << "dropping return biot " << biotId << ": window expired" << std::endl;
+            return;
+        }
+
+        if(client.link != nullptr)
+            sendFrame(client.link->socket, frame);
     }
 
     void reviewLinks()
@@ -344,6 +424,43 @@ private:
         }
     }
 
+    void sweepTimeouts()
+    {
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        QList<QTcpSocket *> toDisconnect;
+
+        for(auto it = clients.begin(); it != clients.end(); ++it)
+        {
+            Client *client = it.value();
+
+            if(client->instanceId.isEmpty() && now - client->connectTime > HELLO_TIMEOUT_MS)
+            {
+                std::cout << "disconnecting client: no hello within timeout" << std::endl;
+                toDisconnect.append(it.key());
+                continue;
+            }
+
+            if(!client->assemblyBuffer.isEmpty() && now - client->lastActivityTime > INCOMPLETE_FRAME_TIMEOUT_MS)
+            {
+                std::cout << "disconnecting client: incomplete frame timeout" << std::endl;
+                toDisconnect.append(it.key());
+                continue;
+            }
+
+            auto bidIt = client->recentlyReceivedBiotIds.begin();
+            while(bidIt != client->recentlyReceivedBiotIds.end())
+            {
+                if(now - bidIt.value() > RETURN_BIOT_WINDOW_MS)
+                    bidIt = client->recentlyReceivedBiotIds.erase(bidIt);
+                else
+                    ++bidIt;
+            }
+        }
+
+        for(QTcpSocket *socket : toDisconnect)
+            socket->disconnectFromHost();
+    }
+
     bool isLoopbackPair(const Client &a, const Client &b) const
     {
         if(&a == &b)
@@ -365,6 +482,13 @@ private:
         if(client != nullptr)
         {
             unlink(*client);
+
+            int count = connectionsPerIp.value(client->peerAddress, 0) - 1;
+            if(count <= 0)
+                connectionsPerIp.remove(client->peerAddress);
+            else
+                connectionsPerIp[client->peerAddress] = count;
+
             delete client;
         }
 
@@ -406,6 +530,7 @@ int main(int argc, char *argv[])
 
     quint16 port = DEFAULT_PORT;
     int maxClients = DEFAULT_MAX_CLIENTS;
+    int maxClientsPerIp = DEFAULT_MAX_CLIENTS_PER_IP;
     QStringList args = app.arguments();
     for(int i=1; i<args.size(); i++)
     {
@@ -423,10 +548,17 @@ int main(int argc, char *argv[])
             if(ok && parsedMaxClients > 0)
                 maxClients = parsedMaxClients;
         }
+        else if(args[i] == "--max-clients-per-ip" && i + 1 < args.size())
+        {
+            bool ok = false;
+            int parsed = args[++i].toInt(&ok);
+            if(ok && parsed > 0)
+                maxClientsPerIp = parsed;
+        }
     }
 
     try {
-        HubServer hub(port, maxClients);
+        HubServer hub(port, maxClients, maxClientsPerIp);
         return app.exec();
     }
     catch(const std::exception &err) {
