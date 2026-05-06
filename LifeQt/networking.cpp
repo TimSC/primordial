@@ -37,6 +37,18 @@ static QByteArray UncompressBiotPayload(const QByteArray &data)
     return uncompressed;
 }
 
+static QString FormatHostPort(const QString &host, quint16 port)
+{
+    QHostAddress address;
+    if(address.setAddress(host) && address.protocol() == QAbstractSocket::IPv6Protocol)
+        return QString("[%1]:%2").arg(address.toString()).arg(port);
+
+    if(host.contains(":") && !host.startsWith("["))
+        return QString("[%1]:%2").arg(host).arg(port);
+
+    return QString("%1:%2").arg(host).arg(port);
+}
+
 std::string SocketStateToString(QAbstractSocket::SocketState state)
 {
     if(state==QAbstractSocket::UnconnectedState) return "Unconnected";
@@ -386,7 +398,10 @@ void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &status
     if(sockets[side] != nullptr)
     {
         QTcpSocket *sock = sockets[side];
-        hostPortOut = QString::asprintf("%s:%d", sock->peerName().toStdString().c_str(), sock->peerPort());
+        QString host = sock->peerAddress().toString();
+        if(host.isEmpty() || sock->peerAddress().isNull())
+            host = sock->peerName();
+        hostPortOut = FormatHostPort(host, sock->peerPort());
         QTcpSocket::SocketState state = sock->state();
         statusOut = SocketStateToString(state).c_str();
         if(state == QTcpSocket::SocketState::HostLookupState || state == QTcpSocket::SocketState::ConnectingState || state == QTcpSocket::SocketState::ConnectedState)

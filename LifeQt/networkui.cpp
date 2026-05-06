@@ -1,6 +1,70 @@
 #include "networkui.h"
 #include "ui_networkui.h"
+#include <QHostAddress>
 #include <QUrl>
+
+static const quint16 DEFAULT_NETWORK_PORT = 56436;
+
+static bool ParsePort(const QString &text, quint16 &port)
+{
+    bool ok = false;
+    uint parsed = text.toUInt(&ok);
+    if(!ok || parsed > 65535)
+        return false;
+
+    port = (quint16)parsed;
+    return true;
+}
+
+static bool ParseEndpoint(const QString &input, QString &host, quint16 &port)
+{
+    QString text = input.trimmed();
+    port = DEFAULT_NETWORK_PORT;
+
+    if(text.isEmpty())
+        return false;
+
+    if(text.startsWith("tcp://", Qt::CaseInsensitive))
+    {
+        QUrl url(text);
+        host = url.host();
+        port = (quint16)url.port(DEFAULT_NETWORK_PORT);
+        return !host.isEmpty();
+    }
+
+    if(text.startsWith("["))
+    {
+        int closeBracket = text.indexOf("]");
+        if(closeBracket < 0)
+            return false;
+
+        host = text.mid(1, closeBracket - 1);
+        QString rest = text.mid(closeBracket + 1);
+        if(rest.startsWith(":") && !ParsePort(rest.mid(1), port))
+            return false;
+
+        return !host.isEmpty();
+    }
+
+    QHostAddress address;
+    if(address.setAddress(text))
+    {
+        host = address.toString();
+        return true;
+    }
+
+    if(text.count(":") == 1)
+    {
+        int colon = text.lastIndexOf(":");
+        host = text.left(colon);
+        if(!ParsePort(text.mid(colon + 1), port))
+            return false;
+        return !host.isEmpty();
+    }
+
+    host = text;
+    return true;
+}
 
 NetworkUi::NetworkUi(SidesManager &sidesManagerIn, QWidget *parent) :
     QDialog(parent),
@@ -78,12 +142,12 @@ void NetworkUi::ConnectRow(int side, QPushButton *button, QLineEdit *lineEdit)
 {
     if(button->text() == "Connect")
     {
-        QString addr = lineEdit->text();
-        QUrl addrParsed("tcp://"+addr);
-        int port = addrParsed.port();
-        if (port < 0) port = 56436;
+        QString host;
+        quint16 port;
+        if(!ParseEndpoint(lineEdit->text(), host, port))
+            return;
 
-        sidesManager.connectToHost(side, addrParsed.host(), port);
+        sidesManager.connectToHost(side, host, port);
     }
     else
         sidesManager.disconnectSide(side);
