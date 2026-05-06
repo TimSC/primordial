@@ -37,6 +37,7 @@ SOURCES += \
     mainwindow.cpp \
     networking.cpp \
     networkui.cpp \
+    settingsautosave.cpp \
     settingsbiot.cpp \
     settingshabitat.cpp \
     settingsnetwork.cpp \
@@ -60,6 +61,7 @@ HEADERS += \
     mainwindow.h \
     networking.h \
     networkui.h \
+    settingsautosave.h \
     settingsbiot.h \
     settingshabitat.h \
     settingsnetwork.h \
@@ -70,6 +72,7 @@ FORMS += \
     dockviewbiot.ui \
     mainwindow.ui \
     networkui.ui \
+    settingsautosave.ui \
     settingsbiot.ui \
     settingshabitat.ui \
     settingsnetwork.ui \

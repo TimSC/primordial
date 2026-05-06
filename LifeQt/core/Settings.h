@@ -72,6 +72,8 @@ public: //Fox BEGIN
     bool    bParentAttack;
     bool    bSiblingsAttack;
     bool    bSaveOnQuit;
+    bool    bAutosave;
+    int     autosaveMinutes;
 
     float   friction;
     BRect   barrier;

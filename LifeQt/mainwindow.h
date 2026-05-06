@@ -115,6 +115,7 @@ private:
 
     int64_t lastGraphicsUpdate;
     int64_t lastStatsUpdate;
+    int64_t lastAutosave;
 
     class MainApp app;
 

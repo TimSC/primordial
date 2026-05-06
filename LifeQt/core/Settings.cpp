@@ -52,6 +52,9 @@ void CSettings::Save()
     QJsonDocument cljdoc(clj);
     settings.setValue("network/m_connectList", cljdoc.toJson());
 
+    settings.setValue("autosave/bAutosave", bAutosave);
+    settings.setValue("autosave/autosaveMinutes", autosaveMinutes);
+
 }
 
 void CSettings::Load()
@@ -102,6 +105,11 @@ void CSettings::Load()
         }
     }
 
+    val = settings.value("autosave/bAutosave");
+    if(val.isValid()) bAutosave = val.toBool();
+    val = settings.value("autosave/autosaveMinutes");
+    if(val.isValid()) autosaveMinutes = val.toInt();
+
 }
 
 void CSettings::SanityCheck()
@@ -126,6 +134,11 @@ void CSettings::SanityCheck()
     if (m_nSizeChoice  > 3 ||
         m_nSizeChoice < 0)
         m_nSizeChoice = 2;
+
+    if (autosaveMinutes < 1)
+        autosaveMinutes = 1;
+    if (autosaveMinutes > 1440)
+        autosaveMinutes = 1440;
 }
 
 
@@ -150,6 +163,9 @@ CSettings& CSettings::operator=(CSettings& s)
     bMouse                = s.bMouse;    
     bParentAttack         = s.bParentAttack;
     bSiblingsAttack       = s.bSiblingsAttack;    
+    bSaveOnQuit           = s.bSaveOnQuit;
+    bAutosave             = s.bAutosave;
+    autosaveMinutes       = s.autosaveMinutes;
 
     friction              = s.friction;    
     maxLineSegments       = s.maxLineSegments;
@@ -264,6 +280,8 @@ void CSettings::SetToDefaults()
     bParentAttack       = true;
     bSiblingsAttack     = true;
     bSaveOnQuit     = true;
+    bAutosave       = true;
+    autosaveMinutes = 10;
 
     friction            = 5.0f;
     bBarrier            = true;

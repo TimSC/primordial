@@ -217,6 +217,7 @@ MainWindow::MainWindow(bool fuzzEnabled, QWidget *parent)
 {
     lastGraphicsUpdate = 0;
     lastStatsUpdate = 0;
+    lastAutosave = QDateTime::currentMSecsSinceEpoch();
 
     ui->setupUi(this);
     this->setWindowIcon(QIcon(":/res/icon.ico"));
@@ -333,6 +334,20 @@ void MainWindow::timerEvent(QTimerEvent *event)
     }
 
     app.autoConnect.TimedUpdate();
+
+    if(app.env.settings.bAutosave)
+    {
+        int64_t autosaveElapsed = now - lastAutosave;
+        int64_t autosaveInterval = (int64_t)app.env.settings.autosaveMinutes * 60 * 1000;
+        if(autosaveElapsed >= autosaveInterval)
+        {
+            lastAutosave = now;
+            std::string autosaveFilename = currentFilename.empty() ? "autosave.plfc" : currentFilename;
+            app.Save(autosaveFilename);
+        }
+    }
+    else
+        lastAutosave = now;
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -414,6 +429,7 @@ void MainWindow::on_actionSave_triggered()
     }
 
     app.Save(this->currentFilename);
+    lastAutosave = QDateTime::currentMSecsSinceEpoch();
 }
 
 void MainWindow::on_actionStart_Simulation_triggered()
@@ -505,6 +521,7 @@ void MainWindow::on_actionSettings_triggered()
     if(ret == QDialog::Accepted)
     {
         app.sidesManager.updateListenMode();
+        lastAutosave = QDateTime::currentMSecsSinceEpoch();
     }
 }
 
