@@ -23,6 +23,14 @@ using namespace rapidjson;
 
 const rapidjson::SizeType MAX_BIOTS_IN_SAVE = 10000;
 
+static void ValidateJsonCanBeWritten(const rapidjson::Value& value)
+{
+    std::stringstream ss;
+    OStreamWrapper osw(ss);
+    Writer<OStreamWrapper> writer(osw);
+    value.Accept(writer);
+}
+
 static void RestoreBiotFromJson(Biot& biot, const std::string& json)
 {
     Document restoreDoc;
@@ -147,10 +155,19 @@ void CBiotList::SerializeJson(class Environment &env, rapidjson::Document &d, ra
     Value biotsJson(kArrayType);
     for(int i=0; i<env.m_biotList.size(); i++)
     {
-        Value biotJson(kObjectType);
         Biot *biot = env.m_biotList[i];
-        biot->SerializeJson(d, biotJson);
-        biotsJson.PushBack(biotJson, d.GetAllocator());
+        try
+        {
+            Value biotJson(kObjectType);
+            biot->SerializeJson(d, biotJson);
+            ValidateJsonCanBeWritten(biotJson);
+            biotsJson.PushBack(biotJson, d.GetAllocator());
+        }
+        catch (const std::exception &err)
+        {
+            const uint32_t biotId = biot == nullptr ? 0 : biot->m_Id;
+            std::cerr << "Skipping biot " << biotId << " during save: " << err.what() << std::endl;
+        }
     }
     v.AddMember("biots", biotsJson, d.GetAllocator());
 }
