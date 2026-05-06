@@ -4,6 +4,8 @@
 #include <QWidget>
 #include "core/Environ.h"
 
+class QTreeWidget;
+
 namespace Ui {
 class DockViewBiot;
 }
@@ -41,7 +43,10 @@ private slots:
     void on_applyButton_clicked();
 
 private:
+    void UpdateDetailsTree(Biot* pBiot);
+
     Ui::DockViewBiot *ui;
+    QTreeWidget *detailsTree;
     uint32_t currentBiotId;
 };
 

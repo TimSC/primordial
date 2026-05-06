@@ -688,7 +688,7 @@ CommandLimbStore::CommandLimbStore()
     m_pArg = nullptr;
 
     for(int i=0; i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
-        memset(&command[i], 0x00, sizeof(CommandType));
+        command[i].Clear();
 }
 
 void CommandLimbStore::Initialize(int nLimbType, int nLimb, Biot& biot)
@@ -1073,21 +1073,72 @@ void CommandLimbStore::SerializeJson(Biot& biot, rapidjson::Document &d, rapidjs
     v.AddMember("command", commandJson, allocator);
 }
 
-static void LoadLegacyCommandBlob(CommandType &command, const Value &v)
+union LegacyCommandType {
+    CommandFlapLimbSegment         flapLimbSegment;
+    CommandFlapLimbTypeSegment     flapLimbTypeSegment;
+    CommandMoveLimbSegment         moveLimbSegment;
+    CommandMoveLimbSegments        moveLimbSegments;
+    CommandMoveLimbTypeSegment     moveLimbTypeSegment;
+    CommandMoveLimbTypeSegments    moveLimbTypeSegments;
+    CommandRetractLimbType         retractLimbType;
+    CommandRetractLimb             retractLimb;
+    CommandNOP                     nop;
+    CommandMemory                  memory;
+};
+
+static void LoadLegacyCommandBlob(CommandType &command, const Value &v, int expectedCommand)
 {
     if(!v.IsString())
         throw std::range_error("command entry is not a string");
 
     QByteArray buffStr(v.GetString(), v.GetStringLength());
     QByteArray buff = QByteArray::fromBase64(buffStr);
-    if(buff.length() != (int)sizeof(CommandType))
+    if(buff.length() != (int)sizeof(LegacyCommandType))
     {
         LogInvalidDeserializedValue("CommandLimbStore::SerializeJsonLoad", "command byte length", buff.length());
         throw std::range_error("command byte length out of range");
     }
 
-    memset(&command, 0x00, sizeof(CommandType));
-    memcpy(&command, buff.constData(), sizeof(CommandType));
+    LegacyCommandType legacy;
+    memset(&legacy, 0x00, sizeof(LegacyCommandType));
+    memcpy(&legacy, buff.constData(), sizeof(LegacyCommandType));
+
+    command.Clear();
+    switch(expectedCommand)
+    {
+    case CommandArgument::COMMAND_FLAP_LIMB_SEGMENT:
+        command.flapLimbSegment = legacy.flapLimbSegment;
+        break;
+    case CommandArgument::COMMAND_FLAP_LIMB_TYPE_SEGMENT:
+        command.flapLimbTypeSegment = legacy.flapLimbTypeSegment;
+        break;
+    case CommandArgument::COMMAND_MOVE_LIMB_SEGMENT:
+        command.moveLimbSegment = legacy.moveLimbSegment;
+        break;
+    case CommandArgument::COMMAND_MOVE_LIMB_SEGMENTS:
+        command.moveLimbSegments = legacy.moveLimbSegments;
+        break;
+    case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENT:
+        command.moveLimbTypeSegment = legacy.moveLimbTypeSegment;
+        break;
+    case CommandArgument::COMMAND_MOVE_LIMB_TYPE_SEGMENTS:
+        command.moveLimbTypeSegments = legacy.moveLimbTypeSegments;
+        break;
+    case CommandArgument::COMMAND_RETRACT_LIMB_TYPE:
+        command.retractLimbType = legacy.retractLimbType;
+        break;
+    case CommandArgument::COMMAND_RETRACT_LIMB:
+        command.retractLimb = legacy.retractLimb;
+        break;
+    case CommandArgument::COMMAND_NOP:
+        command.nop = legacy.nop;
+        break;
+    case CommandArgument::COMMAND_MEMORY:
+        command.memory = legacy.memory;
+        break;
+    default:
+        throw std::range_error("legacy command kind out of range");
+    }
 }
 
 void CommandLimbStore::LoadSemanticCommandState(CommandType &command, const Value &v, int expectedCommand)
@@ -1103,7 +1154,7 @@ void CommandLimbStore::LoadSemanticCommandState(CommandType &command, const Valu
     if(expectedCommand >= 0 && commandType != expectedCommand)
         throw std::range_error("command state kind does not match command definition");
 
-    memset(&command, 0x00, sizeof(CommandType));
+    command.Clear();
 
     switch(commandType)
     {
@@ -1189,7 +1240,7 @@ void CommandLimbStore::SerializeJsonLoad(Biot& biot, const rapidjson::Value& v)
     for(rapidjson::SizeType i=0; i<commandJson.Size() and i<CommandLimbType::MAX_COMMANDS_PER_LIMB; i++)
     {
         if(commandJson[i].IsString())
-            LoadLegacyCommandBlob(command[i], commandJson[i]);
+            LoadLegacyCommandBlob(command[i], commandJson[i], ExpectedStoreCommand(biot, m_nLimbType, (int)i));
         else if(commandJson[i].IsObject())
             LoadSemanticCommandState(command[i], commandJson[i], ExpectedStoreCommand(biot, m_nLimbType, (int)i));
         else

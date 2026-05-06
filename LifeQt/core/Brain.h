@@ -555,7 +555,9 @@ protected:
 };
 
 
-union CommandType {
+struct CommandType {
+    void Clear() { *this = CommandType(); }
+
     CommandFlapLimbSegment         flapLimbSegment;
     CommandFlapLimbTypeSegment     flapLimbTypeSegment;
     CommandMoveLimbSegment         moveLimbSegment;
@@ -563,7 +565,7 @@ union CommandType {
     CommandMoveLimbTypeSegment     moveLimbTypeSegment;
     CommandMoveLimbTypeSegments    moveLimbTypeSegments;
     CommandRetractLimbType         retractLimbType;
-     CommandRetractLimb             retractLimb;
+    CommandRetractLimb             retractLimb;
     CommandNOP                     nop;
     CommandMemory                  memory;
 };
