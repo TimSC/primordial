@@ -207,6 +207,7 @@ void Networking::connectToHost(QTcpSocket *socket, const QString &hostName, quin
 {
     connect(socket, &QTcpSocket::readyRead, this, &Networking::clientBytesAvailable);
     connect(socket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(clientStateChanged(QAbstractSocket::SocketState)));
+    connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(clientError(QAbstractSocket::SocketError)));
     socket->connectToHost(hostName, port);
 }
 
@@ -219,6 +220,7 @@ void Networking::acceptConnection()
 
         connect(client, &QTcpSocket::readyRead, this, &Networking::clientBytesAvailable);
         connect(client, SIGNAL(stateChanged(QAbstractSocket::SocketState)), this, SLOT(clientStateChanged(QAbstractSocket::SocketState)));
+        connect(client, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(clientError(QAbstractSocket::SocketError)));
 
         clients.append(client);
         assembleBuffers[client] = QByteArray();
@@ -265,6 +267,18 @@ void Networking::clientStateChanged(QAbstractSocket::SocketState state)
     }
 
     emit netStateChanged(client, state);
+}
+
+void Networking::clientError(QAbstractSocket::SocketError socketError)
+{
+    QTcpSocket *client = qobject_cast<QTcpSocket *>(QObject::sender());
+    if(client == nullptr)
+        return;
+
+    std::cout << "socket error " << (uint64_t)client
+              << " code=" << (int)socketError
+              << " message=" << client->errorString().toStdString()
+              << std::endl;
 }
 
 void Networking::clientBytesAvailable()
@@ -486,9 +500,22 @@ void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketSt
             affectedSides.append(i);
         }
 
+    QString endpoint = endpointBySocket.value(client);
+    QString sideList;
+    for(int i=0; i<affectedSides.size(); i++)
+    {
+        if(i > 0)
+            sideList.append(",");
+        sideList.append(QString::number(affectedSides[i]));
+    }
+    std::cout << "socket state " << (uint64_t)client
+              << " state=" << SocketStateToString(state)
+              << " endpoint=" << endpoint.toStdString()
+              << " sides=" << sideList.toStdString()
+              << std::endl;
+
     if(state==QAbstractSocket::UnconnectedState)
     {
-        QString endpoint = endpointBySocket.value(client);
         if(!endpoint.isEmpty())
             connectionByEndpoint.remove(endpoint);
         endpointBySocket.remove(client);
@@ -860,6 +887,7 @@ void SidesManager::receivePeerHello(int side, const QByteArray &d)
         peerInstanceId[side] = instanceId;
         if(instanceId == env.settings.m_instanceId)
         {
+            std::cout << "disconnecting peer: loopback rejected on side " << side << std::endl;
             status[side] = "Loopback rejected";
             env.settings.m_bSideEnable[side] = false;
             env.settings.Save();
@@ -896,6 +924,7 @@ void SidesManager::receivePeerHello(QTcpSocket *client, const QByteArray &d)
             peerInstanceId[side] = instanceId;
             if(instanceId == env.settings.m_instanceId)
             {
+                std::cout << "disconnecting peer: loopback rejected on side " << side << std::endl;
                 status[side] = "Loopback rejected";
                 env.settings.m_bSideEnable[side] = false;
                 sockets[side] = nullptr;
@@ -907,6 +936,7 @@ void SidesManager::receivePeerHello(QTcpSocket *client, const QByteArray &d)
         }
         if(instanceId == env.settings.m_instanceId)
         {
+            std::cout << "disconnecting peer: loopback rejected" << std::endl;
             env.settings.Save();
             client->disconnectFromHost();
         }
@@ -928,6 +958,7 @@ void SidesManager::receiveMuxOpen(QTcpSocket *client, const QByteArray &d)
 
     if(peerInstanceBySocket.value(client) == env.settings.m_instanceId)
     {
+        std::cout << "disconnecting peer: mux open rejected for loopback channel " << channel << std::endl;
         QByteArray response(RPC_MUX_NO_FREE);
         response.append((char)channel);
         networking.sendPage(client, response.constData(), response.length());
@@ -948,7 +979,10 @@ void SidesManager::receiveMuxOpen(QTcpSocket *client, const QByteArray &d)
     networking.sendPage(client, response.constData(), response.length());
 
     if(freeSide < 0)
+    {
+        std::cout << "rejecting mux channel " << channel << ": no free sides" << std::endl;
         return;
+    }
 
     sockets[freeSide] = client;
     sideChannel[freeSide] = (uint8_t)channel;

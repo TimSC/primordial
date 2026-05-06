@@ -23,6 +23,7 @@ public slots:
     void acceptConnection();
     void clientBytesAvailable();
     void clientStateChanged(QAbstractSocket::SocketState socketState);
+    void clientError(QAbstractSocket::SocketError socketError);
 
 signals:
     void netStateChanged(QTcpSocket *client, QAbstractSocket::SocketState socketState);
