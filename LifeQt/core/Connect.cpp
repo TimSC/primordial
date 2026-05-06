@@ -19,9 +19,9 @@ SideListener::~SideListener()
 
 }
 
-void SideListener::BiotLeavingSide(int, Biot *)
+bool SideListener::BiotLeavingSide(int, Biot *)
 {
-
+    return false;
 }
 
 void SideListener::ReadyToReceive(int, bool)
@@ -60,10 +60,7 @@ bool Side::Export(Biot* pBiot)
 {
     if(!m_remoteReady) return false;
     if(m_listener)
-    {
-        m_listener->BiotLeavingSide(m_sideId, pBiot);
-        return true;
-    }
+        return m_listener->BiotLeavingSide(m_sideId, pBiot);
     return false;
 }
 

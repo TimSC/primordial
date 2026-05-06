@@ -279,9 +279,9 @@ SidesManagerEventRx::~SidesManagerEventRx()
 
 }
 
-void SidesManagerEventRx::BiotLeavingSide(int side, Biot *pBiot)
+bool SidesManagerEventRx::BiotLeavingSide(int side, Biot *pBiot)
 {
-    manager->biotLeavingSide(side, pBiot);
+    return manager->biotLeavingSide(side, pBiot);
 }
 
 void SidesManagerEventRx::ReadyToReceive(int sideId, bool ready)
@@ -497,46 +497,59 @@ void SidesManager::getSideStatus(int side, QString &hostPortOut, QString &status
         statusOut = "Assigned";
 }
 
-void SidesManager::biotLeavingSide(int side, Biot *pBiot)
+bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
 {
     cout << "biotLeavingSide " << side << endl;
-    //Serialize biot
-    Document d;
-    d.SetObject();
-    Value biotJson(kObjectType);
-    pBiot->SerializeJson(d, biotJson);
-    d.AddMember("biot", biotJson, d.GetAllocator());
-    stringstream ss;
-    OStreamWrapper osw(ss);
-    Writer<OStreamWrapper> writer(osw);
-    d.Accept(writer);
-
-    string serBiot = ss.str();
+    string serBiot;
+    try {
+        Document d;
+        d.SetObject();
+        Value biotJson(kObjectType);
+        pBiot->SerializeJson(d, biotJson);
+        d.AddMember("biot", biotJson, d.GetAllocator());
+        stringstream ss;
+        OStreamWrapper osw(ss);
+        Writer<OStreamWrapper> writer(osw);
+        d.Accept(writer);
+        serBiot = ss.str();
+    }
+    catch (const exception &err) {
+        std::cout << "failed to serialize outgoing biot: " << err.what() << std::endl;
+        return false;
+    }
 
     //Sent via socket
     if(sockets[side] != nullptr)
     {
-        QTcpSocket *sock = sockets[side];
-        qint64 now = QDateTime::currentMSecsSinceEpoch();
-        PruneRecentlySentBiots(recentlySentBiots[side], now);
-        if(1)
-        {
-            //Sent biot in compressed json
-            QByteArray data("transbiotc");
-            QByteArray dat1(qCompress(serBiot.c_str(), serBiot.size()));
-            data.append(dat1);
-            networking.sendPage(sock, data.constData(), data.length());
-            recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
+        try {
+            QTcpSocket *sock = sockets[side];
+            qint64 now = QDateTime::currentMSecsSinceEpoch();
+            PruneRecentlySentBiots(recentlySentBiots[side], now);
+            if(1)
+            {
+                //Sent biot in compressed json
+                QByteArray data("transbiotc");
+                QByteArray dat1(qCompress(serBiot.c_str(), serBiot.size()));
+                data.append(dat1);
+                networking.sendPage(sock, data.constData(), data.length());
+                recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
+            }
+            else
+            {
+                //Sent biot in uncompressed json
+                QByteArray data("transfbiot");
+                data.append(serBiot.c_str(), serBiot.size());
+                networking.sendPage(sock, data.constData(), data.length());
+                recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
+            }
+            return true;
         }
-        else
-        {
-            //Sent biot in uncompressed json
-            QByteArray data("transfbiot");
-            data.append(serBiot.c_str(), serBiot.size());
-            networking.sendPage(sock, data.constData(), data.length());
-            recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
+        catch (const exception &err) {
+            std::cout << "failed to send outgoing biot: " << err.what() << std::endl;
+            return false;
         }
     }
+    return false;
 }
 
 void SidesManager::returnRejectedBiotToPeer(const QString &rpcType, int side, const QByteArray &d, const char *reason)

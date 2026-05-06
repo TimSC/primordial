@@ -26,7 +26,7 @@ public:
     SideListener();
     virtual ~SideListener();
 
-    virtual void BiotLeavingSide(int side, Biot *pBiot);
+    virtual bool BiotLeavingSide(int side, Biot *pBiot);
     virtual void ReadyToReceive(int sideId, bool ready);
 };
 

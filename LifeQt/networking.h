@@ -46,7 +46,7 @@ public:
     SidesManagerEventRx(class SidesManager *managerIn);
     virtual ~SidesManagerEventRx();
 
-    virtual void BiotLeavingSide(int side, Biot *pBiot) override;
+    virtual bool BiotLeavingSide(int side, Biot *pBiot) override;
     virtual void ReadyToReceive(int sideId, bool ready) override;
 
     class SidesManager *manager;
@@ -69,7 +69,7 @@ public:
     void connectToHost(int side, const QString &hostName, quint16 port);
     void disconnectSide(int side);
     void getSideStatus(int side, QString &hostPortOut, QString &statusOut, bool &enableConnect);
-    void biotLeavingSide(int side, Biot *pBiot);
+    bool biotLeavingSide(int side, Biot *pBiot);
     bool isListening(uint16_t &portOut);
     void readyToReceive(int sideId, bool ready);
     void updateListenMode();

@@ -37,6 +37,34 @@ static std::string LoadBiotString(const rapidjson::Value& v, const char *name)
     if(!value.IsString() || value.GetStringLength() > MAX_BIOT_STRING_LENGTH)
         throw std::runtime_error("eror parsing json");
 
+    const char *text = value.GetString();
+    uint32_t expectedContinuation = 0;
+    for(rapidjson::SizeType i = 0; i < value.GetStringLength(); i++)
+    {
+        unsigned char ch = (unsigned char)text[i];
+        if(ch == 0)
+            throw std::runtime_error("biot string contains nul");
+        if(expectedContinuation > 0)
+        {
+            if((ch & 0xc0) != 0x80)
+                throw std::runtime_error("biot string is not valid utf-8");
+            expectedContinuation--;
+        }
+        else if(ch < 0x80)
+        {
+        }
+        else if(ch >= 0xc2 && ch <= 0xdf)
+            expectedContinuation = 1;
+        else if(ch >= 0xe0 && ch <= 0xef)
+            expectedContinuation = 2;
+        else if(ch >= 0xf0 && ch <= 0xf4)
+            expectedContinuation = 3;
+        else
+            throw std::runtime_error("biot string is not valid utf-8");
+    }
+    if(expectedContinuation != 0)
+        throw std::runtime_error("biot string is not valid utf-8");
+
     return std::string(value.GetString(), value.GetStringLength());
 }
 
@@ -1851,10 +1879,18 @@ void  Biot::SerializeJson(rapidjson::Document &d, rapidjson::Value &v)
     v.AddMember("stepEnergy", stepEnergy, allocator);
     v.AddMember("ratio", ratio, allocator);
     v.AddMember("m_age", m_age, allocator);
-    v.AddMember("m_sName", Value(m_sName.c_str(), allocator), allocator);
-    v.AddMember("m_sWorldName", Value(m_sWorldName.c_str(), allocator), allocator);
-    v.AddMember("m_sFatherName", Value(m_sFatherName.c_str(), allocator), allocator);
-    v.AddMember("m_sFatherWorldName", Value(m_sFatherWorldName.c_str(), allocator), allocator);
+    Value nameJson;
+    nameJson.SetString(m_sName.c_str(), (rapidjson::SizeType)m_sName.size(), allocator);
+    v.AddMember("m_sName", nameJson, allocator);
+    Value worldNameJson;
+    worldNameJson.SetString(m_sWorldName.c_str(), (rapidjson::SizeType)m_sWorldName.size(), allocator);
+    v.AddMember("m_sWorldName", worldNameJson, allocator);
+    Value fatherNameJson;
+    fatherNameJson.SetString(m_sFatherName.c_str(), (rapidjson::SizeType)m_sFatherName.size(), allocator);
+    v.AddMember("m_sFatherName", fatherNameJson, allocator);
+    Value fatherWorldNameJson;
+    fatherWorldNameJson.SetString(m_sFatherWorldName.c_str(), (rapidjson::SizeType)m_sFatherWorldName.size(), allocator);
+    v.AddMember("m_sFatherWorldName", fatherWorldNameJson, allocator);
 }
 
 void Biot::SerializeJsonLoad(const rapidjson::Value& v)
