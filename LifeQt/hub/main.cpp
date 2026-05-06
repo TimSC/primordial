@@ -362,7 +362,6 @@ private:
 
         client.lastSentBiotTime = now;
         client.link->recentlyReceivedBiotIds[biotId] = now;
-        biotsRelayedThisMinute++;
         sendFrame(client.link->socket, frame);
     }
 
@@ -391,22 +390,28 @@ private:
             return;
         }
 
-        if(rpcType == "biotaccept")
-            std::cout << "relaying transfer success for biot " << biotId << std::endl;
-
         if(client.link != nullptr)
+        {
+            if(rpcType == "biotaccept")
+                biotsRelayedThisMinute++;
             sendFrame(client.link->socket, frame);
+        }
     }
 
     void logMinuteStats()
     {
         int unlinked = 0;
+        int linked = 0;
         for(auto it = clients.begin(); it != clients.end(); ++it)
         {
             if(it.value()->link == nullptr)
                 unlinked++;
+            else
+                linked++;
         }
+        linked /= 2;
         std::cout << "stats: connected=" << clients.size()
+                  << " links=" << linked
                   << " biots_last_min=" << biotsRelayedThisMinute
                   << " rate_limited=" << biotsRateLimitedThisMinute
                   << " unlinked=" << unlinked << std::endl;
@@ -430,7 +435,8 @@ private:
             Client *second = nullptr;
             for(int i=0; i<unlinked.size(); i++)
             {
-                if(!isLoopbackPair(*first, *unlinked[i]))
+                if(!isLoopbackPair(*first, *unlinked[i]) &&
+                   !playersAlreadyLinked(first->instanceId, unlinked[i]->instanceId))
                 {
                     second = unlinked.takeAt(i);
                     break;
@@ -490,6 +496,19 @@ private:
         if(&a == &b)
             return true;
         return !a.instanceId.isEmpty() && a.instanceId == b.instanceId;
+    }
+
+    bool playersAlreadyLinked(const QString &idA, const QString &idB) const
+    {
+        for(auto it = clients.begin(); it != clients.end(); ++it)
+        {
+            const Client *c = it.value();
+            if(c->link == nullptr)
+                continue;
+            if(c->instanceId == idA && c->link->instanceId == idB)
+                return true;
+        }
+        return false;
     }
 
     void unlink(Client &client)
