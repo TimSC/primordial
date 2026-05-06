@@ -4,6 +4,7 @@
 #include <QSettings>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QUuid>
 
 using namespace rapidjson;
 
@@ -53,6 +54,7 @@ void CSettings::Save()
 
     settings.setValue("network/m_enableNetworking", m_enableNetworking);
     settings.setValue("network/m_autoReconnect", m_autoReconnect);
+    settings.setValue("network/m_instanceId", m_instanceId);
     settings.setValue("network/m_networkPort", m_networkPort);
     for(int i=0; i<SIDES; i++)
     {
@@ -101,6 +103,13 @@ void CSettings::Load()
     if(val.isValid()) m_enableNetworking = val.toBool();
     val = settings.value("network/m_autoReconnect");
     if(val.isValid()) m_autoReconnect = val.toBool();
+    val = settings.value("network/m_instanceId");
+    if(val.isValid()) m_instanceId = val.toString();
+    if(m_instanceId.isEmpty())
+    {
+        m_instanceId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        settings.setValue("network/m_instanceId", m_instanceId);
+    }
     val = settings.value("network/m_networkPort");
     if(val.isValid()) m_networkPort = val.toUInt();
     for(int i=0; i<SIDES; i++)
@@ -212,6 +221,7 @@ CSettings& CSettings::operator=(CSettings& s)
 
     m_enableNetworking = s.m_enableNetworking;
     m_autoReconnect = s.m_autoReconnect;
+    m_instanceId = s.m_instanceId;
     m_networkPort = s.m_networkPort;
     m_connectList = s.m_connectList;
 
@@ -310,6 +320,7 @@ void CSettings::SetToDefaults()
 
     m_enableNetworking = false;
     m_autoReconnect = true;
+    m_instanceId = "";
     m_networkPort = 54275;
     m_connectList.clear();
     for (int i = 0; i < SIDES; i++)

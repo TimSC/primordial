@@ -18,6 +18,7 @@ const uint32_t MAX_PAGE_SIZE = 1024*1024;
 const uint32_t MAX_BIOT_JSON_SIZE = 512*1024;
 const qint64 RETURN_BIOT_WINDOW_MS = 10000;
 const qint64 RECONNECT_INTERVAL_MS = 60000;
+const char *RPC_PEER_HELLO = "peerhello1";
 
 static uint32_t GetQtCompressedSize(const QByteArray &data)
 {
@@ -363,6 +364,7 @@ SidesManager::SidesManager(class Environment &envIn) :
         status[i] = "no connection";
         isAssigned[i] = false;
         configuredHostPort[i] = QString::fromStdString(env.settings.m_sSideAddress[i]);
+        peerInstanceId[i] = "";
         recentlySentBiots[i].clear();
     }
 
@@ -464,7 +466,10 @@ void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketSt
     for(int i=0;i<4; i++)
         if(sockets[i] == client)
         {
-            status[i] = SocketStateToString(state).c_str();
+            QString stateStatus = SocketStateToString(state).c_str();
+            if(state != QAbstractSocket::UnconnectedState ||
+               (status[i] != "No free sides" && status[i] != "Loopback rejected"))
+                status[i] = stateStatus;
             sideId = i;
             break;
         }
@@ -476,6 +481,7 @@ void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketSt
             sockets[sideId] = nullptr;
             isAssigned[sideId] = false;
             recentlySentBiots[sideId].clear();
+            peerInstanceId[sideId] = "";
             env.side[sideId]->SetConnected(false);
             env.side[sideId]->Clear(&this->env);
             env.side[sideId]->SetSize(false);
@@ -484,7 +490,7 @@ void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketSt
     }
     else if(state==QAbstractSocket::ConnectedState)
     {
-
+        sendPeerHello(client);
     }
 
     if(sideId >= 0)
@@ -508,7 +514,11 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
     if(side == -1) return;
 
     QString rpcType = d.left(10);
-    if(rpcType == "transfbiot" or rpcType == "transbiotc")
+    if(rpcType == RPC_PEER_HELLO)
+    {
+        receivePeerHello(side, d);
+    }
+    else if(rpcType == "transfbiot" or rpcType == "transbiotc")
     {
         receiveBiotFromNetwork(rpcType, side, d, true);
     }
@@ -547,6 +557,7 @@ void SidesManager::netReceivedPage(QTcpSocket *client, const char *data, uint32_
     }
     else if(rpcType == "nofreeside")
     {
+        status[side] = "No free sides";
         client->disconnectFromHost();
     }
     else if(rpcType == "sidunready")
@@ -677,6 +688,61 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
         }
     }
     return false;
+}
+
+void SidesManager::sendPeerHello(QTcpSocket *client)
+{
+    if(client == nullptr)
+        return;
+
+    Document d;
+    d.SetObject();
+    Document::AllocatorType& allocator = d.GetAllocator();
+    QByteArray instanceId = env.settings.m_instanceId.toUtf8();
+    Value instanceIdJson;
+    instanceIdJson.SetString(instanceId.constData(), instanceId.size(), allocator);
+    d.AddMember("instanceId", instanceIdJson, allocator);
+
+    stringstream ss;
+    OStreamWrapper osw(ss);
+    Writer<OStreamWrapper> writer(osw);
+    d.Accept(writer);
+
+    string payload = ss.str();
+    QByteArray data(RPC_PEER_HELLO);
+    data.append(payload.c_str(), payload.size());
+    networking.sendPage(client, data.constData(), data.length());
+}
+
+void SidesManager::receivePeerHello(int side, const QByteArray &d)
+{
+    try {
+        QByteArray payload = d.mid(10);
+        stringstream ss(std::string(payload.constData(), payload.size()));
+        IStreamWrapper isw(ss);
+
+        Document doc;
+        ParseResult ok = doc.ParseStream(isw);
+        if(!ok || !doc.IsObject() || !doc.HasMember("instanceId") || !doc["instanceId"].IsString())
+            throw runtime_error("error parsing peer hello");
+
+        QString instanceId = QString::fromUtf8(doc["instanceId"].GetString(), doc["instanceId"].GetStringLength());
+        if(instanceId.isEmpty())
+            throw runtime_error("peer hello missing instance id");
+
+        peerInstanceId[side] = instanceId;
+        if(instanceId == env.settings.m_instanceId)
+        {
+            status[side] = "Loopback rejected";
+            env.settings.m_bSideEnable[side] = false;
+            env.settings.Save();
+            if(sockets[side] != nullptr)
+                sockets[side]->disconnectFromHost();
+        }
+    }
+    catch (const exception &err) {
+        std::cout << "invalid peer hello: " << err.what() << std::endl;
+    }
 }
 
 void SidesManager::returnRejectedBiotToPeer(const QString &rpcType, int side, const QByteArray &d, const char *reason)

@@ -88,6 +88,8 @@ signals:
     void sideAssigned(int side);
 
 private:
+    void sendPeerHello(QTcpSocket *client);
+    void receivePeerHello(int side, const QByteArray &d);
     void receiveBiotFromNetwork(const QString &rpcType, int side, const QByteArray &d, bool returnOnFailure, bool allowQueueOverflow = false);
     void receiveCachedReturnedBiot(int side, const QByteArray &jsonPayload);
     void returnRejectedBiotToPeer(const QString &rpcType, int side, const QByteArray &d, const char *reason);
@@ -97,6 +99,7 @@ private:
     QTcpSocket *sockets[4];
     bool isAssigned[4];
     QString configuredHostPort[4];
+    QString peerInstanceId[4];
     QMap<uint32_t, RecentlySentBiot> recentlySentBiots[4];
     QString status[4];
     SidesManagerEventRx eventRx;

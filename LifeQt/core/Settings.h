@@ -95,6 +95,7 @@ public: //Fox BEGIN
 
     bool m_enableNetworking;
     bool m_autoReconnect;
+    QString m_instanceId;
     uint16_t m_networkPort;
     QList<QString> m_connectList;
 
