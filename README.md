@@ -180,7 +180,7 @@ The genetic code consists of 10 segment genes and one trait gene. A line is made
 
 ### The Species Identifier
 
-For sexual reproduction, a species identifier is used to allow for different species to develop, thus preventing them from interbreeding. It works like this. A biot with an id of 1 may breed with a biot with an id of 2 or 0, or 1. Even if a single species develops initially, through genetic drift, they can develop into different species. A mutation of the species id may change a biot's id to 2, which means it can still breed. Down the road, 2 can give way to 3, and if all the biots with id 2 die out, you are left with 1 and 3 as two species.
+For sexual reproduction, a species identifier is used to allow for different species to develop, thus preventing them from Should we validate before serializing for Should we validate before serializing for transfer??transferinterbreeding. It works like this. A biot with an id of 1 may breed with a biot with an id of 2 or 0, or 1. Even if a single species develops initially, through genetic drift, they can develop into different species. A mutation of the species id may change a biot's id to 2, which means it can still breed. Down the road, 2 can give way to 3, and if all the biots with id 2 die out, you are left with 1 and 3 as two species.
 
 ### Motion Frequency
 

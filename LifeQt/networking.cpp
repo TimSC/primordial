@@ -2,6 +2,7 @@
 #include <QIODevice>
 #include <QtEndian>
 #include <QDateTime>
+#include <QTimer>
 #include <QUrl>
 #include <iostream>
 #include <memory>
@@ -17,6 +18,8 @@ using namespace rapidjson;
 const uint32_t MAX_PAGE_SIZE = 1024*1024;
 const uint32_t MAX_BIOT_JSON_SIZE = 512*1024;
 const qint64 MAX_PENDING_WRITE_BYTES = 2 * 1024 * 1024;
+const qint64 MAX_READ_BYTES_PER_READY_READ = 256 * 1024;
+const int MAX_PAGES_PER_READY_READ = 64;
 const int MAX_MUX_CHANNELS_PER_SOCKET = 4;
 const qint64 RETURN_BIOT_WINDOW_MS = 10000;
 const qint64 RECONNECT_INTERVAL_MS = 60000;
@@ -307,12 +310,24 @@ void Networking::clientError(QAbstractSocket::SocketError socketError)
 void Networking::clientBytesAvailable()
 {
     QTcpSocket *client = qobject_cast<QTcpSocket *>(QObject::sender());
-    if(client == nullptr) return;
+    drainClient(client);
+}
 
-    while(client->bytesAvailable())
+void Networking::drainClient(QTcpSocket *client)
+{
+    if(client == nullptr || !clients.contains(client))
+        return;
+
+    qint64 bytesReadThisCall = 0;
+    int pagesThisCall = 0;
+
+    while(client->bytesAvailable() && bytesReadThisCall < MAX_READ_BYTES_PER_READY_READ && pagesThisCall < MAX_PAGES_PER_READY_READ)
     {
 
         qint64 readBytes = client->read(rxBuffer, sizeof(rxBuffer));
+        if(readBytes <= 0)
+            break;
+        bytesReadThisCall += readBytes;
 
         //std::cout << "rx0 " << readBytes << " " << (uint64_t)client << std::endl;
 
@@ -320,7 +335,8 @@ void Networking::clientBytesAvailable()
 
         assemblyBuffer.append(rxBuffer, readBytes);
 
-        while(assemblyBuffer.size() >= (int)(sizeof(uint32_t)+magicCodeLen))
+        while(pagesThisCall < MAX_PAGES_PER_READY_READ &&
+              assemblyBuffer.size() >= (int)(sizeof(uint32_t)+magicCodeLen))
         {
             QByteArray chkMagicCode = assemblyBuffer.left(magicCodeLen);
             if(chkMagicCode != magicCode.c_str())
@@ -348,7 +364,18 @@ void Networking::clientBytesAvailable()
             QByteArray page = assemblyBuffer.mid(magicCodeLen + sizeof(uint32_t), expectSize);
             assemblyBuffer.remove(0, entirePageSize);
             pageComplete(client, page.constData(), page.size());
+            pagesThisCall++;
+
+            if(!clients.contains(client))
+                return;
         }
+    }
+
+    if(clients.contains(client) && (client->bytesAvailable() || assembleBuffers.value(client).size() >= (int)(sizeof(uint32_t)+magicCodeLen)))
+    {
+        QTimer::singleShot(0, client, [this, client]() {
+            drainClient(client);
+        });
     }
 }
 

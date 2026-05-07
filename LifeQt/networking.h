@@ -37,6 +37,7 @@ private:
     std::string magicCode;
     int magicCodeLen;
 
+    void drainClient(QTcpSocket *client);
     void pageComplete(QTcpSocket *client, const char *data, uint32_t size);
 
 };
