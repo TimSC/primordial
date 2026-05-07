@@ -17,7 +17,7 @@ public:
     virtual ~Networking();
 
     void connectToHost(QTcpSocket *socket, const QString &hostName, quint16 port);
-    void sendPage(QTcpSocket *client, const char *data, uint32_t size);
+    bool sendPage(QTcpSocket *client, const char *data, uint32_t size);
 
 public slots:
     void acceptConnection();
@@ -94,7 +94,7 @@ private:
     void sendPeerHello(QTcpSocket *client);
     void sendMuxOpen(int side);
     void sendMuxClose(QTcpSocket *sock, uint8_t channel);
-    void sendSidePage(int side, const QByteArray &frame);
+    bool sendSidePage(int side, const QByteArray &frame);
     void sendBiotAccept(int side, uint32_t biotId);
     void receivePeerHello(int side, const QByteArray &d);
     void receivePeerHello(QTcpSocket *client, const QByteArray &d);

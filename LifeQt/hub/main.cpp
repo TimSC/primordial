@@ -27,6 +27,7 @@ const int DEFAULT_MAX_CLIENTS_PER_IP = 16;
 const int RX_BUFFER_SIZE = 50 * 1024;
 const uint32_t MAX_PAGE_SIZE = 1024 * 1024;
 const uint32_t MAX_BIOT_JSON_SIZE = 512 * 1024;
+const qint64 MAX_PENDING_WRITE_BYTES = 2 * 1024 * 1024;
 const int MAX_MUX_CHANNELS_PER_SOCKET = 4;
 const qint64 LINK_BIOT_INTERVAL_MS = 1000;
 const int MAGIC_CODE_LEN = 8;
@@ -60,6 +61,7 @@ struct Client {
     QString peerAddress;
     qint64 connectTime = 0;
     qint64 lastActivityTime = 0;
+    bool processingRead = false;
     bool disconnectAfterRead = false;
     QMap<int, ClientChannel *> channels;
 };
@@ -252,12 +254,16 @@ private:
         if(client == nullptr)
             return;
 
+        client->processingRead = true;
         char rxBuffer[RX_BUFFER_SIZE];
         while(socket->bytesAvailable())
         {
             qint64 readBytes = socket->read(rxBuffer, sizeof(rxBuffer));
             if(readBytes <= 0)
+            {
+                client->processingRead = false;
                 return;
+            }
 
             client->assemblyBuffer.append(rxBuffer, readBytes);
             client->lastActivityTime = QDateTime::currentMSecsSinceEpoch();
@@ -267,10 +273,12 @@ private:
                 return;
             if(client->disconnectAfterRead)
             {
+                client->processingRead = false;
                 socket->disconnectFromHost();
                 return;
             }
         }
+        client->processingRead = false;
     }
 
     void processAssemblyBuffer(Client &client)
@@ -470,9 +478,16 @@ private:
             return;
         }
 
+        ClientChannel *linkedChannel = channel.link;
+        if(!sendChannelFrame(*linkedChannel, frame))
+        {
+            std::cout << "returning biot " << biotId << ": linked client write buffer is full" << std::endl;
+            sendReturnBiot(channel, rpcType, biotId);
+            return;
+        }
+
         channel.lastSentBiotTime = now;
-        channel.link->recentlyReceivedBiotIds[biotId] = now;
-        sendChannelFrame(*channel.link, frame);
+        linkedChannel->recentlyReceivedBiotIds[biotId] = now;
     }
 
     void relayReturnBiot(ClientChannel &channel, const QString &rpcType, const QByteArray &frame)
@@ -658,7 +673,19 @@ private:
 
     void requestDisconnect(Client &client)
     {
-        client.disconnectAfterRead = true;
+        if(client.processingRead)
+            client.disconnectAfterRead = true;
+        else if(client.socket != nullptr)
+            client.socket->disconnectFromHost();
+    }
+
+    void requestDisconnect(QTcpSocket *socket)
+    {
+        Client *client = findClient(socket);
+        if(client != nullptr)
+            requestDisconnect(*client);
+        else if(socket != nullptr)
+            socket->disconnectFromHost();
     }
 
     void removeClient(QTcpSocket *socket)
@@ -700,30 +727,52 @@ private:
         return total;
     }
 
-    void sendReturnBiot(ClientChannel &channel, const QString &rpcType, uint32_t biotId)
+    bool sendReturnBiot(ClientChannel &channel, const QString &rpcType, uint32_t biotId)
     {
         QByteArray frame = ReturnBiotFrame(rpcType, biotId);
         if(!frame.isEmpty())
-            sendChannelFrame(channel, frame);
+            return sendChannelFrame(channel, frame);
+        return false;
     }
 
-    void sendChannelFrame(ClientChannel &channel, const QByteArray &frame)
+    bool sendChannelFrame(ClientChannel &channel, const QByteArray &frame)
     {
         QByteArray muxFrame(RPC_MUX_FRAME);
         muxFrame.append((char)channel.id);
         muxFrame.append(frame);
-        sendFrame(channel.client->socket, muxFrame);
+        return sendFrame(channel.client->socket, muxFrame);
     }
 
-    void sendFrame(QTcpSocket *socket, const QByteArray &frame)
+    bool sendFrame(QTcpSocket *socket, const QByteArray &frame)
     {
         if(socket == nullptr || frame.size() > (int)MAX_PAGE_SIZE)
-            return;
+            return false;
 
-        socket->write(MAGIC_CODE, MAGIC_CODE_LEN);
+        if(socket->bytesToWrite() > MAX_PENDING_WRITE_BYTES)
+        {
+            std::cout << "disconnecting client: write buffer limit exceeded before send"
+                      << " pending=" << socket->bytesToWrite() << std::endl;
+            requestDisconnect(socket);
+            return false;
+        }
+
+        if(socket->write(MAGIC_CODE, MAGIC_CODE_LEN) < 0)
+            return false;
         uint32_t pageSize = qToBigEndian<uint32_t>((uint32_t)frame.size());
-        socket->write((const char *)&pageSize, sizeof(pageSize));
-        socket->write(frame.constData(), frame.size());
+        if(socket->write((const char *)&pageSize, sizeof(pageSize)) < 0)
+            return false;
+        if(socket->write(frame.constData(), frame.size()) < 0)
+            return false;
+
+        if(socket->bytesToWrite() > MAX_PENDING_WRITE_BYTES)
+        {
+            std::cout << "disconnecting client: write buffer limit exceeded after send"
+                      << " pending=" << socket->bytesToWrite() << std::endl;
+            requestDisconnect(socket);
+            return false;
+        }
+
+        return true;
     }
 };
 

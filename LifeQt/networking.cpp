@@ -16,6 +16,7 @@ using namespace rapidjson;
 
 const uint32_t MAX_PAGE_SIZE = 1024*1024;
 const uint32_t MAX_BIOT_JSON_SIZE = 512*1024;
+const qint64 MAX_PENDING_WRITE_BYTES = 2 * 1024 * 1024;
 const int MAX_MUX_CHANNELS_PER_SOCKET = 4;
 const qint64 RETURN_BIOT_WINDOW_MS = 10000;
 const qint64 RECONNECT_INTERVAL_MS = 60000;
@@ -232,19 +233,40 @@ void Networking::acceptConnection()
     }
 }
 
-void Networking::sendPage(QTcpSocket *client, const char *data, uint32_t size)
+bool Networking::sendPage(QTcpSocket *client, const char *data, uint32_t size)
 {
-    if(size > MAX_PAGE_SIZE)
-        throw invalid_argument("Page too large");
+    if(client == nullptr || size > MAX_PAGE_SIZE)
+        return false;
 
-    client->write(magicCode.c_str(), magicCodeLen);
+    if(client->bytesToWrite() > MAX_PENDING_WRITE_BYTES)
+    {
+        std::cout << "disconnecting peer: write buffer limit exceeded before send"
+                  << " pending=" << client->bytesToWrite() << std::endl;
+        client->disconnectFromHost();
+        return false;
+    }
+
+    if(client->write(magicCode.c_str(), magicCodeLen) < 0)
+        return false;
     uint32_t pageSize = qToBigEndian<uint32_t>(size);
-    client->write((const char *)&pageSize, sizeof(uint32_t));
-    client->write(data, size);
+    if(client->write((const char *)&pageSize, sizeof(uint32_t)) < 0)
+        return false;
+    if(client->write(data, size) < 0)
+        return false;
 
     uint32_t expectSize=qFromBigEndian<uint32_t>(pageSize);
     //cout<< "tx " << size << "," << pageSize << "," << expectSize << endl;
     assert(size == expectSize);
+
+    if(client->bytesToWrite() > MAX_PENDING_WRITE_BYTES)
+    {
+        std::cout << "disconnecting peer: write buffer limit exceeded after send"
+                  << " pending=" << client->bytesToWrite() << std::endl;
+        client->disconnectFromHost();
+        return false;
+    }
+
+    return true;
 }
 
 void Networking::clientStateChanged(QAbstractSocket::SocketState state)
@@ -786,7 +808,11 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
                 QByteArray data("transbiotc");
                 QByteArray dat1(qCompress(serBiot.c_str(), serBiot.size()));
                 data.append(dat1);
-                sendSidePage(side, data);
+                if(!sendSidePage(side, data))
+                {
+                    std::cout << "failed to send outgoing biot: socket write buffer is full" << std::endl;
+                    return false;
+                }
                 recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
             }
             else
@@ -794,7 +820,11 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
                 //Sent biot in uncompressed json
                 QByteArray data("transfbiot");
                 data.append(serBiot.c_str(), serBiot.size());
-                sendSidePage(side, data);
+                if(!sendSidePage(side, data))
+                {
+                    std::cout << "failed to send outgoing biot: socket write buffer is full" << std::endl;
+                    return false;
+                }
                 recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
             }
             return true;
@@ -834,15 +864,15 @@ void SidesManager::sendMuxClose(QTcpSocket *sock, uint8_t channel)
     networking.sendPage(sock, close.constData(), close.length());
 }
 
-void SidesManager::sendSidePage(int side, const QByteArray &frame)
+bool SidesManager::sendSidePage(int side, const QByteArray &frame)
 {
     QTcpSocket *sock = sockets[side];
     if(sock == nullptr)
-        return;
+        return false;
     QByteArray muxFrame(RPC_MUX_FRAME);
     muxFrame.append((char)sideChannel[side]);
     muxFrame.append(frame);
-    networking.sendPage(sock, muxFrame.constData(), muxFrame.length());
+    return networking.sendPage(sock, muxFrame.constData(), muxFrame.length());
 }
 
 void SidesManager::sendPeerHello(QTcpSocket *client)
