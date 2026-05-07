@@ -16,6 +16,8 @@
 
 #include <rapidjson/document.h>
 #include <rapidjson/istreamwrapper.h>
+#include <rapidjson/ostreamwrapper.h>
+#include <rapidjson/writer.h>
 
 using namespace rapidjson;
 
@@ -32,6 +34,7 @@ const int MAX_MUX_CHANNELS_PER_SOCKET = 4;
 const qint64 LINK_BIOT_INTERVAL_MS = 1000;
 const int MAGIC_CODE_LEN = 8;
 const char *MAGIC_CODE = "primlife";
+const char *HUB_INSTANCE_ID = "primordial-hub";
 const char *RPC_PEER_HELLO = "peerhello1";
 const char *RPC_MUX_OPEN = "muxopen001";
 const char *RPC_MUX_CLOSE = "muxclose01";
@@ -58,12 +61,18 @@ struct Client {
     QTcpSocket *socket = nullptr;
     QByteArray assemblyBuffer;
     QString instanceId;
+    double maxReceiveBiotsPerSecond = 0.0;
     QString peerAddress;
     qint64 connectTime = 0;
     qint64 lastActivityTime = 0;
     bool processingRead = false;
     bool disconnectAfterRead = false;
     QMap<int, ClientChannel *> channels;
+};
+
+struct PeerHelloInfo {
+    QString instanceId;
+    double maxReceiveBiotsPerSecond = 0.0;
 };
 
 uint32_t GetQtCompressedSize(const QByteArray &data)
@@ -120,7 +129,7 @@ uint32_t ValidateBiotPayloadAndGetId(const QString &rpcType, const QByteArray &f
     return biot["m_Id"].GetUint();
 }
 
-QString ParsePeerInstanceId(const QByteArray &frame)
+PeerHelloInfo ParsePeerHello(const QByteArray &frame)
 {
     QByteArray payload = frame.mid(10);
     std::stringstream ss(std::string(payload.constData(), payload.size()));
@@ -131,7 +140,11 @@ QString ParsePeerInstanceId(const QByteArray &frame)
     if(!ok || !doc.IsObject() || !doc.HasMember("instanceId") || !doc["instanceId"].IsString())
         throw std::runtime_error("error parsing peer hello");
 
-    return QString::fromUtf8(doc["instanceId"].GetString(), doc["instanceId"].GetStringLength());
+    PeerHelloInfo hello;
+    hello.instanceId = QString::fromUtf8(doc["instanceId"].GetString(), doc["instanceId"].GetStringLength());
+    if(doc.HasMember("maxReceiveBiotsPerSecond") && doc["maxReceiveBiotsPerSecond"].IsNumber())
+        hello.maxReceiveBiotsPerSecond = doc["maxReceiveBiotsPerSecond"].GetDouble();
+    return hello;
 }
 
 bool IsBiotTransferRpc(const QString &rpcType)
@@ -160,6 +173,28 @@ bool ParseReturnBiotId(const QByteArray &frame, uint32_t &biotId)
         return false;
     biotId = qFromBigEndian<uint32_t>((const uchar *)frame.constData() + 10);
     return true;
+}
+
+QByteArray BuildPeerHelloFrame()
+{
+    Document doc;
+    doc.SetObject();
+    Document::AllocatorType& allocator = doc.GetAllocator();
+
+    Value instanceId;
+    instanceId.SetString(HUB_INSTANCE_ID, allocator);
+    doc.AddMember("instanceId", instanceId, allocator);
+    doc.AddMember("maxReceiveBiotsPerSecond", 1000.0 / (double)LINK_BIOT_INTERVAL_MS, allocator);
+
+    std::stringstream ss;
+    OStreamWrapper osw(ss);
+    Writer<OStreamWrapper> writer(osw);
+    doc.Accept(writer);
+
+    QByteArray frame(RPC_PEER_HELLO);
+    std::string payload = ss.str();
+    frame.append(payload.c_str(), payload.size());
+    return frame;
 }
 
 // Strip non-printable ASCII and cap length to prevent log injection.
@@ -243,6 +278,8 @@ private:
 
             connect(socket, &QTcpSocket::readyRead, this, [this, socket]() { readClient(socket); });
             connect(socket, &QTcpSocket::disconnected, this, [this, socket]() { removeClient(socket); });
+
+            sendFrame(socket, BuildPeerHelloFrame());
 
             std::cout << "client connected, total=" << clients.size() << std::endl;
         }
@@ -431,7 +468,9 @@ private:
     void receivePeerHello(Client &client, const QByteArray &frame)
     {
         try {
-            client.instanceId = SanitizeInstanceId(ParsePeerInstanceId(frame));
+            PeerHelloInfo hello = ParsePeerHello(frame);
+            client.instanceId = SanitizeInstanceId(hello.instanceId);
+            client.maxReceiveBiotsPerSecond = hello.maxReceiveBiotsPerSecond;
         }
         catch(const std::exception &err) {
             std::cout << "invalid peer hello: " << err.what() << std::endl;
@@ -470,15 +509,22 @@ private:
             return;
         }
 
+        ClientChannel *linkedChannel = channel.link;
         qint64 now = QDateTime::currentMSecsSinceEpoch();
-        if(now - channel.lastSentBiotTime < LINK_BIOT_INTERVAL_MS)
+        qint64 sendIntervalMs = LINK_BIOT_INTERVAL_MS;
+        if(linkedChannel->client->maxReceiveBiotsPerSecond > 0.0)
+        {
+            sendIntervalMs = (qint64)(1000.0 / linkedChannel->client->maxReceiveBiotsPerSecond);
+            if(sendIntervalMs < 1)
+                sendIntervalMs = 1;
+        }
+        if(linkedChannel->lastSentBiotTime != 0 && now - linkedChannel->lastSentBiotTime < sendIntervalMs)
         {
             biotsRateLimitedThisMinute++;
             sendReturnBiot(channel, rpcType, biotId);
             return;
         }
 
-        ClientChannel *linkedChannel = channel.link;
         if(!sendChannelFrame(*linkedChannel, frame))
         {
             std::cout << "returning biot " << biotId << ": linked client write buffer is full" << std::endl;
@@ -486,7 +532,7 @@ private:
             return;
         }
 
-        channel.lastSentBiotTime = now;
+        linkedChannel->lastSentBiotTime = now;
         linkedChannel->recentlyReceivedBiotIds[biotId] = now;
     }
 

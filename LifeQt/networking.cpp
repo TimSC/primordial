@@ -30,6 +30,8 @@ const char *RPC_MUX_CLOSE = "muxclose01";
 const char *RPC_MUX_FRAME = "muxframe01";
 const char *RPC_MUX_ASSIGN = "muxassign1";
 const char *RPC_MUX_NO_FREE = "muxnofree1";
+const int LOCAL_BIOT_ENCODING_VERSION = 1;
+const double LOCAL_MAX_RECEIVE_BIOTS_PER_SECOND = 5.0;
 
 static uint32_t GetQtCompressedSize(const QByteArray &data)
 {
@@ -437,6 +439,8 @@ SidesManager::SidesManager(class Environment &envIn) :
         configuredHostPort[i] = QString::fromStdString(env.settings.m_sSideAddress[i]);
         peerInstanceId[i] = "";
         recentlySentBiots[i].clear();
+        lastSentBiotTime[i] = 0;
+        lastReceivedBiotTime[i] = 0;
         biotsSent[i] = 0;
         biotsReceived[i] = 0;
     }
@@ -478,6 +482,8 @@ void SidesManager::connectToHost(int side, const QString &hostName, quint16 port
     }
 
     recentlySentBiots[side].clear();
+    lastSentBiotTime[side] = 0;
+    lastReceivedBiotTime[side] = 0;
     biotsSent[side] = 0;
     biotsReceived[side] = 0;
     emit sideStatsChanged(side);
@@ -522,6 +528,8 @@ void SidesManager::disconnectSide(int side)
         sockets[side] = nullptr;
         isAssigned[side] = false;
         recentlySentBiots[side].clear();
+        lastSentBiotTime[side] = 0;
+        lastReceivedBiotTime[side] = 0;
         peerInstanceId[side] = "";
         env.side[side]->SetConnected(false);
         env.side[side]->Clear(&this->env);
@@ -569,7 +577,7 @@ void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketSt
         if(!endpoint.isEmpty())
             connectionByEndpoint.remove(endpoint);
         endpointBySocket.remove(client);
-        peerInstanceBySocket.remove(client);
+        peerHandshakeBySocket.remove(client);
         sideBySocketChannel.remove(client);
 
         for(int sideId : affectedSides)
@@ -577,6 +585,8 @@ void SidesManager::netStateChanged(QTcpSocket *client, QAbstractSocket::SocketSt
             sockets[sideId] = nullptr;
             isAssigned[sideId] = false;
             recentlySentBiots[sideId].clear();
+            lastSentBiotTime[sideId] = 0;
+            lastReceivedBiotTime[sideId] = 0;
             peerInstanceId[sideId] = "";
             env.side[sideId]->SetConnected(false);
             env.side[sideId]->Clear(&this->env);
@@ -805,6 +815,30 @@ void SidesManager::setAutoReconnectEnabled(bool enabled)
 bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
 {
     cout << "biotLeavingSide " << side << endl;
+    QTcpSocket *sock = sockets[side];
+    if(sock == nullptr)
+        return false;
+    if(!peerHandshakeBySocket.value(sock).receivedHello)
+    {
+        std::cout << "delaying outgoing biot on side " << side
+                  << ": waiting for peer hello" << std::endl;
+        return false;
+    }
+    double peerReceiveRate = peerHandshakeBySocket.value(sock).maxReceiveBiotsPerSecond;
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    if(peerReceiveRate > 0.0)
+    {
+        qint64 sendIntervalMs = (qint64)(1000.0 / peerReceiveRate);
+        if(sendIntervalMs < 1)
+            sendIntervalMs = 1;
+        if(lastSentBiotTime[side] != 0 && now - lastSentBiotTime[side] < sendIntervalMs)
+        {
+            std::cout << "delaying outgoing biot on side " << side
+                      << ": peer receive rate limited" << std::endl;
+            return false;
+        }
+    }
+
     string serBiot;
     try {
         Document d;
@@ -827,7 +861,6 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
     if(sockets[side] != nullptr)
     {
         try {
-            qint64 now = QDateTime::currentMSecsSinceEpoch();
             PruneRecentlySentBiots(recentlySentBiots[side], now);
             if(1)
             {
@@ -840,6 +873,7 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
                     std::cout << "failed to send outgoing biot: socket write buffer is full" << std::endl;
                     return false;
                 }
+                lastSentBiotTime[side] = now;
                 recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
             }
             else
@@ -852,6 +886,7 @@ bool SidesManager::biotLeavingSide(int side, Biot *pBiot)
                     std::cout << "failed to send outgoing biot: socket write buffer is full" << std::endl;
                     return false;
                 }
+                lastSentBiotTime[side] = now;
                 recentlySentBiots[side][pBiot->m_Id] = RecentlySentBiot{now, QByteArray(serBiot.c_str(), serBiot.size())};
             }
             return true;
@@ -914,6 +949,8 @@ void SidesManager::sendPeerHello(QTcpSocket *client)
     Value instanceIdJson;
     instanceIdJson.SetString(instanceId.constData(), instanceId.size(), allocator);
     d.AddMember("instanceId", instanceIdJson, allocator);
+    d.AddMember("biotEncodingVersion", LOCAL_BIOT_ENCODING_VERSION, allocator);
+    d.AddMember("maxReceiveBiotsPerSecond", LOCAL_MAX_RECEIVE_BIOTS_PER_SECOND, allocator);
 
     stringstream ss;
     OStreamWrapper osw(ss);
@@ -929,21 +966,10 @@ void SidesManager::sendPeerHello(QTcpSocket *client)
 void SidesManager::receivePeerHello(int side, const QByteArray &d)
 {
     try {
-        QByteArray payload = d.mid(10);
-        stringstream ss(std::string(payload.constData(), payload.size()));
-        IStreamWrapper isw(ss);
+        PeerHandshakeInfo hello = parsePeerHello(d);
 
-        Document doc;
-        ParseResult ok = doc.ParseStream(isw);
-        if(!ok || !doc.IsObject() || !doc.HasMember("instanceId") || !doc["instanceId"].IsString())
-            throw runtime_error("error parsing peer hello");
-
-        QString instanceId = QString::fromUtf8(doc["instanceId"].GetString(), doc["instanceId"].GetStringLength());
-        if(instanceId.isEmpty())
-            throw runtime_error("peer hello missing instance id");
-
-        peerInstanceId[side] = instanceId;
-        if(instanceId == env.settings.m_instanceId)
+        peerInstanceId[side] = hello.instanceId;
+        if(hello.instanceId == env.settings.m_instanceId)
         {
             std::cout << "disconnecting peer: loopback rejected on side " << side << std::endl;
             status[side] = "Loopback rejected";
@@ -961,26 +987,15 @@ void SidesManager::receivePeerHello(int side, const QByteArray &d)
 void SidesManager::receivePeerHello(QTcpSocket *client, const QByteArray &d)
 {
     try {
-        QByteArray payload = d.mid(10);
-        stringstream ss(std::string(payload.constData(), payload.size()));
-        IStreamWrapper isw(ss);
+        PeerHandshakeInfo hello = parsePeerHello(d);
 
-        Document doc;
-        ParseResult ok = doc.ParseStream(isw);
-        if(!ok || !doc.IsObject() || !doc.HasMember("instanceId") || !doc["instanceId"].IsString())
-            throw runtime_error("error parsing peer hello");
-
-        QString instanceId = QString::fromUtf8(doc["instanceId"].GetString(), doc["instanceId"].GetStringLength());
-        if(instanceId.isEmpty())
-            throw runtime_error("peer hello missing instance id");
-
-        peerInstanceBySocket[client] = instanceId;
+        peerHandshakeBySocket[client] = hello;
         QMap<int, int> channels = sideBySocketChannel.value(client);
         for(auto it = channels.begin(); it != channels.end(); ++it)
         {
             int side = it.value();
-            peerInstanceId[side] = instanceId;
-            if(instanceId == env.settings.m_instanceId)
+            peerInstanceId[side] = hello.instanceId;
+            if(hello.instanceId == env.settings.m_instanceId)
             {
                 std::cout << "disconnecting peer: loopback rejected on side " << side << std::endl;
                 status[side] = "Loopback rejected";
@@ -992,7 +1007,7 @@ void SidesManager::receivePeerHello(QTcpSocket *client, const QByteArray &d)
                 env.side[side]->SetSize(false);
             }
         }
-        if(instanceId == env.settings.m_instanceId)
+        if(hello.instanceId == env.settings.m_instanceId)
         {
             std::cout << "disconnecting peer: loopback rejected" << std::endl;
             env.settings.Save();
@@ -1002,6 +1017,34 @@ void SidesManager::receivePeerHello(QTcpSocket *client, const QByteArray &d)
     catch (const exception &err) {
         std::cout << "invalid peer hello: " << err.what() << std::endl;
     }
+}
+
+PeerHandshakeInfo SidesManager::parsePeerHello(const QByteArray &d)
+{
+    QByteArray payload = d.mid(10);
+    stringstream ss(std::string(payload.constData(), payload.size()));
+    IStreamWrapper isw(ss);
+
+    Document doc;
+    ParseResult ok = doc.ParseStream(isw);
+    if(!ok || !doc.IsObject() || !doc.HasMember("instanceId") || !doc["instanceId"].IsString())
+        throw runtime_error("error parsing peer hello");
+
+    PeerHandshakeInfo hello;
+    hello.instanceId = QString::fromUtf8(doc["instanceId"].GetString(), doc["instanceId"].GetStringLength());
+    if(hello.instanceId.isEmpty())
+        throw runtime_error("peer hello missing instance id");
+
+    hello.biotEncodingVersion = 0;
+    if(doc.HasMember("biotEncodingVersion") && doc["biotEncodingVersion"].IsInt())
+        hello.biotEncodingVersion = doc["biotEncodingVersion"].GetInt();
+
+    hello.maxReceiveBiotsPerSecond = 0.0;
+    if(doc.HasMember("maxReceiveBiotsPerSecond") && doc["maxReceiveBiotsPerSecond"].IsNumber())
+        hello.maxReceiveBiotsPerSecond = doc["maxReceiveBiotsPerSecond"].GetDouble();
+
+    hello.receivedHello = true;
+    return hello;
 }
 
 void SidesManager::receiveMuxOpen(QTcpSocket *client, const QByteArray &d)
@@ -1023,7 +1066,7 @@ void SidesManager::receiveMuxOpen(QTcpSocket *client, const QByteArray &d)
         return;
     }
 
-    if(peerInstanceBySocket.value(client) == env.settings.m_instanceId)
+    if(peerHandshakeBySocket.value(client).instanceId == env.settings.m_instanceId)
     {
         std::cout << "disconnecting peer: mux open rejected for loopback channel " << channel << std::endl;
         QByteArray response(RPC_MUX_NO_FREE);
@@ -1056,11 +1099,13 @@ void SidesManager::receiveMuxOpen(QTcpSocket *client, const QByteArray &d)
     sideBySocketChannel[client][channel] = freeSide;
     isAssigned[freeSide] = true;
     recentlySentBiots[freeSide].clear();
+    lastSentBiotTime[freeSide] = 0;
+    lastReceivedBiotTime[freeSide] = 0;
     biotsSent[freeSide] = 0;
     biotsReceived[freeSide] = 0;
     peerInstanceId[freeSide] = "";
-    if(peerInstanceBySocket.contains(client))
-        peerInstanceId[freeSide] = peerInstanceBySocket[client];
+    if(peerHandshakeBySocket.contains(client))
+        peerInstanceId[freeSide] = peerHandshakeBySocket[client].instanceId;
     emit sideStatsChanged(freeSide);
     QString peer = client->peerName();
     if(peer.isEmpty())
@@ -1120,6 +1165,14 @@ void SidesManager::returnRejectedBiotToPeer(const QString &rpcType, int side, co
 void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, const QByteArray &d, bool returnOnFailure, bool allowQueueOverflow)
 {
     cout << "biot arriving " << side << endl;
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+    qint64 receiveIntervalMs = (qint64)(1000.0 / LOCAL_MAX_RECEIVE_BIOTS_PER_SECOND);
+    if(lastReceivedBiotTime[side] != 0 && now - lastReceivedBiotTime[side] < receiveIntervalMs)
+    {
+        if(returnOnFailure)
+            returnRejectedBiotToPeer(rpcType, side, d, "receive rate limited");
+        return;
+    }
 
     std::unique_ptr<Biot> pBiot;
     uint32_t biotId = 0;
@@ -1151,6 +1204,7 @@ void SidesManager::receiveBiotFromNetwork(const QString &rpcType, int side, cons
     }
     if(env.side[side]->ReceiveBiotFromNetwork(pBiot.get(), allowQueueOverflow))
     {
+        lastReceivedBiotTime[side] = now;
         pBiot.release();
         sendBiotAccept(side, biotId);
         biotsReceived[side]++;

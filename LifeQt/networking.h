@@ -61,6 +61,19 @@ struct RecentlySentBiot {
     QByteArray jsonPayload;
 };
 
+struct PeerHandshakeInfo {
+    PeerHandshakeInfo() :
+        biotEncodingVersion(0),
+        maxReceiveBiotsPerSecond(0.0),
+        receivedHello(false)
+    {}
+
+    QString instanceId;
+    int biotEncodingVersion;
+    double maxReceiveBiotsPerSecond;
+    bool receivedHello;
+};
+
 class SidesManager : public QObject
 {
     Q_OBJECT
@@ -99,6 +112,7 @@ private:
     void sendBiotAccept(int side, uint32_t biotId);
     void receivePeerHello(int side, const QByteArray &d);
     void receivePeerHello(QTcpSocket *client, const QByteArray &d);
+    PeerHandshakeInfo parsePeerHello(const QByteArray &d);
     void receiveMuxOpen(QTcpSocket *client, const QByteArray &d);
     bool unwrapMuxFrame(QTcpSocket *client, const QByteArray &d, int &sideOut, QByteArray &frameOut);
     void receiveBiotFromNetwork(const QString &rpcType, int side, const QByteArray &d, bool returnOnFailure, bool allowQueueOverflow = false);
@@ -113,12 +127,14 @@ private:
     QString configuredHostPort[4];
     QString peerInstanceId[4];
     QMap<uint32_t, RecentlySentBiot> recentlySentBiots[4];
+    qint64 lastSentBiotTime[4];
+    qint64 lastReceivedBiotTime[4];
     QString status[4];
     int biotsSent[4];
     int biotsReceived[4];
     QMap<QString, QTcpSocket *> connectionByEndpoint;
     QMap<QTcpSocket *, QString> endpointBySocket;
-    QMap<QTcpSocket *, QString> peerInstanceBySocket;
+    QMap<QTcpSocket *, PeerHandshakeInfo> peerHandshakeBySocket;
     QMap<QTcpSocket *, QMap<int, int>> sideBySocketChannel;
     SidesManagerEventRx eventRx;
 };
