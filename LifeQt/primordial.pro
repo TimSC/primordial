@@ -1,10 +1,11 @@
 
-QT       += core gui network multimedia openglwidgets
+QT       += core gui network multimedia
 win32 {
 INCLUDEPATH += "C:\dev\lib\rapidjson-1.1.0\include"
 }
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 5): QT += openglwidgets
 
 CONFIG += c++11
 
