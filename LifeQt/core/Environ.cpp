@@ -504,8 +504,15 @@ void CEnvStatsList::SerializeJsonLoad(const rapidjson::Value& v)
 Environment::Environment()
 {
     m_scene = nullptr;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    mediaPlayer = new QMediaPlayer(nullptr);
+    audioOutput = new QAudioOutput(nullptr);
+    audioOutput->setVolume(0.5);
+    mediaPlayer->setAudioOutput(audioOutput);
+#else
     mediaPlayer = new QMediaPlayer(nullptr, QMediaPlayer::LowLatency);
     mediaPlayer->setAudioRole(QAudio::GameRole);
+#endif
 
     tickStart = QDateTime::currentMSecsSinceEpoch();
     tickCount = 0;
@@ -525,6 +532,10 @@ Environment::~Environment(void)
 {
     delete mediaPlayer;
     mediaPlayer = nullptr;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    delete audioOutput;
+    audioOutput = nullptr;
+#endif
 }
 
 
@@ -578,8 +589,13 @@ void Environment::PlayResource(const std::string &szSound)
 
         if (!sSound.empty())
         {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            mediaPlayer->setSource(QUrl::fromLocalFile(sSound.c_str()));
+            audioOutput->setVolume(0.5);
+#else
             mediaPlayer->setMedia(QUrl::fromLocalFile(sSound.c_str()));
             mediaPlayer->setVolume(50);
+#endif
             mediaPlayer->play();
         }
     }

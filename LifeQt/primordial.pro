@@ -1,5 +1,5 @@
 
-QT       += core gui network multimedia
+QT       += core gui network multimedia openglwidgets
 win32 {
 INCLUDEPATH += "C:\dev\lib\rapidjson-1.1.0\include"
 }

@@ -13,6 +13,9 @@
 #include <QDataStream>
 #include <QOpenGLWidget>
 #include <QMediaPlayer>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QAudioOutput>
+#endif
 #include "Etools.h"
 #include "Connect.h"
 #include "Genotype.h"
@@ -257,6 +260,9 @@ public:
     double ticksPerSec;
 
     QMediaPlayer *mediaPlayer;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QAudioOutput *audioOutput;
+#endif
     QList<class EnvironmentListener *> listeners;
 };
 
