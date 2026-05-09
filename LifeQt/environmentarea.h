@@ -1,10 +1,12 @@
 #ifndef ENVIRONMENTAREA_H
 #define ENVIRONMENTAREA_H
 
-#include <QOpenGLWidget>
+#include <QCanvasImage>
+#include <QCanvasPainterWidget>
+#include <QImage>
 #include "core/Environ.h"
 
-class EnvironmentArea : public QOpenGLWidget
+class EnvironmentArea : public QCanvasPainterWidget
 {
     Q_OBJECT
 public:
@@ -12,13 +14,16 @@ public:
 
     void SetEnvironment(class Environment *envIn);
 
-    void paintEvent(QPaintEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
-    void paintGL() override;
 
     void mousePressEvent(QMouseEvent * event) override;
     void mouseReleaseEvent(QMouseEvent * event) override;
     void setCurrentTool(const std::string &tool);
+
+protected:
+    void initializeResources(QCanvasPainter *painter) override;
+    void graphicsResourcesInvalidated() override;
+    void paint(QCanvasPainter *painter) override;
 
 signals:
     void SelectedBiot(uint32_t biotId);
@@ -30,9 +35,10 @@ private:
     uint64_t tickStart, tickCount;
     double ticksPerSec;
     std::string currentTool;
-    QPixmap backgroundTop, backgroundBottom;
+    QImage backgroundTopImage, backgroundBottomImage;
+    QCanvasImage backgroundTop, backgroundBottom;
 
-    void paintBackground(QPainter &painter);
+    void paintBackground(QCanvasPainter *painter);
 
 
 };

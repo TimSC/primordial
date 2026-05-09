@@ -272,7 +272,7 @@
  <customwidgets>
   <customwidget>
    <class>EnvironmentArea</class>
-   <extends>QOpenGLWidget</extends>
+   <extends>QWidget</extends>
    <header>environmentarea.h</header>
   </customwidget>
   <customwidget>

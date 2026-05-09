@@ -9,7 +9,6 @@
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QKeyEvent>
-#include <QOpenGLWidget>
 #include <QScreen>
 #include <QLabel>
 #include <QByteArray>
@@ -227,15 +226,6 @@ MainWindow::MainWindow(bool fuzzEnabled, QWidget *parent)
 
     QRect rect(0, 0, size.width(), size.height());
     //QRect rect(0, 0, 640, 480);
-    QPen whitePen(QColor(255,255,255));
-    QGraphicsRectItem *gri = new QGraphicsRectItem(rect);
-
-    QSurfaceFormat fmt;
-    fmt.setSwapInterval(0);
-    this->ui->openGLWidget->setFormat(fmt);
-
-    gri->setPen(whitePen);
-
     this->app.env.settings.Reset(rect.x(), rect.y());
 
     qint64 seed = QDateTime::currentMSecsSinceEpoch();

@@ -10,7 +10,7 @@
 #include <cassert>
 #include <iostream>
 #include <stdexcept>
-#include <QPainter>
+#include <QCanvasPainter>
 
 using namespace rapidjson;
 
@@ -2577,22 +2577,22 @@ short Biot::MoveLimbSegment(int nSegment, int nLimb, int nRate)
 }
 
 // ///////////////////////////////////////////////////////////////////
-// paintGL
+// paint
 //
 //
 //
 
-void Biot::paintGL(QPainter &painter)
+void Biot::paint(QCanvasPainter *painter)
 {
 
     if (env.BiotShouldBox(m_Id))
     {
-        QRect rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
-        QPen whitePen(QColor(255,255,255));
+        QRectF rc(-0.5 * Width(), -0.5 * Height(), Width(), Height());
         rc.translate(CenterX(), CenterY());
 
-        painter.setPen(whitePen);
-        painter.drawRect(rc);
+        painter->setStrokeStyle(QColor(255,255,255));
+        painter->setLineWidth(1.0f);
+        painter->strokeRect(rc);
     }
 
     bool flashCol = false;
@@ -2620,14 +2620,18 @@ void Biot::paintGL(QPainter &painter)
 
             if(aPen < 0 || aPen >= env.settings.pens.size())
             {
-                LogInvalidIndex("Biot::paintGL", "pen", aPen);
+                LogInvalidIndex("Biot::paint", "pen", aPen);
                 AssertInvalidRuntimeBiotData();
                 aPen = GREEN_LEAF;
             }
 
-            painter.setPen(env.settings.pens[aPen]);
-
-            painter.drawLine(startPt[i].x()+origin.x(), startPt[i].y()+origin.y(), stopPt[i].x()+origin.x(), stopPt[i].y()+origin.y());
+            const QPen &pen = env.settings.pens[aPen];
+            painter->beginPath();
+            painter->moveTo(startPt[i].x()+origin.x(), startPt[i].y()+origin.y());
+            painter->lineTo(stopPt[i].x()+origin.x(), stopPt[i].y()+origin.y());
+            painter->setStrokeStyle(pen.color());
+            painter->setLineWidth(pen.widthF() > 0.0 ? pen.widthF() : 1.0f);
+            painter->stroke();
 
         }
     }

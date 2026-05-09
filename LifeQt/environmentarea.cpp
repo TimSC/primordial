@@ -1,6 +1,8 @@
 #include "environmentarea.h"
 #include "core/Biots.h"
-#include <QPainter>
+#include <QCanvasImagePattern>
+#include <QCanvasLinearGradient>
+#include <QCanvasPainter>
 #include <QDateTime>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -18,16 +20,17 @@ using namespace rapidjson;
 
 const qint64 MAX_SINGLE_BIOT_FILE_SIZE = 1024*1024;
 
-EnvironmentArea::EnvironmentArea(QWidget *central) : QOpenGLWidget(central)
+EnvironmentArea::EnvironmentArea(QWidget *central) : QCanvasPainterWidget(central)
 {
     this->env = nullptr;
+    setFillColor(Qt::black);
 
     tickStart = QDateTime::currentMSecsSinceEpoch();
     tickCount = 0;
     ticksPerSec = 0.0;
 
-    backgroundTop.load(":/res/top.png");
-    backgroundBottom.load(":/res/bottom.png");
+    backgroundTopImage.load(":/res/top.png");
+    backgroundBottomImage.load(":/res/bottom.png");
     currentTool = "examine";
 
 }
@@ -37,20 +40,29 @@ void EnvironmentArea::SetEnvironment(class Environment *envIn)
     this->env = envIn;
 }
 
-void EnvironmentArea::paintEvent(QPaintEvent* event)
-{
-   //makeCurrent();
-   //paintGL();
-   QOpenGLWidget::paintEvent(event);
-}
-
 void EnvironmentArea::resizeEvent(QResizeEvent* event)
 {
     //your code...
-    QOpenGLWidget::resizeEvent(event);
+    QCanvasPainterWidget::resizeEvent(event);
 }
 
-void EnvironmentArea::paintGL()
+void EnvironmentArea::initializeResources(QCanvasPainter *painter)
+{
+    const auto flags = QCanvasPainter::ImageFlag::Repeat |
+                       QCanvasPainter::ImageFlag::GenerateMipmaps;
+    if (!backgroundTopImage.isNull())
+        backgroundTop = painter->addImage(backgroundTopImage, flags);
+    if (!backgroundBottomImage.isNull())
+        backgroundBottom = painter->addImage(backgroundBottomImage, flags);
+}
+
+void EnvironmentArea::graphicsResourcesInvalidated()
+{
+    backgroundTop = {};
+    backgroundBottom = {};
+}
+
+void EnvironmentArea::paint(QCanvasPainter *painter)
 {
     uint64_t tickNow = QDateTime::currentMSecsSinceEpoch();
     uint64_t elapse = tickNow - tickStart;
@@ -63,32 +75,36 @@ void EnvironmentArea::paintGL()
     }
     tickCount ++;
 
-    QPainter painter(this);
     this->paintBackground(painter);
 
-
-    this->env->paintGL(painter);
+    if (this->env)
+        this->env->paint(painter);
 }
 
-void EnvironmentArea::paintBackground(QPainter &painter)
+void EnvironmentArea::paintBackground(QCanvasPainter *painter)
 {
-    painter.save();
+    painter->save();
 
-    QLinearGradient background(0, 0, 0, this->height());
-    background.setColorAt(0, QColor(0,0,100));
-    background.setColorAt(1, Qt::black);
-    painter.fillRect(this->rect(), background);
+    QCanvasLinearGradient background(0, 0, 0, this->height());
+    background.setStartColor(QColor(0,0,100));
+    background.setEndColor(Qt::black);
+    painter->setFillStyle(background);
+    painter->fillRect(this->rect());
 
-    //Repeat texture https://stackoverflow.com/a/64805500/4288232
-    painter.setBrush(backgroundTop);
-    painter.setBrushOrigin(0, 0);
-    painter.drawRect(QRect(0, 0, this->width(), 16));
+    if (!backgroundTop.isNull()) {
+        QCanvasImagePattern pattern(backgroundTop, 0, 0, backgroundTop.width(), backgroundTop.height());
+        painter->setFillStyle(pattern);
+        painter->fillRect(QRectF(0, 0, this->width(), 16));
+    }
 
-    painter.setBrush(backgroundBottom);
-    painter.setBrushOrigin(0, this->height()-16);
-    painter.drawRect(QRect(0, this->height()-16, this->width(), 16));
+    if (!backgroundBottom.isNull()) {
+        QCanvasImagePattern pattern(backgroundBottom, 0, this->height() - 16,
+                                    backgroundBottom.width(), backgroundBottom.height());
+        painter->setFillStyle(pattern);
+        painter->fillRect(QRectF(0, this->height()-16, this->width(), 16));
+    }
 
-    painter.restore();
+    painter->restore();
 }
 
 void EnvironmentArea::mousePressEvent(QMouseEvent * event)

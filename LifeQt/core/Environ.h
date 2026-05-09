@@ -11,11 +11,10 @@
 
 #include <string>
 #include <QDataStream>
-#include <QOpenGLWidget>
+#include <QWidget>
 #include <QMediaPlayer>
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QAudioOutput>
-#endif
+#include <QCanvasPainter>
 #include "Etools.h"
 #include "Connect.h"
 #include "Genotype.h"
@@ -204,20 +203,20 @@ public:
 
     bool WithinBorders(BRect& rect);
 
-    void OnNew(QOpenGLWidget &scene, QRect worldRect, int population, int seed,
+    void OnNew(QWidget &scene, QRect worldRect, int population, int seed,
                int nArmsPerBiot, int nTypesPerBiot, int nSegmentsPerArm);
     void OnRestart();
     void OnOpen();
     void OnStop();
 
-    void paintGL(QPainter &painter);
+    void paint(QCanvasPainter *painter);
     void AddListener(class EnvironmentListener *listener);
 
     void Fuzz();
 
 public:
 
-    QOpenGLWidget *  m_scene;
+    QWidget *  m_scene;
     BRectSort         m_sort;
 
     CEnvStats         m_stats;
@@ -260,9 +259,7 @@ public:
     double ticksPerSec;
 
     QMediaPlayer *mediaPlayer;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     QAudioOutput *audioOutput;
-#endif
     QList<class EnvironmentListener *> listeners;
 };
 

@@ -1,10 +1,13 @@
 
-QT       += core gui network multimedia openglwidgets
+QT       += core gui network multimedia canvaspainter
 win32 {
 INCLUDEPATH += "C:\dev\lib\rapidjson-1.1.0\include"
 }
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+lessThan(QT_MAJOR_VERSION, 6): error("Primordial now requires Qt 6.11 or newer for Qt Canvas Painter")
+lessThan(QT_MINOR_VERSION, 11): error("Primordial now requires Qt 6.11 or newer for Qt Canvas Painter")
+
+QT += widgets
 
 CONFIG += c++11
 

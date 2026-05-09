@@ -326,7 +326,7 @@ public:
     void InjectGenes(int type, Biot& enemy);
 
     float PercentEnergy();
-    void paintGL(QPainter &painter);
+    void paint(QCanvasPainter *painter);
  
     short CheckWhite(int type)
     {
